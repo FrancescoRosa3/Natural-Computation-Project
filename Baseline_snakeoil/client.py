@@ -63,7 +63,6 @@ class Track():
         f.write(firstline)
         for s in self.sectionList:
             ts= '%f %f %f %d\n' % (s.start,s.end,s.magnitude,s.badness)
-            print(f"Line {ts}")
             f.write(ts)
         f.close()
     def load_track(self,fn):
@@ -492,7 +491,7 @@ def learn_track(st,a,t,dfs):
     global secBegin
     global secMagnitude
     global secWidth
-    NOSTEER= 0.07 
+    NOSTEER= 0.02
     T.laplength= max(dfs,T.laplength)
     if len(trackHistory) >= TRACKHISTORYMAX:
         trackHistory.pop(0) 
@@ -665,12 +664,10 @@ if __name__ == "__main__":
     C.S.d['stucktimer']= 0
     C.S.d['targetSpeed']= 0
     for step in range(C.maxSteps,0,-1):
-        print(step)
         C.get_servers_input()
         drive(C,step)
         C.respond_to_server()
     if not C.stage:
-        print("Writing file")  
         T.write_track(C.trackname) 
     C.R.d['meta']= 1
     C.respond_to_server()
