@@ -30,8 +30,8 @@ class Track():
     def post_process_track(self):
         ws= [round(s.width) for s in self.sectionList]
         ws= filter(lambda O:O,ws) 
-        ws.sort()          
-        self.width= ws[len(ws)/2]   
+        ws = sorted(ws)          
+        self.width= ws[len(ws)//2]   
         cleanedlist= list()
         TooShortToBeASect= 6
         for n,s in enumerate(self.sectionList):
