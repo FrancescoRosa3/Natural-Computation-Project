@@ -63,6 +63,7 @@ class Track():
         f.write(firstline)
         for s in self.sectionList:
             ts= '%f %f %f %d\n' % (s.start,s.end,s.magnitude,s.badness)
+            print(f"Line {ts}")
             f.write(ts)
         f.close()
     def load_track(self,fn):
@@ -657,17 +658,19 @@ if __name__ == "__main__":
         try:
             T.load_track(C.trackname)
         except:
-            print "Could not load the track: %s" % C.trackname
+            print(f"Could not load the track: {C.trackname}") 
             sys.exit()
-        print "Track loaded!"
+        print("Track loaded!")
     initialize_car(C)
     C.S.d['stucktimer']= 0
     C.S.d['targetSpeed']= 0
-    for step in xrange(C.maxSteps,0,-1):
+    for step in range(C.maxSteps,0,-1):
+        print(step)
         C.get_servers_input()
         drive(C,step)
         C.respond_to_server()
-    if not C.stage:  
+    if not C.stage:
+        print("Writing file")  
         T.write_track(C.trackname) 
     C.R.d['meta']= 1
     C.respond_to_server()
