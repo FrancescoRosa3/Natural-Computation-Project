@@ -1,8 +1,11 @@
-import sys, math
+import sys, math, json
+import os 
 
 from Baseline_snakeoil.client import Track, TrackSection
 from Baseline_snakeoil import snakeoil
 import utils
+
+dir_path = os.path.dirname(os.path.realpath(__file__))
 
 target_speed= 0 
 lap= 0 
@@ -569,10 +572,19 @@ def initialize_car(c):
     R['focus']= 0 
     c.respond_to_server() 
 
-if __name__ == "__main__":
-    T= Track()
-    C=  snakeoil.Client()
-    print(C.stage)
+def run_controller( parameters = None, parameters_from_file = True, parameter_file = "\Baseline_snakeoil\default_parameters", plot_history = False):
+    global P, T, C, lap
+    
+    # load parameters
+    if parameters_from_file:
+        pfile= open(dir_path + parameter_file,'r') 
+        P = json.load(pfile)
+    else:
+        P = parameters
+
+    T = Track()
+    C =  snakeoil.Client(P=P)
+        
     if C.stage == 1 or C.stage == 2:
         try:
             T.load_track(C.trackname)
@@ -587,9 +599,12 @@ if __name__ == "__main__":
     history_speed = {}    
     history_damage = {}
     history_lap_time = {}
+    global lap
+    lap = 0
+    last_lap_time_prev = 0.0
 
     for step in range(C.maxSteps,0,-1):
-        C.get_servers_input()
+        race_ended = C.get_servers_input()
         
         try:
             history_speed[lap]
@@ -598,23 +613,34 @@ if __name__ == "__main__":
                 history_speed[lap].append(math.sqrt(C.S.d['speedX']**2+C.S.d['speedY']**2+C.S.d['speedZ']**2))
                 history_damage[lap].append(C.S.d['damage'])
         except:
-            if lap > 1:
+            if C.S.d['lastLapTime'] != 0.0 and C.S.d['lastLapTime'] != last_lap_time_prev:
                 # store the lap time
-                history_lap_time[lap-1] = C.S.d['lastLapTime']
+                history_lap_time[lap-1] = C.S.d['lastLapTime']    
+                last_lap_time_prev = C.S.d['lastLapTime'] 
             if lap >= 1:
                 # initialize the history for the current lap
                 history_speed[lap] = [math.sqrt(C.S.d['speedX']**2+C.S.d['speedY']**2+C.S.d['speedZ']**2)]
                 history_damage[lap] = [C.S.d['damage']]
+
+        if race_ended:
+            #print("Race ended")
+            break
         
         drive(C,step)
         C.respond_to_server()
 
     # save the history
     print(f"Lap time: {history_lap_time}")
-    utils.plot_history(history_lap_time, history_speed, history_damage)
+    if plot_history:
+        utils.plot_history(history_lap_time, history_speed, history_damage)
 
     if not C.stage:
         T.write_track(C.trackname) 
     C.R.d['meta']= 1
     C.respond_to_server()
-    C.shutdown()
+    #C.shutdown()
+    
+    return history_lap_time, history_speed, history_damage
+
+if __name__ == "__main__":
+    run_controller()

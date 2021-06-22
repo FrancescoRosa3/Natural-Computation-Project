@@ -377,8 +377,9 @@ class Client():
         if f: self.pfilename = f
         self.S = ServerState()
         self.R = DriverAction()
-        pfile= open(self.pfilename,'r')
-        self.P= json.load(pfile)
+        #pfile= open(self.pfilename,'r')
+        #self.P= json.load(pfile)
+        self.P = P
         self.setup_connection()
 
     def setup_connection(self):
@@ -477,12 +478,14 @@ class Client():
                 print("Client connected on %d.............." % self.port)
                 continue
             elif '***shutdown***' in sockdata.decode():
+                '''
                 print((("Server has stopped the race on %d. " +
                         "You were in %d place.") %
                        (self.port, self.S.d['racePos'])))
+                '''
                 self.respond_to_server()
                 self.shutdown()
-                return
+                return True
             elif '***restart***' in sockdata.decode():
                 # What do I do here?
                 print("Server has restarted the race on %d." % self.port)

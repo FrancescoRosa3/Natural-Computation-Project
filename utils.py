@@ -2,7 +2,6 @@ import matplotlib.pyplot as plt
 
 def plot_history(history_lap_time, history_speed, history_damage):
     for lap in history_lap_time:
-        print(lap)
         plt.figure(figsize=(1, 2))
         plt.subplot(121)
 
