@@ -635,7 +635,7 @@ def run_controller( port=None, parameters = None, parameters_from_file = True, p
         C.respond_to_server()
 
     # save the history
-    print(f"Lap time: {history_lap_time}")
+    #print(f"Lap time: {history_lap_time}")
     if plot_history:
         utils.plot_history(history_lap_time, history_speed, history_damage)
 

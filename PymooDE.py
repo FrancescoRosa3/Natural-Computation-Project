@@ -24,9 +24,11 @@ def print_hi(name):
     # Use a breakpoint in the code line below to debug your script.
     print(f'Hi, {name}')  # Press ⌘F8 to toggle the breakpoint.
 
+
+
 # class that defines the problem to solve
 class TORCS_PROBLEM(Problem):
-    
+
     # Problem initialization
     def __init__(self, parameters):
             xl = np.zeros(n_parameters)
@@ -34,9 +36,13 @@ class TORCS_PROBLEM(Problem):
             for i in range(xl.size):
                 xl[i] = -100000
                 xu[i] = 100000
-            super().__init__(n_var=n_parameters, n_obj=1, n_constr=0, xl=xl, xu=xu, elementwise_evaluation = True)
+            super().__init__(n_var=n_parameters, n_obj=1, n_constr=0, xl=xl, xu=xu)
             self.parameters = parameters
     
+
+    def run_simulations(indx, fitness):
+        pass
+
     # evaluate function
     # we take in input a single individual
     # run the experiment
@@ -50,19 +56,23 @@ class TORCS_PROBLEM(Problem):
             #print(f"\"{k}\": {self.parameters[k]},")
             i += 1
         try:
+            fitness = [None for i in range(x.size[0])]
+            servers_available = [True for i in range(10)]
             
-            history_lap_time, history_speed, history_damage = custom_controller.run_controller(parameters=self.parameters, 
-                                                                                                parameters_from_file=False)
-            average_time = 0.0
-            cnt = 0
-            for key in history_lap_time.keys():
-                if key > 1:
-                    average_time += history_lap_time[key]
-                    cnt += 1
-            if cnt != 0:
-                out["F"] = average_time/cnt
-            else:
-                out["F"] = np.inf
+            for agent_indx in range(x.size[0]):
+                history_lap_time, history_speed, history_damage = custom_controller.run_controller(parameters=self.parameters, 
+                                                                                                    parameters_from_file=False)
+                average_time = 0.0
+                cnt = 0
+                for key in history_lap_time.keys():
+                    if key > 1:
+                        average_time += history_lap_time[key]
+                        cnt += 1
+                if cnt != 0:
+                    out["F"] = average_time/cnt
+                else:
+                    out["F"] = np.inf
+        
         except KeyboardInterrupt:
             sys.exit()
         except:
@@ -101,7 +111,7 @@ if __name__ == "__main__":
     print_hi('Pymoo Differential Evolution')
 
     # population size
-    n_pop = 510
+    n_pop = 5*n_parameters
     # number of variables for the problem visualization
     n_vars = n_parameters
     # maximum number of generations
