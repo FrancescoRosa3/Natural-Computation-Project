@@ -151,16 +151,16 @@ class ServerState():
         '''Specialty output for useful ServerState monitoring.'''
         out = str()
         sensors = [  # Select the ones you want in the order you want them.
-            # 'curLapTime',
-            # 'lastLapTime',
+            'curLapTime',
+            'lastLapTime',
             'stucktimer',
-            # 'damage',
-            # 'focus',
+            'damage',
+            'focus',
             'fuel',
-            # 'gear',
+            'gear',
             'distRaced',
             'distFromStart',
-            # 'racePos',
+            'racePos',
             'opponents',
             'wheelSpinVel',
             'z',
