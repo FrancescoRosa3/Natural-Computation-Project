@@ -1,5 +1,7 @@
 import sys, math, json
-import os 
+import os
+
+from matplotlib.pyplot import locator_params 
 
 from Baseline_snakeoil.client import Track, TrackSection
 from Baseline_snakeoil import snakeoil
@@ -572,9 +574,9 @@ def initialize_car(c):
     R['focus']= 0 
     c.respond_to_server() 
 
-def run_controller( parameters = None, parameters_from_file = True, parameter_file = "\Baseline_snakeoil\default_parameters", plot_history = False):
+def run_controller( port=None, parameters = None, parameters_from_file = True, parameter_file = "\Baseline_snakeoil\default_parameters", plot_history = False):
     global P, T, C, lap
-    
+    lap = 0
     # load parameters
     if parameters_from_file:
         pfile= open(dir_path + parameter_file,'r') 
@@ -583,7 +585,7 @@ def run_controller( parameters = None, parameters_from_file = True, parameter_fi
         P = parameters
 
     T = Track()
-    C =  snakeoil.Client(P=P)
+    C =  snakeoil.Client(p=port, P=P)
         
     if C.stage == 1 or C.stage == 2:
         try:
@@ -599,28 +601,31 @@ def run_controller( parameters = None, parameters_from_file = True, parameter_fi
     history_speed = {}    
     history_damage = {}
     history_lap_time = {}
-    global lap
-    lap = 0
+    
+    lap_cnt = 1
     last_lap_time_prev = 0.0
 
     for step in range(C.maxSteps,0,-1):
         race_ended = C.get_servers_input()
         
         try:
-            history_speed[lap]
-            if lap >= 1:
-                # store the history
-                history_speed[lap].append(math.sqrt(C.S.d['speedX']**2+C.S.d['speedY']**2+C.S.d['speedZ']**2))
-                history_damage[lap].append(C.S.d['damage'])
-        except:
-            if C.S.d['lastLapTime'] != 0.0 and C.S.d['lastLapTime'] != last_lap_time_prev:
+            
+            if C.S.d['lastLapTime'] != last_lap_time_prev:
                 # store the lap time
-                history_lap_time[lap-1] = C.S.d['lastLapTime']    
-                last_lap_time_prev = C.S.d['lastLapTime'] 
-            if lap >= 1:
+                history_lap_time[lap_cnt] = C.S.d['lastLapTime']    
+                last_lap_time_prev = C.S.d['lastLapTime']
+                lap_cnt +=1
+            
+            history_speed[lap_cnt]
+            if lap_cnt >= 1:
+                # store the history
+                history_speed[lap_cnt].append(math.sqrt(C.S.d['speedX']**2+C.S.d['speedY']**2+C.S.d['speedZ']**2))
+                history_damage[lap_cnt].append(C.S.d['damage'])
+        except:
+            if lap_cnt >= 1:
                 # initialize the history for the current lap
-                history_speed[lap] = [math.sqrt(C.S.d['speedX']**2+C.S.d['speedY']**2+C.S.d['speedZ']**2)]
-                history_damage[lap] = [C.S.d['damage']]
+                history_speed[lap_cnt] = [math.sqrt(C.S.d['speedX']**2+C.S.d['speedY']**2+C.S.d['speedZ']**2)]
+                history_damage[lap_cnt] = [C.S.d['damage']]
 
         if race_ended:
             #print("Race ended")

@@ -47,7 +47,7 @@ class TORCS_PROBLEM(Problem):
         for k in self.parameters.keys():
             # assign the current parameter value
             self.parameters[k] = x[i]
-            print(x[i])
+            #print(f"\"{k}\": {self.parameters[k]},")
             i += 1
         try:
             
@@ -101,11 +101,11 @@ if __name__ == "__main__":
     print_hi('Pymoo Differential Evolution')
 
     # population size
-    n_pop = 5
+    n_pop = 510
     # number of variables for the problem visualization
     n_vars = n_parameters
     # maximum number of generations
-    max_gens = 100
+    max_gens = 3
     # Cross-over rate
     cr = 0.9
     # Scaling factor F
@@ -134,10 +134,10 @@ if __name__ == "__main__":
                    F=f,
                    dither="vector", 
                    jitter=True,
-                   eliminate_duplicates=False)
+                   eliminate_duplicates=True)
 
     res = minimize(problem, algorithm, termination, seed=112, verbose=True, save_history=True)
-
+    print(res.history)
     print("Best solution found: \nX = %s\nF = %s" % (res.X, res.F))
 
     # plot convergence
