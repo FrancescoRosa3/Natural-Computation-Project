@@ -1,7 +1,8 @@
 from math import inf
 import numpy as np
 import matplotlib.pyplot as plt
-import json, random, sys, threading
+import json, random, sys, threading, signal
+from copy import deepcopy
 
 from pymoo.algorithms.so_de import DE
 from pymoo.optimize import minimize
@@ -22,14 +23,12 @@ parameters = json.load(pfile)
 n_parameters = len(parameters)
 
 # CONSTANT DEFINITION
-NUMBER_SERVERS = 2
+NUMBER_SERVERS = 10
 BASE_PORT = 3000
 
 def print_hi(name):
     # Use a breakpoint in the code line below to debug your script.
     print(f'Hi, {name}')  # Press ⌘F8 to toggle the breakpoint.
-
-
 
 # class that defines the problem to solve
 class TorcsProblem(Problem):
@@ -46,10 +45,16 @@ class TorcsProblem(Problem):
     
 
     def run_simulations(indx, num_agents_to_run, fitness, x, parameters_dict):
-        # compute the start agent index
-        start_agent_indx = num_agents_to_run * indx
-        # compute the end agent index
-        end_agent_indx = start_agent_indx + num_agents_to_run
+        if indx != NUMBER_SERVERS - 1:
+            # compute the start agent index
+            start_agent_indx = num_agents_to_run * indx
+            # compute the end agent index
+            end_agent_indx = start_agent_indx + num_agents_to_run
+        else:
+            # compute the start agent index
+            start_agent_indx = x.shape[0]-num_agents_to_run
+            # compute the end agent index
+            end_agent_indx = x.shape[0]
 
         # for each agent that the thread must run
         for agent_indx in range(start_agent_indx, end_agent_indx):
@@ -63,10 +68,12 @@ class TorcsProblem(Problem):
                 #print(f"\"{k}\": {self.parameters[k]},")
                 i += 1
             try:
-                print(f"Port {BASE_PORT+indx+1}")
-                history_lap_time, history_speed, history_damage = custom_controller.run_controller(port=BASE_PORT+indx+1,
-                                                                                                   parameters=parameters_dict, 
-                                                                                                   parameters_from_file=False)
+                print(f"Run agent {agent_indx} on Port {BASE_PORT+indx+1}")
+                controller = custom_controller.CustomController(port=BASE_PORT+indx+1,
+                                                                parameters=parameters_dict, 
+                                                                parameters_from_file=False)
+                history_lap_time, history_speed, history_damage = controller.run_controller()
+
                 average_time = 0.0
                 cnt = 0
                 for key in history_lap_time.keys():
@@ -77,15 +84,13 @@ class TorcsProblem(Problem):
                     fitness[agent_indx] = average_time/cnt
                 else:
                     fitness[agent_indx] = np.inf
-            except KeyboardInterrupt:
-                sys.exit()
-            except:
-                print("Exception")
+            except (RuntimeWarning, RuntimeError) as e:
+                print(f"Exception {e}")
                 fitness[agent_indx] = np.inf
 
     # evaluate function
     def _evaluate(self, x, out, *args, **kwargs):
-       
+
         # list of fitness values
         fitness = [np.inf for i in range(x.shape[0])]
         # compute the number of agents that each thread must run
@@ -101,14 +106,15 @@ class TorcsProblem(Problem):
                 num_individuals_to_run = number_of_individuals_per_thread
 
             threads.append(threading.Thread(target=TorcsProblem.run_simulations, 
-                                            args=(i, num_individuals_to_run, fitness, x, self.parameters_dict)))
+                                            args=(i, num_individuals_to_run, fitness, x, deepcopy(self.parameters_dict)), daemon = True))
+            
             # run the i-th thread
             threads[i].start()
 
         # wait for all thread to end
         for i in range(NUMBER_SERVERS):
             threads[i].join()
-            
+
         out["F"] = np.array(fitness).T
         print(out["F"])
 

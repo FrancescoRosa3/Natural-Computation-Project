@@ -61,6 +61,11 @@ PI = 3.14159265359
 import os 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
+# Constant definition
+RACE_ENDED = 1
+NO_DATA_FROM_SERVER = -1
+
+
 # Initialize help messages
 ophelp = 'Options:\n'
 ophelp += ' --host, -H <host>    TORCS server host. [localhost]\n'
@@ -485,7 +490,7 @@ class Client():
                 '''
                 self.respond_to_server()
                 self.shutdown()
-                return True
+                return RACE_ENDED
             elif '***restart***' in sockdata.decode():
                 # What do I do here?
                 print("Server has restarted the race on %d." % self.port)
