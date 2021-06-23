@@ -1,6 +1,7 @@
+from math import inf
 import numpy as np
 import matplotlib.pyplot as plt
-import json, random, sys
+import json, random, sys, threading
 
 from pymoo.algorithms.so_de import DE
 from pymoo.optimize import minimize
@@ -20,6 +21,10 @@ pfile= open(dir_path + "\Baseline_snakeoil\default_parameters",'r')
 parameters = json.load(pfile)
 n_parameters = len(parameters)
 
+# CONSTANT DEFINITION
+NUMBER_SERVERS = 2
+BASE_PORT = 3000
+
 def print_hi(name):
     # Use a breakpoint in the code line below to debug your script.
     print(f'Hi, {name}')  # Press ⌘F8 to toggle the breakpoint.
@@ -27,7 +32,7 @@ def print_hi(name):
 
 
 # class that defines the problem to solve
-class TORCS_PROBLEM(Problem):
+class TorcsProblem(Problem):
 
     # Problem initialization
     def __init__(self, parameters):
@@ -37,31 +42,31 @@ class TORCS_PROBLEM(Problem):
                 xl[i] = -100000
                 xu[i] = 100000
             super().__init__(n_var=n_parameters, n_obj=1, n_constr=0, xl=xl, xu=xu)
-            self.parameters = parameters
+            self.parameters_dict = parameters
     
 
-    def run_simulations(indx, fitness):
-        pass
+    def run_simulations(indx, num_agents_to_run, fitness, x, parameters_dict):
+        # compute the start agent index
+        start_agent_indx = num_agents_to_run * indx
+        # compute the end agent index
+        end_agent_indx = start_agent_indx + num_agents_to_run
 
-    # evaluate function
-    # we take in input a single individual
-    # run the experiment
-    # take the result
-    def _evaluate(self, x, out, *args, **kwargs):
-        # counter for the attribute vector x
-        i = 0
-        for k in self.parameters.keys():
-            # assign the current parameter value
-            self.parameters[k] = x[i]
-            #print(f"\"{k}\": {self.parameters[k]},")
-            i += 1
-        try:
-            fitness = [None for i in range(x.size[0])]
-            servers_available = [True for i in range(10)]
-            
-            for agent_indx in range(x.size[0]):
-                history_lap_time, history_speed, history_damage = custom_controller.run_controller(parameters=self.parameters, 
-                                                                                                    parameters_from_file=False)
+        # for each agent that the thread must run
+        for agent_indx in range(start_agent_indx, end_agent_indx):
+
+            # assign to the parameter dict the parameter value for the agent_indx-th agent
+            # counter for the attribute vector x
+            i = 0
+            for k in parameters_dict.keys():
+                # assign the current parameter value
+                parameters_dict[k] = x[agent_indx][i]
+                #print(f"\"{k}\": {self.parameters[k]},")
+                i += 1
+            try:
+                print(f"Port {BASE_PORT+indx+1}")
+                history_lap_time, history_speed, history_damage = custom_controller.run_controller(port=BASE_PORT+indx+1,
+                                                                                                   parameters=parameters_dict, 
+                                                                                                   parameters_from_file=False)
                 average_time = 0.0
                 cnt = 0
                 for key in history_lap_time.keys():
@@ -69,15 +74,43 @@ class TORCS_PROBLEM(Problem):
                         average_time += history_lap_time[key]
                         cnt += 1
                 if cnt != 0:
-                    out["F"] = average_time/cnt
+                    fitness[agent_indx] = average_time/cnt
                 else:
-                    out["F"] = np.inf
-        
-        except KeyboardInterrupt:
-            sys.exit()
-        except:
-            out["F"] = np.inf
+                    fitness[agent_indx] = np.inf
+            except KeyboardInterrupt:
+                sys.exit()
+            except:
+                print("Exception")
+                fitness[agent_indx] = np.inf
 
+    # evaluate function
+    def _evaluate(self, x, out, *args, **kwargs):
+       
+        # list of fitness values
+        fitness = [np.inf for i in range(x.shape[0])]
+        # compute the number of agents that each thread must run
+        number_of_individuals_per_thread, remainder = divmod(x.shape[0], NUMBER_SERVERS)
+        # list of thread
+        threads = []
+        for i in range(NUMBER_SERVERS):
+            # check for the last thread
+            # assign the reaminder number of individuals to the last thread
+            if i == NUMBER_SERVERS - 1:
+                num_individuals_to_run = number_of_individuals_per_thread + remainder
+            else:
+                num_individuals_to_run = number_of_individuals_per_thread
+
+            threads.append(threading.Thread(target=TorcsProblem.run_simulations, 
+                                            args=(i, num_individuals_to_run, fitness, x, self.parameters_dict)))
+            # run the i-th thread
+            threads[i].start()
+
+        # wait for all thread to end
+        for i in range(NUMBER_SERVERS):
+            threads[i].join()
+            
+        out["F"] = np.array(fitness).T
+        print(out["F"])
 
 # simple n_ary tournament for a single-objective algorithm
 def n_ary_tournament(pop, P, algorithm, **kwargs):
@@ -111,7 +144,8 @@ if __name__ == "__main__":
     print_hi('Pymoo Differential Evolution')
 
     # population size
-    n_pop = 5*n_parameters
+    #n_pop = 5*n_parameters
+    n_pop = 10
     # number of variables for the problem visualization
     n_vars = n_parameters
     # maximum number of generations
@@ -122,7 +156,7 @@ if __name__ == "__main__":
     f = 0.9
 
     # define the problem
-    problem = TORCS_PROBLEM(parameters = parameters)
+    problem = TorcsProblem(parameters = parameters)
     # define the termination criteria
     termination = get_termination("n_gen", max_gens)
 
