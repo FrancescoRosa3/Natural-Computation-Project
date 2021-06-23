@@ -23,7 +23,7 @@ parameters = json.load(pfile)
 n_parameters = len(parameters)
 
 # CONSTANT DEFINITION
-NUMBER_SERVERS = 10
+NUMBER_SERVERS = 1
 BASE_PORT = 3000
 
 def print_hi(name):
@@ -150,12 +150,11 @@ if __name__ == "__main__":
     print_hi('Pymoo Differential Evolution')
 
     # population size
-    #n_pop = 5*n_parameters
-    n_pop = 10
+    n_pop = 5 * n_parameters
     # number of variables for the problem visualization
     n_vars = n_parameters
     # maximum number of generations
-    max_gens = 3
+    max_gens = 10
     # Cross-over rate
     cr = 0.9
     # Scaling factor F
