@@ -23,7 +23,7 @@ parameters = json.load(pfile)
 n_parameters = len(parameters)
 
 # CONSTANT DEFINITION
-NUMBER_SERVERS = 1
+NUMBER_SERVERS = 5
 BASE_PORT = 3000
 
 def print_hi(name):
@@ -174,6 +174,7 @@ if __name__ == "__main__":
     population = np.zeros((n_pop, n_vars))
     for i in range(n_pop):
         for j in range(parameters_start_values.size):
+            # TO DO
             population[i][j] = parameters_start_values[j] + np.random.uniform(-1.0, 1.0)
         
     algorithm = DE(pop_size=n_pop, 

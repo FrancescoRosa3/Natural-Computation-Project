@@ -96,7 +96,8 @@ class CustomController:
         else:
             slip= 0
         return slip
-
+    
+    # S['track'], S['angle']
     def track_sensor_analysis(self, t,a):
         alpha= 0
         sense= 1 
@@ -180,7 +181,7 @@ class CustomController:
 
     #P,S['distFromStart'],S['track'],S['trackPos'],S['speedX'],S['speedY'],R['steer'],S['angle'],infleX,infleA)
     def speed_planning(self, P,d,t,tp,sx,sy,st,a,infleX,infleA):
-        # take the max distance from the track sensors
+        # take the max distance from the track edge
         cansee= max(t[2:17])
         if cansee > 0:
             carmax= P['carmaxvisib'] * cansee 
@@ -192,16 +193,19 @@ class CustomController:
             return carmax 
         if t[9] < 40: 
             return P['obviousbase'] + t[9] * P['obvious']
+       
         if infleA:
             willneedtobegoing= 600-180.0*math.log(abs(infleA))
             willneedtobegoing= max(willneedtobegoing,P['carmin']) 
         else: 
             willneedtobegoing= carmax
+       
         brakingpacecut= 150 
         if sx > brakingpacecut:
             brakingpace= P['brakingpacefast']
         else:
             brakingpace= P['brakingpaceslow']
+            
         base= min(infleX * brakingpace + willneedtobegoing,carmax)
         base= max(base,P['carmin']) 
         if st<P['consideredstr8']: 
@@ -270,6 +274,7 @@ class CustomController:
 
     # P,R['steer'],S['trackPos'],S['angle']
     def steer_centeralign(self, P,sti,tp,a,ttp=0):
+        
         pointing_ahead= abs(a) < P['pointingahead'] 
         # tp represents if the car is inside or outside the track
         # value normalized with respect to the track width. <-1 or >1 the car is outside the track
@@ -283,7 +288,6 @@ class CustomController:
             sto= a * P['backward']
         ttp*= 1-a 
         sto+= (ttp - min(tp,P['steer2edge'])) * P['s2cen'] * offrd 
-        # sto [-1, 1]
         return sto 
 
     def speed_appropriate_steer(self, P,sto,sx):
@@ -302,11 +306,13 @@ class CustomController:
         maxsen= max(t)
         ttp= 0
         aadj= a
+        # If you are on track
         if maxsen > 0 and abs(tp) < .99:
             MaxSensorPos= t.index(maxsen)
             # take the angle of the sensor that returns the max distance [rad]
             MaxSensorAng= self.sangsrad[MaxSensorPos]
-            sensangF= -.9  
+            #sensangF= -.9  
+            sensangF = P['sensang']
             aadj= MaxSensorAng * sensangF
             if maxsen < 40:
                 ttp= MaxSensorAng * - P['s2sen'] / maxsen
@@ -325,7 +331,6 @@ class CustomController:
             else:
                 ttp= 0
         sto= self.steer_centeralign(P,sti,tp,aadj,ttp)
-        # return value [-1, 1]
         return self.speed_appropriate_steer(P,sto,sx)
 
     def traffic_navigation(self, os, sti):
@@ -369,6 +374,7 @@ class CustomController:
                 ts= min(ts,okmaxspeed4steer)
             tooslow= ts-sx 
         ao= 2 / (1+math.exp(-tooslow)) -1
+        
         # reduce ao if the car is slipping
         ao-= abs(sl) * P['slipdec'] 
         spincut= P['spincutint']-P['spincutslp']*abs(sy)
@@ -376,10 +382,11 @@ class CustomController:
         ao*= spincut
         ww= abs(ang)/P['wwlim']
         wwcut=  min(ww,.1)
+        
         if ts>0 and sx >5:
             ao-= wwcut
         if ao > .8: ao= 1
-        # ao should be [0,1]
+
         return ao
     
     #(P,R['brake'],S['speedX'],S['speedY'],self.target_speed,skid
@@ -392,8 +399,10 @@ class CustomController:
             return 0
         # the car speed is higher than the target speed
         if toofast: 
+            # direttamente proporzionale alla differenza di velocità
+            # inversamente proporzionale allo slittamentos
             bo+= P['brake'] * toofast / max(1,abs(sk))
-            bo=1
+            #bo=1
         if sk > P['seriousABS']: bo=0 
         if sx < 0: bo= 0 
         if sx < -.1 and ts > 0:  
@@ -494,8 +503,8 @@ class CustomController:
         infleX,infleA,straightness= self.track_sensor_analysis(S['track'],S['angle'])
         if self.target_speed>0:
             if c.stage:
-                print("Linea 473") 
                 if not S['stucktimer']:
+                    # return target speed, [km/h]
                     self.target_speed= self.speed_planning(P,S['distFromStart'],S['track'],S['trackPos'],
                                             S['speedX'],S['speedY'],R['steer'],S['angle'],
                                             infleX,infleA)
@@ -529,7 +538,7 @@ class CustomController:
                         if snext.self.badness>1000: caution= .75
                         if snext.self.badness>10000: caution= .5
         self.target_speed*= caution
-        # In unknown we enter here
+        # In unknown this if is true
         if self.T.usable_model or c.stage>1:
             # if the car is not on the axis
             if abs(S['trackPos']) > 1:
@@ -544,6 +553,7 @@ class CustomController:
             s= self.steer_centeralign(P,R['steer'],S['trackPos'],S['angle'])
         # set the steer value to send to the server
         R['steer']= s
+        
         if S['stucktimer'] and S['distRaced']>20:
             # if you are going in reverse.
             # invert the rotation, in order to align with the track
@@ -559,17 +569,19 @@ class CustomController:
                 # override what has been decided before.
                 # set the steer based on the current car speed: S['speedX']+50
                 # the desired steer based on the presence of the opponents: self.traffic_navigation(S['opponents'], R['steer'])
-                R['steer']= self.speed_appropriate_steer(P,
-                        self.traffic_navigation(S['opponents'], R['steer']),
-                        S['speedX']+50)
+                R['steer']= self.speed_appropriate_steer(P, 
+                                                        self.traffic_navigation(S['opponents'], R['steer']),
+                                                        S['speedX']+50)
+        
         if not S['stucktimer']:
             self.target_speed= abs(self.target_speed) 
         
         # slipping
         slip= self.find_slip(S['wheelSpinVel'])
-        # define the command for the gas pedal [0,1]
+
         R['accel']= self.throttle_control(P,R['accel'],self.target_speed,S['speedX'],slip,
                                     S['speedY'],S['angle'],R['steer'])
+        
         if R['accel'] < .01:
             R['brake']= self.brake_control(P,R['brake'],S['speedX'],S['speedY'],self.target_speed,skid)
         else:
@@ -578,7 +590,7 @@ class CustomController:
         R['gear'],R['clutch']= self.automatic_transimission(P,
             S['rpm'],S['gear'],R['clutch'],S['rpm'],S['speedX'],self.target_speed,tick)
         
-        R['clutch']= self.clutch_control(P,R['clutch'],slip,S['speedX'],S['speedY'],S['gear'])
+        #R['clutch']= self.clutch_control(P,R['clutch'],slip,S['speedX'],S['speedY'],S['gear'])
         
         if S['distRaced'] < S['distFromStart']: 
             self.lap= 0
@@ -677,7 +689,6 @@ class CustomController:
         
             self.drive(self.C, step)
             self.C.respond_to_server()
-
         # save the history
         #print(f"Lap time: {history_lap_time}")
         if plot_history:
@@ -692,4 +703,5 @@ class CustomController:
         return history_lap_time, history_speed, history_damage
 
 if __name__ == "__main__":
-    pass
+    controller = CustomController()
+    controller.run_controller()

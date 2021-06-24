@@ -43,7 +43,7 @@
     <attstr name="starting order" val="drivers list"/>
     <attstr name="restart" val="yes"/>
     <!-- Number of laps -->
-    <attnum name="laps" val="1"/>
+    <attnum name="laps" val="2"/>
     <!-- Display mode [normal, result only]-->
     <attstr name="display mode" val="normal"/>
     <section name="Starting Grid">

@@ -1,110 +1,162 @@
 {   
+    """ DA MODIFICARE """
     "dnsh3rpm": 7018.2574263038514, # numero giri motore per scendere alla 3 marcia
     
+    """ DA MODIFICARE """ velocità target
     "consideredstr8": 0.010033102875417081, # se st<P['consideredstr8'] viene tornata la base come velocità
     
+    """ DA MODIFICARE """
     "upsh6rpm": 11914.502728729563, # numero giri motore per salire alla 6 marcia
     
+    """ DA MODIFICARE """
     "dnsh2rpm": 6313.0396063881408, # numero giri motore per scendere alla 2 marcia
     
+    """ DA MODIFICARE """
     "str8thresh": 0.14383741216415255, ## straightness, linea 310, utilizzata per confronto con 
     straightness, definisce la soglia per indicare la rettilineità di un tratto di percorso. []
+       
+    """ DA MODIFICARE """
+    "offroad": 1.0002653228126588, ### linea 278 
     
-    "safeatanyspeed": 0.0012800919243947557, ## linea 289, [0, 1], utilizzato per definire lo steer max, sulla base della velocità
-    
-    "offroad": 1.0002653228126588, ### rad, -pi/pi, linea 278 
-    
+    """ DA MODIFICARE """
     "fullstmaxsx": 20.070818862674596, ## assegnato a target speed [km/h], linea 363.
     
+    """ DA MODIFICARE """
     "wwlim": 4.4870482599805364, ## utilizzata per definire ww, poi utilizzata per wwcut.
     
+    """ DA MODIFICARE """
     "upsh4rpm": 9526.724084318208, # numero giri motore per salire alla 4 marcia
     
+    """ DA MODIFICARE """
     "dnsh1rpm": 4013.503613860325, # numero giri motore per scendere alla 1 marcia
     
+    """ DA MODIFICARE """
     "sxappropriatest1": 16.083269822124979, ## utilizzato per definire lo steer max sulla base 
     della velocità, diviso per la radice della velocità, sicuramente >0. linea 289
     
+    """ DA MODIFICARE"""
+    "sxappropriatest2": 0.5520202884372154, ## utilizzato per definire lo steer max sulla base 
+    della velocità, diviso per la radice della velocità. linea 289
+
+    """ NON MODIFICARE """
+    "safeatanyspeed": 0.0012800919243947557, ## linea 289, [0, 1], utilizzato per definire lo steer max, sulla base della velocità
+ 
+    """ DA MODIFICARE """
     "oksyp": 0.065867064919736679,## linea 210, uncoolsy= abs(sy)/sx
                                                 syadjust= 2 - 1 / P['oksyp'] * uncoolsy
                                                 return base * syadjust 
     
+    """ DA MODIFICARE """
     "slipdec": 0.018047798233552067, # riduce il valore di accell se la macchina sta slittando, moltiplicato per slip in linea 368. [0, ..]
     
+    """ DA MODIFICARE """
     "spincutslp": 0.051425894532076979, ## linea 371.1, coefficiente che moltiplica la velocità lungo y.
     
+    """ DA MODIFICARE """
     "ignoreinfleA": 10.793558810628733, ## linea 310, confrontata con infleA
     
+    """ DA MODIFICARE """
     "s2sen": 3.0044320966938169, ## linea 308, 
-    
+
+    """ DA MODIFICARE """    
     "dnsh4rpm": 7430.3104910837837,  # numero giri motore per scendere alla 4 marcia
     
+    """ DA MODIFICARE """
     "seriousABS": 27.913519841072034, # definisce il limite minimo che attiva una sorta di ABS, s ela macchina sta slittando, sk > P['seriousABS'], allora bo a 0. Valore [>0].
     
+    """ DA MODIFICARE """
     "dnsh5rpm": 7483.4710893801393,  # numero giri motore per scendere alla 5 marcia
     
-    "obviousbase": 95.307151655731118, # [km/h] velocità base quando t[9], sensore centrale è minore di 90
+    """ DA MODIFICARE """ #P['obviousbase'] + t[9] * P['obvious']
+    "obviousbase": 95.307151655731118, # [km/h] velocità base quando t[9], sensore centrale è minore di 90,, >0
     
+    """ DA MODIFICARE """
+    "obvious": 1.3424661801203506, # fattore moltiplicativo a t9, >0
+    
+    """ DA MODIFICARE """
     "stst": 494.40788172445616, ## linea 365
     
+    """ DA MODIFICARE """
     "upsh3rpm": 9519.1838721046497, # numero giri motore per salire alla 3 marcia
     
+    """ NON MODIFICARE """
     "clutch_release": 0.050017716984125785, ## non utilizzato.
     
+    """ DA MODIFICARE """
     "stC": 329.15365840061344, # okmaxspeed4steer= P['stst']*steer*steer-P['st']*steer+P['stC']
     
+    """ NON MODIFICARE """
     "pointingahead": 2.196445074922305, # angle, rad, -pi/pi
     
+    """ DA MODIFICARE """
     "spincutclip": 0.1025421499370399, # lower bound nel clip del spincut, [0, 1]
     
+    """ NON MODIFICARE """
     "clutchslip": 90.341006943295284, # definisce l'incremento del clutch se la macchina è in slip, sl/P['clutchslip']
     
-    "obvious": 1.3424661801203506, # [km/h], fattore moltiplicativo a t9
-    
+    """ NON MODIFICARE """
     "backontracksx": 70.850623711341527, # velocità utillizzata per tornare sul tracciato. [km/h]
     
+    """ DA MODIFICARE """
     "upsh2rpm": 9528.4660840537708, # numero giri motore per salire alla 2 marcia
     
+    """ NON MODIFICARE """
     "senslim": 0.031006049843539912, 
     
+    """ NON MODIFICARE """
     "clutchspin": 50.291035172311716, # sy/P['clutchspin']
     
+    """ DA MODIFICARE """
     "fullstis": 0.81987358172808966, 
     
+    """ DA MODIFICARE """
     "brake": 0.00011033489913893834, # bo+= P['brake'] * toofast / max(1,abs(sk)), deve essere piccolo, altrimenti l'incremento su bo è troppo.
 
+    """ DA MODIFICARE """ velocità target
     "carmin": 33.868780217679259, # linea 197, sorta di velocità minima. [km/h]
     
+    """ NON MODIFICARE """
     "sycon2": 1.0002391984331429, ## linea 399
     
+    """ NON MODIFICARE """
+    "sycon1": 0.6429244177717478, ## linea 399
+
+    """ DA MODIFICARE """
     "s2cen": 0.51134607943433941, ## [-1, 1] linea 282 
     
-    "sycon1": 0.6429244177717478, ## linea 399
-    
+    """ DA MODIFICARE """
     "upsh5rpm": 9652.7871700313972, # numero giri motore per salire alla 5 marcia
     
+    """ DA MODIFICARE """
     "carmaxvisib": 2.2918586828736709, # linea 186, fattore moltiplicativo della distanza dal bordo pista carmax= P['carmaxvisib'] * cansee, viene anche ritornata, quindi è una velocità
-    
-    "sxappropriatest2": 0.5520202884372154, ## utilizzato per definire lo steer max sulla base 
-    della velocità, diviso per la radice della velocità. linea 289
-    
+        
+    """ NON MODIFICARE """
     "skidsev1": 0.57661669447984198, 
     
+    """ NON MODIFICARE """
     "wheeldia": 0.85542776687776345, 
     
+    """ DA MODIFICARE velocità target"""
     "brakingpacefast": 1.0383418702288039, # brakingpace= P['brakingpacefast'], quando sx>brakingpacecut. brakingpace utilizzato per il calcolo di base
     
+    """ DA MODIFICARE velocità target"""
+    "brakingpaceslow": 2.2425656876338924, # brakingpace= P['brakingpaceslow'], quando sx <brakingpacecut
+
+    """ DA MODIFICARE """
     "sensang": -0.90182079063412712, 
     
+    """ DA MODIFICARE """
     "spincutint": 1.7449866514563273, ## linea 370, gli viene sotratta la velocità lungo y scalata, presumibilmente km/h. Utilizzata per definire spincut, che viene poi moltiplicata con a0.
     
+    """ DA MODIFICARE """
     "st": 689.95543662576313, ## okmaxspeed4steer= P['stst']*steer*steer-P['st']*steer+P['stC']
     
-    "brakingpaceslow": 2.2425656876338924, # brakingpace= P['brakingpaceslow'], quando sx <brakingpacecut
-    
+    """ NON MODIFICARE """
     "sortofontrack": 1.5040683093640903, # definisce se la car è sul tracciato o meno. linea 271.
     
+    """ DA MODIFICARE """
     "steer2edge": 0.95021144003154068, ## [-1, 1], linea 282
     
-    "backward": 1.6692247869011361 ### rad, -pi/pi, linea 278    
+    """ DA MODIFICARE """
+    "backward": 1.6692247869011361 ### linea 278    
 }
