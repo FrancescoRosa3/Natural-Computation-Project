@@ -26,9 +26,21 @@ pfile= open(dir_path + "\parameter_change_condition",'r')
 parameters_to_change = json.load(pfile)
 
 # CONSTANT DEFINITION
-NUMBER_SERVERS = 1
+NUMBER_SERVERS = 2
 BASE_PORT = 3000
 PERCENTAGE_OF_VARIATION = 20
+
+
+# CONSTANT FOR NORMALIZATION
+EXPECTED_NUM_LAPS = 2
+MAX_SPEED = 330
+FORZA_LENGHT = 5784.10
+FORZA_WIDTH = 11.0
+WHEEL_LENGHT = 4328.54
+WHEEL_WIDTH = 14.0
+CG_1_LENGHT = 2057.56
+CG_1_WIDTH = 15.0
+UPPER_BOUND_DAMAGE = 1500
 
 def print_hi(name):
     # Use a breakpoint in the code line below to debug your script.
@@ -73,16 +85,42 @@ class TorcsProblem(Problem):
                 controller = custom_controller.CustomController(port=BASE_PORT+indx+1,
                                                                 parameters=controller_variables, 
                                                                 parameters_from_file=False)
-                history_lap_time, history_speed, history_damage = controller.run_controller()
+                
+                history_lap_time, history_speed, history_damage, history_distance_raced, history_track_pos = controller.run_controller()
 
-                average_time = 0.0
-                cnt = 0
-                for key in history_lap_time.keys():
-                    if key > 1:
-                        average_time += history_lap_time[key]
-                        cnt += 1
-                if cnt != 0:
-                    fitness[agent_indx] = average_time/cnt
+                # compute the number of laps
+                num_laps = len(history_lap_time) 
+                if num_laps > 0:
+                    # compute the average speed
+                    avg_speed = 0
+                    for key in history_speed.keys():
+                        avg_speed += np.average(history_speed[key])
+                    avg_speed /= num_laps
+                    normalized_avg_speed = avg_speed/MAX_SPEED
+
+                    # compute the total distance raced
+                    distance_raced = history_distance_raced[num_laps][-1]
+                    normalized_distance_raced = distance_raced/(FORZA_LENGHT*EXPECTED_NUM_LAPS)
+                    
+                    # take the damage
+                    damage = history_damage[num_laps][-1]
+                    normalized_damage = damage/UPPER_BOUND_DAMAGE
+
+                    # compute the average from the center line
+                    average_track_pos = 0
+                    steps = 0
+                    for key in history_track_pos.keys():
+                        for value in history_track_pos[key]:
+                            steps += 1
+                            if abs(value) > 1:
+                                average_track_pos += (abs(value) - 1)
+                    average_track_pos /= steps
+
+                    if damage > UPPER_BOUND_DAMAGE:
+                        fitness[agent_indx] = np.inf
+                    else:
+                        fitness[agent_indx] = - normalized_avg_speed - normalized_distance_raced + normalized_damage + average_track_pos
+                        print(f"Fitness Value {fitness[agent_indx]}\nNormalized AVG SPEED {normalized_avg_speed}\nNormalized Distance Raced {normalized_distance_raced}\nNormalized Damage {normalized_damage}\nAverage Track Pos {average_track_pos}")
                 else:
                     fitness[agent_indx] = np.inf
             except (RuntimeWarning, RuntimeError) as e:
@@ -143,11 +181,11 @@ if __name__ == "__main__":
     ub = np.array(ub)
     
     # population size
-    n_pop = 5 * n_parameters
+    n_pop = 10
     # number of variables for the problem visualization
     n_vars = n_parameters
     # maximum number of generations
-    max_gens = 10
+    max_gens = 5
     # Cross-over rate
     cr = 0.9
     # Scaling factor F
