@@ -64,7 +64,7 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 # Constant definition
 RACE_ENDED = 1
 NO_DATA_FROM_SERVER = -1
-
+MAX_STEPS = 25000  
 
 # Initialize help messages
 ophelp = 'Options:\n'
@@ -361,6 +361,7 @@ class DriverAction():
 
 class Client():
     def __init__(self, H=None, p=None, i=None, e=None, t=None, s=None, d=None, P=None,f=None):
+        self.parse_the_command_line()
         # If you don't like the option defaults,  change them here.
         self.host = 'localhost'
         self.port = 3001
@@ -369,9 +370,8 @@ class Client():
         self.trackname = 'unknown'
         self.stage = 3  # 0=Warm-up, 1=Qualifying 2=Race, 3=unknown <Default=3>
         self.debug = False
-        self.maxSteps = 10 ** 5  # 50steps/second
+        self.maxSteps = MAX_STEPS # 50steps/second
         self.pfilename = dir_path + '\default_parameters'
-        self.parse_the_command_line()
         if H: self.host = H
         if p: self.port = p
         if i: self.sid = i

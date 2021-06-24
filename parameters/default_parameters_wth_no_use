@@ -38,7 +38,7 @@
     "sxappropriatest2": 0.5520202884372154, ## utilizzato per definire lo steer max sulla base 
     della velocità, diviso per la radice della velocità. linea 289
 
-    """ NON MODIFICARE """
+    """ DA MODIFICARE """
     "safeatanyspeed": 0.0012800919243947557, ## linea 289, [0, 1], utilizzato per definire lo steer max, sulla base della velocità
  
     """ DA MODIFICARE """
@@ -94,7 +94,7 @@
     """ NON MODIFICARE """
     "clutchslip": 90.341006943295284, # definisce l'incremento del clutch se la macchina è in slip, sl/P['clutchslip']
     
-    """ NON MODIFICARE """
+    """ DA MODIFICARE """
     "backontracksx": 70.850623711341527, # velocità utillizzata per tornare sul tracciato. [km/h]
     
     """ DA MODIFICARE """
