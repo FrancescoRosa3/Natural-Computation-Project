@@ -1,7 +1,7 @@
 {   
     "dnsh3rpm": [1, 0, 15000],
     
-    "consideredstr8": [0, 0, 10], 
+    "consideredstr8": [1, 0, 10], 
     
     "upsh6rpm": [1, 0, 15000], 
     
@@ -9,13 +9,13 @@
     
     "str8thresh":  [1, 0, 10], 
     
-    "safeatanyspeed": [0, 0, 1], 
+    "safeatanyspeed": [1, 0, 1], 
     
-    "offroad": [0, 1, 2], 
+    "offroad": [1, 1, 2], 
     
-    "fullstmaxsx": [0, 10, 330], 
+    "fullstmaxsx": [1, 10, 330], 
     
-    "wwlim": [0, 0.1, 10], 
+    "wwlim": [1, 0.1, 10], 
     
     "upsh4rpm": [1, 0, 15000], 
     
@@ -23,13 +23,13 @@
     
     "sxappropriatest1": [1, 5, 30], 
     
-    "oksyp": [0, 0.01, 0.1], 
+    "oksyp": [1, 0.01, 0.1], 
     
-    "slipdec": [0, 0.005, 0.1], 
+    "slipdec": [1, 0.005, 0.1], 
     
-    "spincutslp": [0, 0.01, 0.1], 
+    "spincutslp": [1, 0.01, 0.1], 
     
-    "ignoreinfleA": [0, 5, 30], 
+    "ignoreinfleA": [1, 5, 30], 
     
     "s2sen": [1, 0, 20], 
     

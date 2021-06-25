@@ -26,9 +26,9 @@ pfile= open(dir_path + "\parameter_change_condition",'r')
 parameters_to_change = json.load(pfile)
 
 # CONSTANT DEFINITION
-NUMBER_SERVERS = 2
+NUMBER_SERVERS = 10
 BASE_PORT = 3000
-PERCENTAGE_OF_VARIATION = 20
+PERCENTAGE_OF_VARIATION = 5
 
 # CONSTANT FOR NORMALIZATION
 EXPECTED_NUM_LAPS = 2
@@ -67,18 +67,22 @@ class TorcsProblem(Problem):
             # compute the end agent index
             end_agent_indx = x.shape[0]
 
+        done_agents = 1
         # for each agent that the thread must run
         for agent_indx in range(start_agent_indx, end_agent_indx):
-
+            
             i = 0
             for key in variable_to_change.keys():
                 # change the value of contreller_variables
                 # if the given variable is under evolution
                 if variable_to_change[key][0] == 1:
                     # this parameter is under evolution
+                    #print(f"key: {key} - starting value: {controller_variables[key]:.2f} - modified value: {x[agent_indx][i]}")
                     controller_variables[key] = x[agent_indx][i]
                     i += 1
-                
+
+            #print(f"AGENT PARAMS:\n{controller_variables}")
+
             try:
                 #print(f"Run agent {agent_indx} on Port {BASE_PORT+indx+1}")
                 controller = custom_controller.CustomController(port=BASE_PORT+indx+1,
@@ -86,7 +90,8 @@ class TorcsProblem(Problem):
                                                                 parameters_from_file=False)
                 
                 history_lap_time, history_speed, history_damage, history_distance_raced, history_track_pos = controller.run_controller()
-
+                print(F"SERVER: {indx} - done {done_agents} agents")
+                done_agents += 1
                 # compute the number of laps
                 num_laps = len(history_lap_time) 
                 if num_laps > 0:
@@ -96,15 +101,14 @@ class TorcsProblem(Problem):
                         avg_speed += np.average(history_speed[key])
                     avg_speed /= num_laps
                     normalized_avg_speed = avg_speed/MAX_SPEED
-
-                    # compute the total distance raced
+                
                     distance_raced = history_distance_raced[num_laps][-1]
                     normalized_distance_raced = distance_raced/(FORZA_LENGTH*EXPECTED_NUM_LAPS)
-                    
+                
                     # take the damage
                     damage = history_damage[num_laps][-1]
                     normalized_damage = damage/UPPER_BOUND_DAMAGE
-
+                
                     # compute the average from the center line
                     average_track_pos = 0
                     steps = 0
@@ -114,16 +118,60 @@ class TorcsProblem(Problem):
                             if abs(value) > 1:
                                 average_track_pos += (abs(value) - 1)
                     average_track_pos /= steps
-
+                    
                     #if damage > UPPER_BOUND_DAMAGE:
                     #    fitness[agent_indx] = np.inf
                     #else:
                     fitness[agent_indx] = - normalized_avg_speed - normalized_distance_raced + normalized_damage + average_track_pos
-                    print(f"Fitness Value {fitness[agent_indx]}\nNormalized AVG SPEED {normalized_avg_speed}\nNormalized Distance Raced {normalized_distance_raced}\nNormalized Damage {normalized_damage}\nAverage Track Pos {average_track_pos}")
+                    print(F"SERVER: {indx} - distance: {distance_raced}")
+                    print(f"SERVER: {indx} - Fitness Value {fitness[agent_indx]:.2f}")
+                    #print(f"Fitness Value {fitness[agent_indx]:.2f}\nNormalized AVG SPEED {normalized_avg_speed:.2f}\nNormalized Distance Raced {normalized_distance_raced:.2f}\nNormalized Damage {normalized_damage:.2f}\nAverage Track Pos {average_track_pos:.2f}")
                 else:
-                    fitness[agent_indx] = np.inf
+                    try:                    
+                        # compute the average speed
+                        avg_speed = 0
+                        for key in history_speed.keys():
+                            avg_speed += np.average(history_speed[key])
+                        avg_speed /= len(history_speed[key])
+                        normalized_avg_speed = avg_speed/MAX_SPEED
+                    except:
+                        print("1")
+
+                    try:
+                        # compute the total distance raced
+                        distance_raced = history_distance_raced[1][-1]
+                        normalized_distance_raced = distance_raced/(FORZA_LENGTH)
+                    except:
+                        print("2")
+
+                    try:
+                        # take the damage
+                        damage = history_damage[1][-1]
+                        normalized_damage = damage/UPPER_BOUND_DAMAGE
+                    except:
+                        print("3")
+
+                    try:
+                        # compute the average from the center line
+                        average_track_pos = 0
+                        steps = 0
+                        for key in history_track_pos.keys():
+                            for value in history_track_pos[key]:
+                                steps += 1
+                                if abs(value) > 1:
+                                    average_track_pos += (abs(value) - 1)
+                        average_track_pos /= steps
+                    except:
+                        print("4")
+
+                    fitness[agent_indx] = - normalized_avg_speed - normalized_distance_raced + normalized_damage + average_track_pos
+                    print(F"SERVER: {indx} - distance: {distance_raced}")
+                    print(f"THE AGENTS COULDN'T COMPLETE THE FIRST LAP")    
+                    print(f"SERVER: {indx} - Fitness Value {fitness[agent_indx]:.2f}")
+                    # fitness[agent_indx] = np.inf
+
             except:
-                #print(f"Exception")
+                print(f"Exception")
                 fitness[agent_indx] = np.inf
 
     # evaluate function
@@ -180,15 +228,15 @@ if __name__ == "__main__":
     ub = np.array(ub)
     
     # population size
-    n_pop = 4
+    n_pop = 10
     # number of variables for the problem visualization
     n_vars = n_parameters
     # maximum number of generations
-    max_gens = 1
+    max_gens = 5
     # Cross-over rate
-    cr = 0.9
+    cr = 0.5
     # Scaling factor F
-    f = 0.2
+    f = 0.1
 
     # initialize the population
     population = np.zeros((n_pop, n_vars))
@@ -198,13 +246,14 @@ if __name__ == "__main__":
             # compute the variation based on the default parameters
             variation = (PERCENTAGE_OF_VARIATION * parameters[key])/100
             operation = np.random.choice([0,1,2])
+            #offset = np.random.uniform(0, variation)
             if operation == 0:
                 population[i][j] = parameters[key] + variation
             elif operation == 1:
                 population[i][j] = parameters[key] - variation
             else:
                 population[i][j] = parameters[key]
-
+            #print(f"PARAMETER: {key}: {parameters[key]} - variation: {variation} - final_value: {population[i][j]}")
 
 
     # define the problem
@@ -217,11 +266,12 @@ if __name__ == "__main__":
                    variant="DE/rand/1/bin", 
                    CR=cr,
                    F=f,
-                   dither="vector", 
-                   jitter=True,
+                   dither="no", 
+                   jitter=False,
                    eliminate_duplicates=True)
 
-    res = minimize(problem, algorithm, termination, seed=112, verbose=True, save_history=True)
+    res = minimize(problem, algorithm, termination, seed=123, verbose=True, save_history=True)
+    print(f"final population fitness: {res.pop.get('F')}")
     print("Best solution found: \nX = %s\nF = %s" % (res.X, res.F))
 
     # plot convergence
@@ -246,4 +296,3 @@ if __name__ == "__main__":
     plt.plot(n_evals, opt, "-")
     #plt.yscale("log")
     plt.show()
- 
