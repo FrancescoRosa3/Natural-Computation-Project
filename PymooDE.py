@@ -30,11 +30,10 @@ NUMBER_SERVERS = 2
 BASE_PORT = 3000
 PERCENTAGE_OF_VARIATION = 20
 
-
 # CONSTANT FOR NORMALIZATION
 EXPECTED_NUM_LAPS = 2
 MAX_SPEED = 330
-FORZA_LENGHT = 5784.10
+FORZA_LENGTH = 5784.10
 FORZA_WIDTH = 11.0
 WHEEL_LENGHT = 4328.54
 WHEEL_WIDTH = 14.0
@@ -81,7 +80,7 @@ class TorcsProblem(Problem):
                     i += 1
                 
             try:
-                print(f"Run agent {agent_indx} on Port {BASE_PORT+indx+1}")
+                #print(f"Run agent {agent_indx} on Port {BASE_PORT+indx+1}")
                 controller = custom_controller.CustomController(port=BASE_PORT+indx+1,
                                                                 parameters=controller_variables, 
                                                                 parameters_from_file=False)
@@ -100,7 +99,7 @@ class TorcsProblem(Problem):
 
                     # compute the total distance raced
                     distance_raced = history_distance_raced[num_laps][-1]
-                    normalized_distance_raced = distance_raced/(FORZA_LENGHT*EXPECTED_NUM_LAPS)
+                    normalized_distance_raced = distance_raced/(FORZA_LENGTH*EXPECTED_NUM_LAPS)
                     
                     # take the damage
                     damage = history_damage[num_laps][-1]
@@ -116,15 +115,15 @@ class TorcsProblem(Problem):
                                 average_track_pos += (abs(value) - 1)
                     average_track_pos /= steps
 
-                    if damage > UPPER_BOUND_DAMAGE:
-                        fitness[agent_indx] = np.inf
-                    else:
-                        fitness[agent_indx] = - normalized_avg_speed - normalized_distance_raced + normalized_damage + average_track_pos
-                        print(f"Fitness Value {fitness[agent_indx]}\nNormalized AVG SPEED {normalized_avg_speed}\nNormalized Distance Raced {normalized_distance_raced}\nNormalized Damage {normalized_damage}\nAverage Track Pos {average_track_pos}")
+                    #if damage > UPPER_BOUND_DAMAGE:
+                    #    fitness[agent_indx] = np.inf
+                    #else:
+                    fitness[agent_indx] = - normalized_avg_speed - normalized_distance_raced + normalized_damage + average_track_pos
+                    print(f"Fitness Value {fitness[agent_indx]}\nNormalized AVG SPEED {normalized_avg_speed}\nNormalized Distance Raced {normalized_distance_raced}\nNormalized Damage {normalized_damage}\nAverage Track Pos {average_track_pos}")
                 else:
                     fitness[agent_indx] = np.inf
-            except (RuntimeWarning, RuntimeError) as e:
-                print(f"Exception {e}")
+            except:
+                #print(f"Exception")
                 fitness[agent_indx] = np.inf
 
     # evaluate function
@@ -181,34 +180,31 @@ if __name__ == "__main__":
     ub = np.array(ub)
     
     # population size
-    n_pop = 10
+    n_pop = 4
     # number of variables for the problem visualization
     n_vars = n_parameters
     # maximum number of generations
-    max_gens = 5
+    max_gens = 1
     # Cross-over rate
     cr = 0.9
     # Scaling factor F
-    f = 0.9
+    f = 0.2
 
     # initialize the population
     population = np.zeros((n_pop, n_vars))
     for i in range(n_pop):
         # for each parameter to change
         for j,key in enumerate(name_parameters_to_change):
-            if i < int(n_pop/2):
-                # compute the variation based on the default parameters
-                variation = (PERCENTAGE_OF_VARIATION * parameters[key])/100
-                operation = np.random.choice([0,1,2])
-                if operation == 0:
-                    population[i][j] = parameters[key] + variation
-                elif operation == 1:
-                    population[i][j] = parameters[key] - variation
-                else:
-                    population[i][j] = parameters[key]
+            # compute the variation based on the default parameters
+            variation = (PERCENTAGE_OF_VARIATION * parameters[key])/100
+            operation = np.random.choice([0,1,2])
+            if operation == 0:
+                population[i][j] = parameters[key] + variation
+            elif operation == 1:
+                population[i][j] = parameters[key] - variation
             else:
-                # initialize the agent attribute, randomly in the given range
-                population[i][j] = np.random.uniform(lb[j], ub[j])
+                population[i][j] = parameters[key]
+
 
 
     # define the problem
@@ -226,15 +222,28 @@ if __name__ == "__main__":
                    eliminate_duplicates=True)
 
     res = minimize(problem, algorithm, termination, seed=112, verbose=True, save_history=True)
-    print(res.history)
     print("Best solution found: \nX = %s\nF = %s" % (res.X, res.F))
 
     # plot convergence
     n_evals = np.array([e.evaluator.n_eval for e in res.history])
     opt = np.array([e.opt[0].F for e in res.history])
-
+    
+    # save best result
+    print("Saving the best result on file.....")
+    i = 0
+    for key in parameters_to_change.keys():
+        # change the value of contreller_variables
+        # if the given variable is under evolution
+        if parameters_to_change[key][0] == 1:
+            # this parameter is under evolution
+            parameters[key] = res.X[i]
+            i += 1
+    file_name = dir_path+"/Results/"+"Forza/"+f"{n_pop}_{n_vars}_{cr}_{f}.xml"
+    with open(file_name, 'w') as outfile:
+        json.dump(parameters, outfile)
+    
     plt.title("Convergence")
     plt.plot(n_evals, opt, "-")
-    plt.yscale("log")
+    #plt.yscale("log")
     plt.show()
-    
+ 

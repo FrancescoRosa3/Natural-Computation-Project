@@ -361,7 +361,7 @@ class DriverAction():
 
 class Client():
     def __init__(self, H=None, p=None, i=None, e=None, t=None, s=None, d=None, P=None,f=None):
-        self.parse_the_command_line()
+        #self.parse_the_command_line()
         # If you don't like the option defaults,  change them here.
         self.host = 'localhost'
         self.port = 3001
