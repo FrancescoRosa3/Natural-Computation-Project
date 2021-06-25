@@ -22,3 +22,5 @@ ovalC.trackinfo
 forza.trackinfo
 __pycache__/custom_controller.cpython-36.pyc
 __pycache__/
+.idea/
+report.log
