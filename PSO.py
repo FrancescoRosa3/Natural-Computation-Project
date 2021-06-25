@@ -80,8 +80,6 @@ class TorcsProblem():
                     # this parameter is under evolution
                     controller_variables[key] = x[agent_indx][i]
                     i += 1
-
-            print(f"AGENT PARAMS: {controller_variables}")
                 
             try:
                 print(f"Run agent {agent_indx} on Port {BASE_PORT+indx+1}")
