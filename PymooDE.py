@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import json, random, sys, threading, signal
 from copy import deepcopy
+import time
 
 from pymoo.algorithms.so_de import DE
 from pymoo.optimize import minimize
@@ -28,7 +29,7 @@ parameters_to_change = json.load(pfile)
 # CONSTANT DEFINITION
 NUMBER_SERVERS = 10
 BASE_PORT = 3000
-PERCENTAGE_OF_VARIATION = 5
+PERCENTAGE_OF_VARIATION = 10
 
 # CONSTANT FOR NORMALIZATION
 EXPECTED_NUM_LAPS = 2
@@ -45,15 +46,23 @@ def print_hi(name):
     # Use a breakpoint in the code line below to debug your script.
     print(f'Hi, {name}')  # Press ⌘F8 to toggle the breakpoint.
 
+def clip(param, lb, ub):
+    if param < lb:
+        return lb
+    if param > ub:
+        return ub
+    return param
+
 # class that defines the problem to solve
 class TorcsProblem(Problem):
 
     # Problem initialization
     def __init__(self, variables_to_change, controller_variables, lb, ub):
-            super().__init__(n_var=lb.shape[0], n_obj=1, n_constr=0, xl=lb, xu=ub)
-            self.variable_to_change = variables_to_change
-            self.controller_variables = controller_variables
-    
+        
+        super().__init__(n_var=lb.shape[0], n_obj=1, n_constr=0, 
+                         xl=np.array([-100000 for i in range(lb.shape[0])]), xu=np.array([100000 for i in range(lb.shape[0])]))
+        self.variable_to_change = variables_to_change
+        self.controller_variables = controller_variables
 
     def run_simulations(indx, num_individuals_to_run, fitness, x, variable_to_change, controller_variables):
         if indx != NUMBER_SERVERS - 1:
@@ -78,6 +87,18 @@ class TorcsProblem(Problem):
                 if variable_to_change[key][0] == 1:
                     # this parameter is under evolution
                     #print(f"key: {key} - starting value: {controller_variables[key]:.2f} - modified value: {x[agent_indx][i]}")
+                    global lb, ub
+                    
+                    if key == 'dnsh1rpm' or key == 'dnsh2rpm' or key == 'dnsh3rpm' or key == 'dnsh4rpm' or key == 'dnsh5rpm' or key == 'dnsh6rpm' \
+                       or key == 'upsh1rpm' or key == 'upsh2rpm' or key == 'upsh3rpm' or key == 'upsh4rpm' or key == 'upsh5rpm' or key == 'upsh6rpm':
+                        print(f"Thread {indx} Agent {agent_indx}")
+                        print(f"RPM variabile {key}- Currente value {x[agent_indx][i]} -lb {lb[i]} - ub {ub[i]} - Start value {controller_variables[key]}")
+                    '''
+                    if x[agent_indx][i] <= lb[i] or x[agent_indx][i] >= ub[i]:
+                        print(f"Thread {indx} Agent {agent_indx}")
+                        print(f"Overflow variabile {key}- Currente value {x[agent_indx][i]} -lb {lb[i]} - ub {ub[i]}")
+                    '''
+                    x[agent_indx][i] = clip(x[agent_indx][i], lb[i], ub[i])
                     controller_variables[key] = x[agent_indx][i]
                     i += 1
 
@@ -90,7 +111,7 @@ class TorcsProblem(Problem):
                                                                 parameters_from_file=False)
                 
                 history_lap_time, history_speed, history_damage, history_distance_raced, history_track_pos = controller.run_controller()
-                print(F"SERVER: {indx} - done {done_agents} agents")
+                #print(F"SERVER: {indx} - done {done_agents} agents")
                 done_agents += 1
                 # compute the number of laps
                 num_laps = len(history_lap_time) 
@@ -123,53 +144,41 @@ class TorcsProblem(Problem):
                     #    fitness[agent_indx] = np.inf
                     #else:
                     fitness[agent_indx] = - normalized_avg_speed - normalized_distance_raced + normalized_damage + average_track_pos
-                    print(F"SERVER: {indx} - distance: {distance_raced}")
-                    print(f"SERVER: {indx} - Fitness Value {fitness[agent_indx]:.2f}")
-                    print(f"Fitness Value {fitness[agent_indx]:.2f}\nNormalized AVG SPEED {normalized_avg_speed:.2f}\nNormalized Distance Raced {normalized_distance_raced:.2f}\nNormalized Damage {normalized_damage:.2f}\nAverage Track Pos {average_track_pos:.2f}")
+                    #print(F"SERVER: {indx} - distance: {distance_raced}")
+                    #print(f"SERVER: {indx} - Fitness Value {fitness[agent_indx]:.2f}")
+                    #print(f"Fitness Value {fitness[agent_indx]:.2f}\nNormalized AVG SPEED {normalized_avg_speed:.2f}\nNormalized Distance Raced {normalized_distance_raced:.2f}\nNormalized Damage {normalized_damage:.2f}\nAverage Track Pos {average_track_pos:.2f}")
                 else:
-                    try:                    
-                        # compute the average speed
-                        avg_speed = 0
-                        for key in history_speed.keys():
-                            avg_speed += np.average(history_speed[key])
-                        avg_speed /= len(history_speed[key])
-                        normalized_avg_speed = avg_speed/MAX_SPEED
-                    except:
-                        print("1")
+                    fitness[agent_indx] = np.inf
+                    '''           
+                    # compute the average speed
+                    avg_speed = 0
+                    for key in history_speed.keys():
+                        avg_speed += np.average(history_speed[key])
+                    avg_speed /= len(history_speed[key])
+                    normalized_avg_speed = avg_speed/MAX_SPEED
 
-                    try:
-                        # compute the total distance raced
-                        distance_raced = history_distance_raced[1][-1]
-                        normalized_distance_raced = distance_raced/(FORZA_LENGTH)
-                    except:
-                        print("2")
-
-                    try:
-                        # take the damage
-                        damage = history_damage[1][-1]
-                        normalized_damage = damage/UPPER_BOUND_DAMAGE
-                    except:
-                        print("3")
-
-                    try:
-                        # compute the average from the center line
-                        average_track_pos = 0
-                        steps = 0
-                        for key in history_track_pos.keys():
-                            for value in history_track_pos[key]:
-                                steps += 1
-                                if abs(value) > 1:
-                                    average_track_pos += (abs(value) - 1)
-                        average_track_pos /= steps
-                    except:
-                        print("4")
-
+                    # compute the total distance raced
+                    distance_raced = history_distance_raced[1][-1]
+                    normalized_distance_raced = distance_raced/(FORZA_LENGTH)
+                    # take the damage
+                    damage = history_damage[1][-1]
+                    normalized_damage = damage/UPPER_BOUND_DAMAGE
+                    # compute the average from the center line
+                    average_track_pos = 0
+                    steps = 0
+                    for key in history_track_pos.keys():
+                        for value in history_track_pos[key]:
+                            steps += 1
+                            if abs(value) > 1:
+                                average_track_pos += (abs(value) - 1)
+                    average_track_pos /= steps
+                    
                     fitness[agent_indx] = - normalized_avg_speed - normalized_distance_raced + normalized_damage + average_track_pos
-                    print(F"SERVER: {indx} - distance: {distance_raced}")
+                    #print(F"SERVER: {indx} - distance: {distance_raced}")
                     print(f"THE AGENTS COULDN'T COMPLETE THE FIRST LAP")    
-                    print(f"SERVER: {indx} - Fitness Value {fitness[agent_indx]:.2f}")
+                    #print(f"SERVER: {indx} - Fitness Value {fitness[agent_indx]:.2f}")
                     # fitness[agent_indx] = np.inf
-
+                    '''
             except:
                 print(f"Exception")
                 fitness[agent_indx] = np.inf
@@ -206,8 +215,10 @@ class TorcsProblem(Problem):
 
 if __name__ == "__main__":
 
+    np_seed = 0
+    de_seed = 123
     # set the np seed
-    np.random.seed(0)
+    np.random.seed(np_seed)
 
     # Pymoo Differential Evolution
     print_hi('Pymoo Differential Evolution')
@@ -222,10 +233,8 @@ if __name__ == "__main__":
     for key in parameters_to_change:
         if parameters_to_change[key][0]:
             n_parameters += 1
-            #lb.append(parameters_to_change[key][1])
-            #ub.append(parameters_to_change[key][2])
-            lb.append(-100000)
-            ub.append(100000)
+            lb.append(parameters_to_change[key][1])
+            ub.append(parameters_to_change[key][2])
             name_parameters_to_change.append(key)
     lb = np.array(lb)
     ub = np.array(ub)
@@ -240,7 +249,7 @@ if __name__ == "__main__":
     # Cross-over rate
     cr = 0.5
     # Scaling factor F
-    f = 0.1
+    f = 0.9
 
     # initialize the population
     population = np.zeros((n_pop, n_vars))
@@ -250,11 +259,11 @@ if __name__ == "__main__":
             # compute the variation based on the default parameters
             variation = (PERCENTAGE_OF_VARIATION * parameters[key])/100
             operation = np.random.choice([0,1,2])
-            #offset = np.random.uniform(0, variation)
+            offset = np.random.uniform(0, variation)
             if operation == 0:
-                population[i][j] = parameters[key] + variation
+                population[i][j] = parameters[key] + offset
             elif operation == 1:
-                population[i][j] = parameters[key] - variation
+                population[i][j] = parameters[key] - offset
             else:
                 population[i][j] = parameters[key]
             #print(f"PARAMETER: {key}: {parameters[key]} - variation: {variation} - final_value: {population[i][j]}")
@@ -274,7 +283,7 @@ if __name__ == "__main__":
                    jitter=False,
                    eliminate_duplicates=True)
 
-    res = minimize(problem, algorithm, termination, seed=123, verbose=True, save_history=True)
+    res = minimize(problem, algorithm, termination, seed=de_seed, verbose=True, save_history=True)
     print(f"final population fitness: {res.pop.get('F')}")
     print("Best solution found: \nX = %s\nF = %s" % (res.X, res.F))
 
@@ -292,7 +301,7 @@ if __name__ == "__main__":
             # this parameter is under evolution
             parameters[key] = res.X[i]
             i += 1
-    file_name = dir_path+"/Results/"+"Forza/"+f"{n_pop}_{n_vars}_{cr}_{f}.xml"
+    file_name = dir_path+"/Results/"+"Forza/"+f"{np_seed}_{de_seed}_{n_pop}_{n_vars}_{cr}_{f}.xml"
     with open(file_name, 'w') as outfile:
         json.dump(parameters, outfile)
     
