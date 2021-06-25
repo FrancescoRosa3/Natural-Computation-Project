@@ -125,7 +125,7 @@ class TorcsProblem(Problem):
                     fitness[agent_indx] = - normalized_avg_speed - normalized_distance_raced + normalized_damage + average_track_pos
                     print(F"SERVER: {indx} - distance: {distance_raced}")
                     print(f"SERVER: {indx} - Fitness Value {fitness[agent_indx]:.2f}")
-                    #print(f"Fitness Value {fitness[agent_indx]:.2f}\nNormalized AVG SPEED {normalized_avg_speed:.2f}\nNormalized Distance Raced {normalized_distance_raced:.2f}\nNormalized Damage {normalized_damage:.2f}\nAverage Track Pos {average_track_pos:.2f}")
+                    print(f"Fitness Value {fitness[agent_indx]:.2f}\nNormalized AVG SPEED {normalized_avg_speed:.2f}\nNormalized Distance Raced {normalized_distance_raced:.2f}\nNormalized Damage {normalized_damage:.2f}\nAverage Track Pos {average_track_pos:.2f}")
                 else:
                     try:                    
                         # compute the average speed
@@ -221,8 +221,10 @@ if __name__ == "__main__":
     for key in parameters_to_change:
         if parameters_to_change[key][0]:
             n_parameters += 1
-            lb.append(parameters_to_change[key][1])
-            ub.append(parameters_to_change[key][2])
+            #lb.append(parameters_to_change[key][1])
+            #ub.append(parameters_to_change[key][2])
+            lb.append(-100000)
+            ub.append(100000)
             name_parameters_to_change.append(key)
     lb = np.array(lb)
     ub = np.array(ub)
