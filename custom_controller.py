@@ -707,14 +707,14 @@ class CustomController:
         
         return history_lap_time, history_speed, history_damage, history_distance_raced, history_track_pos
 
-
-import argparse
-parser = argparse.ArgumentParser()
-parser.add_argument('--parameters_file', '-pf', help="file name where take the controller parameters", type= str,
-                    default= "\Baseline_snakeoil\default_parameters")
-
-args = parser.parse_args()
 if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--parameters_file', '-pf', help="file name where take the controller parameters", type= str,
+                        default= "\Baseline_snakeoil\default_parameters")
+
+    args = parser.parse_args()
+
     print(f"Take parameters from {args.parameters_file}")
     controller = CustomController(parameter_file=args.parameters_file, port=3001)
     controller.run_controller(plot_history=True)
