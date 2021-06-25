@@ -1,11 +1,11 @@
 {   
-    "dnsh3rpm": [1, 0, 15000],
+    "dnsh3rpm": [0, 0, 15000],
     
     "consideredstr8": [0, 0, 10], 
     
-    "upsh6rpm": [1, 0, 15000], 
+    "upsh6rpm": [0, 0, 15000], 
     
-    "dnsh2rpm": [1, 0, 15000], 
+    "dnsh2rpm": [0, 0, 15000], 
     
     "str8thresh":  [1, 0, 10], 
     
@@ -17,9 +17,9 @@
     
     "wwlim": [0, 0.1, 10], 
     
-    "upsh4rpm": [1, 0, 15000], 
+    "upsh4rpm": [0, 0, 15000], 
     
-    "dnsh1rpm": [1, 0, 15000], 
+    "dnsh1rpm": [0, 0, 15000], 
     
     "sxappropriatest1": [1, 5, 30], 
     
@@ -33,17 +33,17 @@
     
     "s2sen": [1, 0, 20], 
     
-    "dnsh4rpm": [1, 0, 15000], 
+    "dnsh4rpm": [0, 0, 15000], 
     
     "seriousABS": [1, 0, 330], 
     
-    "dnsh5rpm": [1, 0, 15000], 
+    "dnsh5rpm": [0, 0, 15000], 
     
     "obviousbase": [1, 70, 330], 
     
     "stst":[1, 100, 1000], 
     
-    "upsh3rpm": [1, 0, 15000], 
+    "upsh3rpm": [0, 0, 15000], 
     
     "clutch_release": [0], 
     
@@ -59,7 +59,7 @@
     
     "backontracksx": [1, 70, 330], 
     
-    "upsh2rpm": [1, 0, 15000], 
+    "upsh2rpm": [0, 0, 15000], 
     
     "senslim": [0], 
     
@@ -77,7 +77,7 @@
     
     "sycon1": [0], 
     
-    "upsh5rpm": [1, 0, 15000], 
+    "upsh5rpm": [0, 0, 15000], 
     
     "carmaxvisib": [1, 1, 10], 
     

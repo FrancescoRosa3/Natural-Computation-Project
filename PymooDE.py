@@ -205,6 +205,7 @@ class TorcsProblem(Problem):
         print(out["F"])
 
 if __name__ == "__main__":
+
     # set the np seed
     np.random.seed(0)
 
@@ -229,6 +230,7 @@ if __name__ == "__main__":
     lb = np.array(lb)
     ub = np.array(ub)
     
+    print(f"Number of parameters {n_parameters}")
     # population size
     n_pop = 10
     # number of variables for the problem visualization
