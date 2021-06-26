@@ -11,6 +11,7 @@ import sys
 import json
 import threading
 from copy import deepcopy
+from multiprocessing.pool import ThreadPool
 # Change directory to access the pyswarms module
 sys.path.append('../')
 
@@ -34,10 +35,11 @@ parameters_to_change = json.load(pfile)
 NUMBER_SERVERS = 10
 BASE_PORT = 3000
 PERCENTAGE_OF_VARIATION = 20
+POOL = ThreadPool(NUMBER_SERVERS)
 
 # CONSTANT FOR NORMALIZATION
 EXPECTED_NUM_LAPS = 2
-MAX_SPEED = 330
+MAX_SPEED = 300
 FORZA_LENGTH = 5784.10
 FORZA_WIDTH = 11.0
 WHEEL_LENGHT = 4328.54
@@ -45,6 +47,7 @@ WHEEL_WIDTH = 14.0
 CG_1_LENGHT = 2057.56
 CG_1_WIDTH = 15.0
 UPPER_BOUND_DAMAGE = 1500
+MAX_OUT_OF_TRACK_TICKS = 1000       # corresponds to 20 sec
 
 #from pyswarms.utils.functions import single_obj as fx
 
@@ -52,62 +55,67 @@ UPPER_BOUND_DAMAGE = 1500
 class TorcsProblem():
 
     # Problem initialization
-    def __init__(self, variables_to_change, controller_variables, lb, ub):
+    def __init__(self, variables_to_change, controller_variables, lb, ub):                 
         self.variable_to_change = variables_to_change
         self.controller_variables = controller_variables
-    
 
-    def run_simulations(indx, num_individuals_to_run, fitness, x, variable_to_change, controller_variables):
-        if indx != NUMBER_SERVERS - 1:
-            # compute the start agent index
-            start_agent_indx = num_individuals_to_run * indx
-            # compute the end agent index
-            end_agent_indx = start_agent_indx + num_individuals_to_run
-        else:
-            # compute the start agent index
-            start_agent_indx = x.shape[0]-num_individuals_to_run
-            # compute the end agent index
-            end_agent_indx = x.shape[0]
-
-        # for each agent that the thread must run
-        for agent_indx in range(start_agent_indx, end_agent_indx):
-
+        self.fitness_terms = {}
+           
+    # evaluate function
+    def evaluate(self, X):
+        
+        def run_simulations(x, port_number, variable_to_change, controller_variables):
             i = 0
             for key in variable_to_change.keys():
                 # change the value of contreller_variables
                 # if the given variable is under evolution
                 if variable_to_change[key][0] == 1:
                     # this parameter is under evolution
-                    controller_variables[key] = x[agent_indx][i]
+                    #print(f"key: {key} - starting value: {controller_variables[key]:.2f} - modified value: {x[agent_indx][i]}")
+                    global lb, ub
+                    '''
+                    if x[i] <= lb[i] or x[i] >= ub[i]:
+                        print(f"Overflow variabile {key}- Currente value {x[i]} -lb {lb[i]} - ub {ub[i]}")
+                    '''
+                    #x[i] = clip(x[i], lb[i], ub[i])
+                    controller_variables[key] = x[i]
                     i += 1
-                
+
+            
+
             try:
-                print(f"Run agent {agent_indx} on Port {BASE_PORT+indx+1}")
-                controller = custom_controller.CustomController(port=BASE_PORT+indx+1,
+                #print(f"Run agent {agent_indx} on Port {BASE_PORT+indx+1}")
+                controller = custom_controller.CustomController(port=BASE_PORT+port_number+1,
                                                                 parameters=controller_variables, 
                                                                 parameters_from_file=False)
                 
-                history_lap_time, history_speed, history_damage, history_distance_raced, history_track_pos = controller.run_controller()
+                history_lap_time, history_speed, history_damage, history_distance_raced, history_track_pos, ticks = controller.run_controller()
+                
+                normalized_ticks = ticks/controller.C.maxSteps
 
                 # compute the number of laps
-                num_laps = len(history_lap_time) 
+                num_laps = len(history_lap_time)
+
                 if num_laps > 0:
                     # compute the average speed
                     avg_speed = 0
                     for key in history_speed.keys():
-                        avg_speed += np.average(history_speed[key])
-                    avg_speed /= num_laps
+                        for value in history_speed[key]:
+                            avg_speed += value
+                    avg_speed /= ticks
+                    #print(f"Num Laps {num_laps} - Average Speed {avg_speed} - Num ticks {ticks}")
+                    
                     normalized_avg_speed = avg_speed/MAX_SPEED
-
-                    # compute the total distance raced
+                
                     distance_raced = history_distance_raced[num_laps][-1]
                     normalized_distance_raced = distance_raced/(FORZA_LENGTH*EXPECTED_NUM_LAPS)
-                    
+                
                     # take the damage
                     damage = history_damage[num_laps][-1]
                     normalized_damage = damage/UPPER_BOUND_DAMAGE
-
+                
                     # compute the average from the center line
+                    """
                     average_track_pos = 0
                     steps = 0
                     for key in history_track_pos.keys():
@@ -116,46 +124,62 @@ class TorcsProblem():
                             if abs(value) > 1:
                                 average_track_pos += (abs(value) - 1)
                     average_track_pos /= steps
+                    """
 
-                    #if damage > UPPER_BOUND_DAMAGE:
-                    #    fitness[agent_indx] = np.inf
-                    #else:
-                    fitness[agent_indx] = - normalized_avg_speed - normalized_distance_raced + normalized_damage + average_track_pos
-                    print(f"Fitness Value {fitness[agent_indx]}\nNormalized AVG SPEED {normalized_avg_speed}\nNormalized Distance Raced {normalized_distance_raced}\nNormalized Damage {normalized_damage}\nAverage Track Pos {average_track_pos}")
+                    # compute out of track ticks and normilize it with respect to the total amount of ticks
+                    ticks_out_of_track = 0
+                    for key in history_track_pos.keys():
+                        for value in history_track_pos[key]:
+                            if abs(value) > 1:
+                                ticks_out_of_track += 1
+                    norm_out_of_track_ticks = ticks_out_of_track/MAX_OUT_OF_TRACK_TICKS
+
+                    # compute #ticks in which the vehicle drive at a speed lower then avarage speed
+                    temp_ticks = 0
+                    avg_negative_speed_variation = 0
+                    for key in history_speed.keys():
+                        for value in history_speed[key]:
+                            if value < avg_speed:
+                                temp_ticks += 1
+                                avg_negative_speed_variation += (avg_speed - value)
+                    avg_negative_speed_variation /= temp_ticks
+                    norm_avg_negative_speed_variation = avg_negative_speed_variation / ticks
+                                
+                    fitness = -normalized_avg_speed -normalized_distance_raced +normalized_damage +norm_out_of_track_ticks + normalized_ticks
+                    self.fitness_terms[fitness] = {"Norm AVG SPEED": -normalized_avg_speed, "Norm Distance Raced": -normalized_distance_raced, "Norm Damage": normalized_damage,
+                        "norm out_of_track_ticks": norm_out_of_track_ticks, "normalized ticks": normalized_ticks, "Sim seconds": ticks/50}
+                    
                 else:
-                    fitness[agent_indx] = np.inf
-            except:
-                #print(f"Exception")
-                fitness[agent_indx] = np.inf
+                    print(f"THE AGENTS COULDN'T COMPLETE THE FIRST LAP")
+                    fitness = np.inf  
+                return fitness
+            except Exception as ex:
+                template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+                message = template.format(type(ex).__name__, ex.args)
+                print(message)
+                return np.inf
+                
+                
+        # prepare the parameters for the pool
+        port_number = 0
+        params = []
+        for k in range(len(X)):
+            params.append((X[k], 
+                           port_number%NUMBER_SERVERS,
+                           deepcopy(self.variable_to_change), 
+                           deepcopy(self.controller_variables)))
+            port_number += 1
+        
+        F = POOL.starmap(run_simulations, params)
+        
+        res = np.array(F)
+        print(res)
+        best_fit = np.min(res)
+        if best_fit != np.inf:
+            print(f"BEST FITNESS: {best_fit} - terms: {self.fitness_terms[best_fit]}")
 
-    # evaluate function
-    def evaluate(self, x):
+        return res
 
-        # list of fitness values
-        fitness = [np.inf for i in range(x.shape[0])]
-        # compute the number of agents that each thread must run
-        number_of_individuals_per_thread, remainder = divmod(x.shape[0], NUMBER_SERVERS)
-        # list of thread
-        threads = []
-        for i in range(NUMBER_SERVERS):
-            # check for the last thread
-            # assign the reaminder number of individuals to the last thread
-            if i == NUMBER_SERVERS - 1:
-                num_individuals_to_run = number_of_individuals_per_thread + remainder
-            else:
-                num_individuals_to_run = number_of_individuals_per_thread
-
-            threads.append(threading.Thread(target=TorcsProblem.run_simulations, 
-                                            args=(i, num_individuals_to_run, fitness, x, deepcopy(self.variable_to_change), deepcopy(self.controller_variables)), daemon = True))
-            
-            # run the i-th thread
-            threads[i].start()
-
-        # wait for all thread to end
-        for i in range(NUMBER_SERVERS):
-            threads[i].join()
-
-        return np.array(fitness).T
 
 # function to optimize
 def func(x):
@@ -198,8 +222,8 @@ if __name__ == '__main__':
     #options = {'c1': 0.5, 'c2': 0.3, 'w': 0.9, 'k': 2, 'p': 2}
     options = {'c1': 1.49618, 'c2': 1.49618, 'w': 0.7298, 'k': 2, 'p': 2}
     problem_size = n_parameters
-    swarm_size = 50
-    iterations = 10 #1000
+    swarm_size = 3
+    iterations = 1 #1000
 
     # initialize the population
     population = np.zeros((swarm_size, n_parameters))
@@ -241,9 +265,9 @@ if __name__ == '__main__':
         # if the given variable is under evolution
         if parameters_to_change[key][0] == 1:
             # this parameter is under evolution
-            parameters[key] = res.X[i]
+            parameters[key] = pos[i]
             i += 1
-    file_name = dir_path+"/Results/"+"Forza/"+f"{np_seed}.xml"
+    file_name = dir_path+"/Results/"+"Forza/"+f"PSO{np_seed}_{options['c1']}_{options['c2']}_{options['w']}_{swarm_size}_{iterations}.xml"
     with open(file_name, 'w') as outfile:
         json.dump(parameters, outfile)
 
