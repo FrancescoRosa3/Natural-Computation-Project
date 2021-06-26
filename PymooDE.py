@@ -207,13 +207,13 @@ if __name__ == "__main__":
     
     print(f"Number of parameters {n_parameters}")
     # population size
-    n_pop = 50
+    n_pop = 100
     # number of variables for the problem visualization
     n_vars = n_parameters
     # maximum number of generations
-    max_gens = 5
+    max_gens = 20
     # Cross-over rate
-    cr = 0.6
+    cr = 0.7
     # Scaling factor F
     f = 0.9
 
