@@ -220,10 +220,10 @@ if __name__ == '__main__':
 
     # Set-up hyperparameters
     #options = {'c1': 0.5, 'c2': 0.3, 'w': 0.9, 'k': 2, 'p': 2}
-    options = {'c1': 1.49618, 'c2': 1.49618, 'w': 0.7298, 'k': 2, 'p': 2}
+    options = {'c1': 1.49618, 'c2': 1.49618, 'w': 0.7298, 'k': 10, 'p': 2}
     problem_size = n_parameters
-    swarm_size = 3
-    iterations = 1 #1000
+    swarm_size = 100
+    iterations = 100 #1000
 
     # initialize the population
     population = np.zeros((swarm_size, n_parameters))
