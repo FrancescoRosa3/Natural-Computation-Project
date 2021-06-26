@@ -400,7 +400,7 @@ class CustomController:
         # the car speed is higher than the target speed
         if toofast: 
             # direttamente proporzionale alla differenza di velocità
-            # inversamente proporzionale allo slittamentos
+            # inversamente proporzionale allo slittamento
             bo+= P['brake'] * toofast / max(1,abs(sk))
             #bo=1
         if sk > P['seriousABS']: bo=0 
@@ -411,6 +411,7 @@ class CustomController:
         if sy:
             sycon= min(1,  P['sycon2']-P['sycon1']*math.log(abs(sy))  )
         
+        #print(f"Bo {bo} - sycon {sycon} - min: {min(bo,sycon)}")
         # output [0,1]
         return min(bo,sycon)
 

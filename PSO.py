@@ -31,7 +31,7 @@ pfile= open(dir_path + "\parameter_change_condition",'r')
 parameters_to_change = json.load(pfile)
 
 # CONSTANT DEFINITION
-NUMBER_SERVERS = 1
+NUMBER_SERVERS = 10
 BASE_PORT = 3000
 PERCENTAGE_OF_VARIATION = 20
 
@@ -80,8 +80,6 @@ class TorcsProblem():
                     # this parameter is under evolution
                     controller_variables[key] = x[agent_indx][i]
                     i += 1
-
-            print(f"AGENT PARAMS: {controller_variables}")
                 
             try:
                 print(f"Run agent {agent_indx} on Port {BASE_PORT+indx+1}")
@@ -173,8 +171,10 @@ def clip(param, lb, ub):
 
 if __name__ == '__main__':
 
+    np_seed = 0
+
     # set the np seed
-    np.random.seed(0)
+    np.random.seed(np_seed)
 
     # compute the number of parameters to change
     # the lower and upper bound
@@ -195,10 +195,11 @@ if __name__ == '__main__':
     tp = TorcsProblem(variables_to_change=parameters_to_change, controller_variables=parameters, lb=lb, ub=ub)
 
     # Set-up hyperparameters
-    options = {'c1': 0.5, 'c2': 0.3, 'w': 0.9, 'k': 2, 'p': 2}
+    #options = {'c1': 0.5, 'c2': 0.3, 'w': 0.9, 'k': 2, 'p': 2}
+    options = {'c1': 1.49618, 'c2': 1.49618, 'w': 0.7298, 'k': 2, 'p': 2}
     problem_size = n_parameters
     swarm_size = 50
-    iterations = 1000
+    iterations = 10 #1000
 
     # initialize the population
     population = np.zeros((swarm_size, n_parameters))
@@ -231,6 +232,20 @@ if __name__ == '__main__':
     cost, pos = optimizer.optimize(func, iters=iterations)
 
     print(cost)
+
+    # save best result
+    print("Saving the best result on file.....")
+    i = 0
+    for key in parameters_to_change.keys():
+        # change the value of contreller_variables
+        # if the given variable is under evolution
+        if parameters_to_change[key][0] == 1:
+            # this parameter is under evolution
+            parameters[key] = res.X[i]
+            i += 1
+    file_name = dir_path+"/Results/"+"Forza/"+f"{np_seed}.xml"
+    with open(file_name, 'w') as outfile:
+        json.dump(parameters, outfile)
 
     plot_cost_history(cost_history=optimizer.cost_history)
     plt.show()

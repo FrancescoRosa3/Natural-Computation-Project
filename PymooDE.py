@@ -4,6 +4,9 @@ import matplotlib.pyplot as plt
 import json, random, sys, threading, signal
 from copy import deepcopy
 import time
+from multiprocessing.pool import ThreadPool
+
+from numpy.lib.function_base import _select_dispatcher
 
 from pymoo.algorithms.so_de import DE
 from pymoo.optimize import minimize
@@ -41,6 +44,9 @@ WHEEL_WIDTH = 14.0
 CG_1_LENGHT = 2057.56
 CG_1_WIDTH = 15.0
 UPPER_BOUND_DAMAGE = 1500
+POOL = ThreadPool(NUMBER_SERVERS)
+# ELEMENTS OF COST FUNCTION
+cost_function = {}
 
 def print_hi(name):
     # Use a breakpoint in the code line below to debug your script.
@@ -60,28 +66,15 @@ class TorcsProblem(Problem):
     def __init__(self, variables_to_change, controller_variables, lb, ub):
         
         super().__init__(n_var=lb.shape[0], n_obj=1, n_constr=0, 
-                         xl=np.array([-100000 for i in range(lb.shape[0])]), xu=np.array([100000 for i in range(lb.shape[0])]))
+                         xl = lb, xu = ub)
+                         #xl=np.array([-100000 for i in range(lb.shape[0])]), xu=np.array([100000 for i in range(lb.shape[0])]),
         self.variable_to_change = variables_to_change
         self.controller_variables = controller_variables
-
-        self.fitness_terms = {}
-
-    def run_simulations(self, indx, num_individuals_to_run, fitness, x, variable_to_change, controller_variables):
-        if indx != NUMBER_SERVERS - 1:
-            # compute the start agent index
-            start_agent_indx = num_individuals_to_run * indx
-            # compute the end agent index
-            end_agent_indx = start_agent_indx + num_individuals_to_run
-        else:
-            # compute the start agent index
-            start_agent_indx = x.shape[0]-num_individuals_to_run
-            # compute the end agent index
-            end_agent_indx = x.shape[0]
-
-        done_agents = 1
-        # for each agent that the thread must run
-        for agent_indx in range(start_agent_indx, end_agent_indx):
-            
+           
+    # evaluate function
+    def _evaluate(self, X, out, *args, **kwargs):
+        
+        def run_simulations(x, port_number, variable_to_change, controller_variables):
             i = 0
             for key in variable_to_change.keys():
                 # change the value of contreller_variables
@@ -90,21 +83,23 @@ class TorcsProblem(Problem):
                     # this parameter is under evolution
                     #print(f"key: {key} - starting value: {controller_variables[key]:.2f} - modified value: {x[agent_indx][i]}")
                     global lb, ub
-                    #x[agent_indx][i] = clip(x[agent_indx][i], lb[i], ub[i])
-                    controller_variables[key] = x[agent_indx][i]
+                    
+                    if x[i] <= lb[i] or x[i] >= ub[i]:
+                        print(f"Overflow variabile {key}- Currente value {x[i]} -lb {lb[i]} - ub {ub[i]}")
+                    
+                    #x[i] = clip(x[i], lb[i], ub[i])
+                    controller_variables[key] = x[i]
                     i += 1
 
             print(f"AGENT PARAMS:\n{controller_variables}")
 
             try:
                 #print(f"Run agent {agent_indx} on Port {BASE_PORT+indx+1}")
-                controller = custom_controller.CustomController(port=BASE_PORT+indx+1,
+                controller = custom_controller.CustomController(port=BASE_PORT+port_number+1,
                                                                 parameters=controller_variables, 
                                                                 parameters_from_file=False)
                 
                 history_lap_time, history_speed, history_damage, history_distance_raced, history_track_pos = controller.run_controller()
-                print(F"SERVER: {indx} - done {done_agents} agents")
-                done_agents += 1
                 # compute the number of laps
                 num_laps = len(history_lap_time) 
                 if num_laps > 0:
@@ -132,81 +127,32 @@ class TorcsProblem(Problem):
                                 average_track_pos += (abs(value) - 1)
                     average_track_pos /= steps
                     
-                    #if damage > UPPER_BOUND_DAMAGE:
-                    #    fitness[agent_indx] = np.inf
-                    #else:
-                    fitness[agent_indx] = - normalized_avg_speed - normalized_distance_raced + normalized_damage + average_track_pos
-                    self.fitness_terms[fitness[agent_indx]] = {"Norm AVG SPEED": -normalized_avg_speed, "Norm Distance Raced": -normalized_distance_raced, "Norm Damage": normalized_damage, "Average Track Pos": average_track_pos, "Track Pos hist": history_track_pos}
-                    print(F"SERVER: {indx} - distance: {distance_raced}")
-                    print(f"SERVER: {indx} - Fitness Value {fitness[agent_indx]:.2f}")
-                    #print(f"Fitness Value {fitness[agent_indx]:.2f}\nNormalized AVG SPEED {normalized_avg_speed:.2f}\nNormalized Distance Raced {normalized_distance_raced:.2f}\nNormalized Damage {normalized_damage:.2f}\nAverage Track Pos {average_track_pos:.2f}")
+                    fitness = - normalized_avg_speed - normalized_distance_raced + normalized_damage + average_track_pos
+                    self.fitness_terms[fitness] = {"Norm AVG SPEED": -normalized_avg_speed, "Norm Distance Raced": -normalized_distance_raced, "Norm Damage": normalized_damage, "Average Track Pos": average_track_pos, "Track Pos hist": history_track_pos}
+                    
                 else:
                     print(f"THE AGENTS COULDN'T COMPLETE THE FIRST LAP")
-                    fitness[agent_indx] = np.inf
-                    
-                    '''           
-                    # compute the average speed
-                    avg_speed = 0
-                    for key in history_speed.keys():
-                        avg_speed += np.average(history_speed[key])
-                    avg_speed /= len(history_speed[key])
-                    normalized_avg_speed = avg_speed/MAX_SPEED
-
-                    # compute the total distance raced
-                    distance_raced = history_distance_raced[1][-1]
-                    normalized_distance_raced = distance_raced/(FORZA_LENGTH)
-                    # take the damage
-                    damage = history_damage[1][-1]
-                    normalized_damage = damage/UPPER_BOUND_DAMAGE
-                    # compute the average from the center line
-                    average_track_pos = 0
-                    steps = 0
-                    for key in history_track_pos.keys():
-                        for value in history_track_pos[key]:
-                            steps += 1
-                            if abs(value) > 1:
-                                average_track_pos += (abs(value) - 1)
-                    average_track_pos /= steps
-                    
-                    fitness[agent_indx] = - normalized_avg_speed - normalized_distance_raced + normalized_damage + average_track_pos
-                    #print(F"SERVER: {indx} - distance: {distance_raced}")
-                    print(f"THE AGENTS COULDN'T COMPLETE THE FIRST LAP")    
-                    #print(f"SERVER: {indx} - Fitness Value {fitness[agent_indx]:.2f}")
-                    # fitness[agent_indx] = np.inf
-                    '''
+                    fitness = np.inf  
+                return fitness
             except:
                 print(f"Exception")
-                fitness[agent_indx] = np.inf
-                #self.fitness_terms[fitness[agent_indx]] = {"Norm AVG SPEED": np.inf, "Norm Distance Raced": np.inf, "Norm Damage": np.inf, "Average Track Pos": np.inf}
-                    
-    # evaluate function
-    def _evaluate(self, x, out, *args, **kwargs):
-
-        # list of fitness values
-        fitness = [np.inf for i in range(x.shape[0])]
-        # compute the number of agents that each thread must run
-        number_of_individuals_per_thread, remainder = divmod(x.shape[0], NUMBER_SERVERS)
-        # list of thread
-        threads = []
-        for i in range(NUMBER_SERVERS):
-            # check for the last thread
-            # assign the reaminder number of individuals to the last thread
-            if i == NUMBER_SERVERS - 1:
-                num_individuals_to_run = number_of_individuals_per_thread + remainder
-            else:
-                num_individuals_to_run = number_of_individuals_per_thread
-
-            threads.append(threading.Thread(target=TorcsProblem.run_simulations, 
-                                            args=(self, i, num_individuals_to_run, fitness, x, deepcopy(self.variable_to_change), deepcopy(self.controller_variables)), daemon = True))
-            
-            # run the i-th thread
-            threads[i].start()
-
-        # wait for all thread to end
-        for i in range(NUMBER_SERVERS):
-            threads[i].join()
+                return np.inf
+                
+                
+        # prepare the parameters for the pool
+        port_number = 0
+        params = []
+        for k in range(len(X)):
+            print(port_number)
+            params.append((X[k], 
+                           port_number%NUMBER_SERVERS,
+                           deepcopy(self.variable_to_change), 
+                           deepcopy(self.controller_variables)))
+            port_number += 1
         
-        out["F"] = np.array(fitness).T
+        F = POOL.starmap(run_simulations, params)
+        out["F"] = np.array(F)
+        
         print(out["F"])
         best_fit = np.min(out["F"])
         if best_fit != np.inf:
@@ -244,7 +190,7 @@ if __name__ == "__main__":
     # number of variables for the problem visualization
     n_vars = n_parameters
     # maximum number of generations
-    max_gens = 2
+    max_gens = 3
     # Cross-over rate
     cr = 0.5
     # Scaling factor F
