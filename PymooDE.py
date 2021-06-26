@@ -36,7 +36,7 @@ PERCENTAGE_OF_VARIATION = 10
 
 # CONSTANT FOR NORMALIZATION
 EXPECTED_NUM_LAPS = 2
-MAX_SPEED = 330
+MAX_SPEED = 300
 FORZA_LENGTH = 5784.10
 FORZA_WIDTH = 11.0
 WHEEL_LENGHT = 4328.54
@@ -44,6 +44,7 @@ WHEEL_WIDTH = 14.0
 CG_1_LENGHT = 2057.56
 CG_1_WIDTH = 15.0
 UPPER_BOUND_DAMAGE = 1500
+MAX_OUT_OF_TRACK_TICKS = 1000       # corresponds to 20 sec
 POOL = ThreadPool(NUMBER_SERVERS)
 # ELEMENTS OF COST FUNCTION
 cost_function = {}
@@ -66,10 +67,12 @@ class TorcsProblem(Problem):
     def __init__(self, variables_to_change, controller_variables, lb, ub):
         
         super().__init__(n_var=lb.shape[0], n_obj=1, n_constr=0, 
-                         xl = lb, xu = ub)
-                         #xl=np.array([-100000 for i in range(lb.shape[0])]), xu=np.array([100000 for i in range(lb.shape[0])]),
+                        xl=np.array([-100000 for i in range(lb.shape[0])]), xu=np.array([100000 for i in range(lb.shape[0])]))#,xl = lb, xu = ub)
+                         
         self.variable_to_change = variables_to_change
         self.controller_variables = controller_variables
+
+        self.fitness_terms = {}
            
     # evaluate function
     def _evaluate(self, X, out, *args, **kwargs):
@@ -91,7 +94,7 @@ class TorcsProblem(Problem):
                     controller_variables[key] = x[i]
                     i += 1
 
-            print(f"AGENT PARAMS:\n{controller_variables}")
+            #print(f"AGENT PARAMS:\n{controller_variables}")
 
             try:
                 #print(f"Run agent {agent_indx} on Port {BASE_PORT+indx+1}")
@@ -118,6 +121,7 @@ class TorcsProblem(Problem):
                     normalized_damage = damage/UPPER_BOUND_DAMAGE
                 
                     # compute the average from the center line
+                    """
                     average_track_pos = 0
                     steps = 0
                     for key in history_track_pos.keys():
@@ -126,16 +130,27 @@ class TorcsProblem(Problem):
                             if abs(value) > 1:
                                 average_track_pos += (abs(value) - 1)
                     average_track_pos /= steps
-                    
-                    fitness = - normalized_avg_speed - normalized_distance_raced + normalized_damage + average_track_pos
-                    self.fitness_terms[fitness] = {"Norm AVG SPEED": -normalized_avg_speed, "Norm Distance Raced": -normalized_distance_raced, "Norm Damage": normalized_damage, "Average Track Pos": average_track_pos, "Track Pos hist": history_track_pos}
+                    """
+
+                    # compute out of track ticks and normilize it with respect to the total amount of ticks
+                    ticks = 0
+                    for key in history_track_pos.keys():
+                        for value in history_track_pos[key]:
+                            if abs(value) > 1:
+                                ticks += 1
+                    norm_out_of_track_ticks = ticks/MAX_OUT_OF_TRACK_TICKS                    
+                                
+                    fitness = - normalized_avg_speed - normalized_distance_raced + normalized_damage + norm_out_of_track_ticks
+                    self.fitness_terms[fitness] = {"Norm AVG SPEED": -normalized_avg_speed, "Norm Distance Raced": -normalized_distance_raced, "Norm Damage": normalized_damage, "norm out_of_track_ticks": norm_out_of_track_ticks, "out_of_track_ticks": ticks}
                     
                 else:
                     print(f"THE AGENTS COULDN'T COMPLETE THE FIRST LAP")
                     fitness = np.inf  
                 return fitness
-            except:
-                print(f"Exception")
+            except Exception as ex:
+                template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+                message = template.format(type(ex).__name__, ex.args)
+                print(message)
                 return np.inf
                 
                 
@@ -143,7 +158,6 @@ class TorcsProblem(Problem):
         port_number = 0
         params = []
         for k in range(len(X)):
-            print(port_number)
             params.append((X[k], 
                            port_number%NUMBER_SERVERS,
                            deepcopy(self.variable_to_change), 
