@@ -145,10 +145,23 @@ class TorcsProblem(Problem):
                         for value in history_track_pos[key]:
                             if abs(value) > 1:
                                 ticks_out_of_track += 1
-                    norm_out_of_track_ticks = ticks_out_of_track/MAX_OUT_OF_TRACK_TICKS                    
+                    norm_out_of_track_ticks = ticks_out_of_track/MAX_OUT_OF_TRACK_TICKS
+
+                    # compute #ticks in which the vehicle drive at a speed lower then avarage speed
+                    temp_ticks = 0
+                    avg_negative_speed_variation = 0
+                    for key in history_speed.keys():
+                        for value in history_speed[key]:
+                            if value < avg_speed:
+                                temp_ticks += 1
+                                avg_negative_speed_variation += (avg_speed - value)
+                    avg_negative_speed_variation /= temp_ticks
+                    norm_avg_negative_speed_variation = avg_negative_speed_variation / ticks
+                    
                                 
-                    fitness = -normalized_avg_speed -normalized_distance_raced +normalized_damage +norm_out_of_track_ticks +normalized_ticks
-                    self.fitness_terms[fitness] = {"Norm AVG SPEED": -normalized_avg_speed, "Norm Distance Raced": -normalized_distance_raced, "Norm Damage": normalized_damage, "norm out_of_track_ticks": norm_out_of_track_ticks, "normalized ticks": normalized_ticks, "Sim seconds": ticks/50}
+                    fitness = -normalized_avg_speed -normalized_distance_raced +normalized_damage +norm_out_of_track_ticks + normalized_ticks + norm_avg_negative_speed_variation
+                    self.fitness_terms[fitness] = {"Norm AVG SPEED": -normalized_avg_speed, "Norm Distance Raced": -normalized_distance_raced, "Norm Damage": normalized_damage,
+                            "norm_avg_negative_speed_variation": norm_avg_negative_speed_variation, "norm out_of_track_ticks": norm_out_of_track_ticks, "normalized ticks": normalized_ticks, "Sim seconds": ticks/50}
                     
                 else:
                     print(f"THE AGENTS COULDN'T COMPLETE THE FIRST LAP")
@@ -207,15 +220,15 @@ if __name__ == "__main__":
     
     print(f"Number of parameters {n_parameters}")
     # population size
-    n_pop = 100
+    n_pop = 150
     # number of variables for the problem visualization
     n_vars = n_parameters
     # maximum number of generations
-    max_gens = 20
+    max_gens = 10
     # Cross-over rate
-    cr = 0.7
+    cr = 0.9
     # Scaling factor F
-    f = 0.9
+    f = 0.95
 
     # initialize the population
     population = np.zeros((n_pop, n_vars))
@@ -245,7 +258,7 @@ if __name__ == "__main__":
                    variant="DE/rand/1/bin", 
                    CR=cr,
                    F=f,
-                   dither="no", 
+                   dither="no",
                    jitter=False,
                    eliminate_duplicates=True)
 
