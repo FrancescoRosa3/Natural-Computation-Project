@@ -664,8 +664,9 @@ class CustomController:
 
         lap_cnt = 1
         last_lap_time_prev = 0.0
-
+        ticks = 0
         for step in range(self.C.maxSteps,0,-1):
+            ticks += 1
             return_code = self.C.get_servers_input()
             try:   
                 if self.C.S.d['lastLapTime'] != last_lap_time_prev:
@@ -690,7 +691,7 @@ class CustomController:
                     history_track_pos[lap_cnt] = [self.C.S.d['trackPos']]
 
             if return_code == snakeoil.RACE_ENDED:
-                #print("Race ended")
+                print("Race ended")
                 break
         
             self.drive(self.C, step)
@@ -706,7 +707,7 @@ class CustomController:
         self.C.respond_to_server()
         #C.shutdown()
         
-        return history_lap_time, history_speed, history_damage, history_distance_raced, history_track_pos
+        return history_lap_time, history_speed, history_damage, history_distance_raced, history_track_pos, ticks
 
 if __name__ == "__main__":
     import argparse

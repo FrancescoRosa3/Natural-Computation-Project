@@ -86,15 +86,15 @@ class TorcsProblem(Problem):
                     # this parameter is under evolution
                     #print(f"key: {key} - starting value: {controller_variables[key]:.2f} - modified value: {x[agent_indx][i]}")
                     global lb, ub
-                    
+                    '''
                     if x[i] <= lb[i] or x[i] >= ub[i]:
                         print(f"Overflow variabile {key}- Currente value {x[i]} -lb {lb[i]} - ub {ub[i]}")
-                    
+                    '''
                     #x[i] = clip(x[i], lb[i], ub[i])
                     controller_variables[key] = x[i]
                     i += 1
 
-            #print(f"AGENT PARAMS:\n{controller_variables}")
+            
 
             try:
                 #print(f"Run agent {agent_indx} on Port {BASE_PORT+indx+1}")
@@ -102,15 +102,22 @@ class TorcsProblem(Problem):
                                                                 parameters=controller_variables, 
                                                                 parameters_from_file=False)
                 
-                history_lap_time, history_speed, history_damage, history_distance_raced, history_track_pos = controller.run_controller()
+                history_lap_time, history_speed, history_damage, history_distance_raced, history_track_pos, ticks = controller.run_controller()
+                
+                normalized_ticks = ticks/controller.C.maxSteps
+
                 # compute the number of laps
-                num_laps = len(history_lap_time) 
+                num_laps = len(history_lap_time)
+
                 if num_laps > 0:
                     # compute the average speed
                     avg_speed = 0
                     for key in history_speed.keys():
-                        avg_speed += np.average(history_speed[key])
-                    avg_speed /= num_laps
+                        for value in history_speed[key]:
+                            avg_speed += value
+                    avg_speed /= ticks
+                    #print(f"Num Laps {num_laps} - Average Speed {avg_speed} - Num ticks {ticks}")
+                    
                     normalized_avg_speed = avg_speed/MAX_SPEED
                 
                     distance_raced = history_distance_raced[num_laps][-1]
@@ -133,15 +140,15 @@ class TorcsProblem(Problem):
                     """
 
                     # compute out of track ticks and normilize it with respect to the total amount of ticks
-                    ticks = 0
+                    ticks_out_of_track = 0
                     for key in history_track_pos.keys():
                         for value in history_track_pos[key]:
                             if abs(value) > 1:
-                                ticks += 1
-                    norm_out_of_track_ticks = ticks/MAX_OUT_OF_TRACK_TICKS                    
+                                ticks_out_of_track += 1
+                    norm_out_of_track_ticks = ticks_out_of_track/MAX_OUT_OF_TRACK_TICKS                    
                                 
-                    fitness = - normalized_avg_speed - normalized_distance_raced + normalized_damage + norm_out_of_track_ticks
-                    self.fitness_terms[fitness] = {"Norm AVG SPEED": -normalized_avg_speed, "Norm Distance Raced": -normalized_distance_raced, "Norm Damage": normalized_damage, "norm out_of_track_ticks": norm_out_of_track_ticks, "out_of_track_ticks": ticks}
+                    fitness = -normalized_avg_speed -normalized_distance_raced +normalized_damage +norm_out_of_track_ticks +normalized_ticks
+                    self.fitness_terms[fitness] = {"Norm AVG SPEED": -normalized_avg_speed, "Norm Distance Raced": -normalized_distance_raced, "Norm Damage": normalized_damage, "norm out_of_track_ticks": norm_out_of_track_ticks, "normalized ticks": normalized_ticks, "Sim seconds": ticks/50}
                     
                 else:
                     print(f"THE AGENTS COULDN'T COMPLETE THE FIRST LAP")
@@ -204,9 +211,9 @@ if __name__ == "__main__":
     # number of variables for the problem visualization
     n_vars = n_parameters
     # maximum number of generations
-    max_gens = 3
+    max_gens = 5
     # Cross-over rate
-    cr = 0.5
+    cr = 0.6
     # Scaling factor F
     f = 0.9
 
@@ -268,3 +275,11 @@ if __name__ == "__main__":
     plt.plot(n_evals, opt, "-")
     #plt.yscale("log")
     plt.show()
+
+'''
+if __name__ == "__main__":
+    par = {'dnsh3rpm': 7043.524501178322, 'consideredstr8': 0.010033102875417081, 'upsh6rpm': 14789.41256679235, 'dnsh2rpm': 7062.974503018889, 'str8thresh': 0.14383741216415255, 'safeatanyspeed': 0.0012800919243947557, 'offroad': 1.0002653228126588, 'fullstmaxsx': 20.070818862674596, 'wwlim': 4.487048259980536, 'upsh4rpm': 9850.06473842414, 'dnsh1rpm': 4086.4281437604054, 'sxappropriatest1': 16.08326982212498, 'oksyp': 0.06586706491973668, 'slipdec': 0.018047798233552067, 'spincutslp': 0.05142589453207698, 'ignoreinfleA': 10.793558810628733, 's2sen': 3.4996561397948263, 'dnsh4rpm': 7474.1667888177535, 'seriousABS': 30.237506792415605, 'dnsh5rpm': 8106.559743640354, 'obviousbase': 93.7374985607152, 'stst': 513.5298776779491, 'upsh3rpm': 9520.747330115491, 'clutch_release': 0.050017716984125785, 'stC': 297.23435114322194, 'pointingahead': 2.196445074922305, 'spincutclip': 0.10803464385693813, 'clutchslip': 90.34100694329528, 'obvious': 1.3232214861047789, 'backontracksx': 69.09088237263713, 'upsh2rpm': 10116.745791908856, 'senslim': 0.031006049843539912, 'clutchspin': 50.291035172311716, 'fullstis': 0.7759314134954662, 'brake': 0.5230215749291802, 'carmin': 34.98602774087677, 'sycon2': 1.000239198433143, 's2cen': 0.4701703131364017, 'sycon1': 0.6429244177717478, 'upsh5rpm': 9309.101130251716, 'carmaxvisib': 2.317604406633401, 'sxappropriatest2': 0.5520202884372154, 'skidsev1': 0.576616694479842, 'wheeldia': 0.8554277668777635, 'brakingpacefast': 1.0083267830865785, 'sensang': -0.7558273506842333, 'spincutint': 1.7810420061006913, 'st': 648.0720326063517, 'brakingpaceslow': 2.0841388650800172, 'sortofontrack': 1.5040683093640903, 'steer2edge': 0.9193250804761118, 'backward': 1.5085149570615013}
+    file_name = dir_path+"/Results/"+"Forza/"+f"sgaso.xml"
+    with open(file_name, 'w') as outfile:
+        json.dump(parameters, outfile)
+'''
