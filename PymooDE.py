@@ -64,7 +64,9 @@ class TorcsProblem(Problem):
         self.variable_to_change = variables_to_change
         self.controller_variables = controller_variables
 
-    def run_simulations(indx, num_individuals_to_run, fitness, x, variable_to_change, controller_variables):
+        self.fitness_terms = {}
+
+    def run_simulations(self, indx, num_individuals_to_run, fitness, x, variable_to_change, controller_variables):
         if indx != NUMBER_SERVERS - 1:
             # compute the start agent index
             start_agent_indx = num_individuals_to_run * indx
@@ -88,21 +90,11 @@ class TorcsProblem(Problem):
                     # this parameter is under evolution
                     #print(f"key: {key} - starting value: {controller_variables[key]:.2f} - modified value: {x[agent_indx][i]}")
                     global lb, ub
-                    
-                    if key == 'dnsh1rpm' or key == 'dnsh2rpm' or key == 'dnsh3rpm' or key == 'dnsh4rpm' or key == 'dnsh5rpm' or key == 'dnsh6rpm' \
-                       or key == 'upsh1rpm' or key == 'upsh2rpm' or key == 'upsh3rpm' or key == 'upsh4rpm' or key == 'upsh5rpm' or key == 'upsh6rpm':
-                        print(f"Thread {indx} Agent {agent_indx}")
-                        print(f"RPM variabile {key}- Currente value {x[agent_indx][i]} -lb {lb[i]} - ub {ub[i]} - Start value {controller_variables[key]}")
-                    '''
-                    if x[agent_indx][i] <= lb[i] or x[agent_indx][i] >= ub[i]:
-                        print(f"Thread {indx} Agent {agent_indx}")
-                        print(f"Overflow variabile {key}- Currente value {x[agent_indx][i]} -lb {lb[i]} - ub {ub[i]}")
-                    '''
-                    x[agent_indx][i] = clip(x[agent_indx][i], lb[i], ub[i])
+                    #x[agent_indx][i] = clip(x[agent_indx][i], lb[i], ub[i])
                     controller_variables[key] = x[agent_indx][i]
                     i += 1
 
-            #print(f"AGENT PARAMS:\n{controller_variables}")
+            print(f"AGENT PARAMS:\n{controller_variables}")
 
             try:
                 #print(f"Run agent {agent_indx} on Port {BASE_PORT+indx+1}")
@@ -111,7 +103,7 @@ class TorcsProblem(Problem):
                                                                 parameters_from_file=False)
                 
                 history_lap_time, history_speed, history_damage, history_distance_raced, history_track_pos = controller.run_controller()
-                #print(F"SERVER: {indx} - done {done_agents} agents")
+                print(F"SERVER: {indx} - done {done_agents} agents")
                 done_agents += 1
                 # compute the number of laps
                 num_laps = len(history_lap_time) 
@@ -144,11 +136,14 @@ class TorcsProblem(Problem):
                     #    fitness[agent_indx] = np.inf
                     #else:
                     fitness[agent_indx] = - normalized_avg_speed - normalized_distance_raced + normalized_damage + average_track_pos
-                    #print(F"SERVER: {indx} - distance: {distance_raced}")
-                    #print(f"SERVER: {indx} - Fitness Value {fitness[agent_indx]:.2f}")
+                    self.fitness_terms[fitness[agent_indx]] = {"Norm AVG SPEED": -normalized_avg_speed, "Norm Distance Raced": -normalized_distance_raced, "Norm Damage": normalized_damage, "Average Track Pos": average_track_pos, "Track Pos hist": history_track_pos}
+                    print(F"SERVER: {indx} - distance: {distance_raced}")
+                    print(f"SERVER: {indx} - Fitness Value {fitness[agent_indx]:.2f}")
                     #print(f"Fitness Value {fitness[agent_indx]:.2f}\nNormalized AVG SPEED {normalized_avg_speed:.2f}\nNormalized Distance Raced {normalized_distance_raced:.2f}\nNormalized Damage {normalized_damage:.2f}\nAverage Track Pos {average_track_pos:.2f}")
                 else:
+                    print(f"THE AGENTS COULDN'T COMPLETE THE FIRST LAP")
                     fitness[agent_indx] = np.inf
+                    
                     '''           
                     # compute the average speed
                     avg_speed = 0
@@ -182,7 +177,8 @@ class TorcsProblem(Problem):
             except:
                 print(f"Exception")
                 fitness[agent_indx] = np.inf
-
+                #self.fitness_terms[fitness[agent_indx]] = {"Norm AVG SPEED": np.inf, "Norm Distance Raced": np.inf, "Norm Damage": np.inf, "Average Track Pos": np.inf}
+                    
     # evaluate function
     def _evaluate(self, x, out, *args, **kwargs):
 
@@ -201,7 +197,7 @@ class TorcsProblem(Problem):
                 num_individuals_to_run = number_of_individuals_per_thread
 
             threads.append(threading.Thread(target=TorcsProblem.run_simulations, 
-                                            args=(i, num_individuals_to_run, fitness, x, deepcopy(self.variable_to_change), deepcopy(self.controller_variables)), daemon = True))
+                                            args=(self, i, num_individuals_to_run, fitness, x, deepcopy(self.variable_to_change), deepcopy(self.controller_variables)), daemon = True))
             
             # run the i-th thread
             threads[i].start()
@@ -209,9 +205,12 @@ class TorcsProblem(Problem):
         # wait for all thread to end
         for i in range(NUMBER_SERVERS):
             threads[i].join()
-
+        
         out["F"] = np.array(fitness).T
         print(out["F"])
+        best_fit = np.min(out["F"])
+        if best_fit != np.inf:
+            print(f"BEST FITNESS: {best_fit} - terms: {self.fitness_terms[best_fit]}")
 
 if __name__ == "__main__":
 
@@ -241,11 +240,11 @@ if __name__ == "__main__":
     
     print(f"Number of parameters {n_parameters}")
     # population size
-    n_pop = 10
+    n_pop = 50
     # number of variables for the problem visualization
     n_vars = n_parameters
     # maximum number of generations
-    max_gens = 5
+    max_gens = 2
     # Cross-over rate
     cr = 0.5
     # Scaling factor F
@@ -301,7 +300,7 @@ if __name__ == "__main__":
             # this parameter is under evolution
             parameters[key] = res.X[i]
             i += 1
-    file_name = dir_path+"/Results/"+"Forza/"+f"{np_seed}_{de_seed}_{n_pop}_{n_vars}_{cr}_{f}.xml"
+    file_name = dir_path+"/Results/"+"Forza/"+f"{np_seed}_{de_seed}_{n_pop}_{max_gens}_{n_vars}_{cr}_{f}.xml"
     with open(file_name, 'w') as outfile:
         json.dump(parameters, outfile)
     
