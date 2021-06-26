@@ -4,6 +4,9 @@ import matplotlib.pyplot as plt
 import json, random, sys, threading, signal
 from copy import deepcopy
 import time
+from multiprocessing.pool import ThreadPool
+
+from numpy.lib.function_base import _select_dispatcher
 
 from pymoo.algorithms.so_de import DE
 from pymoo.optimize import minimize
@@ -41,6 +44,9 @@ WHEEL_WIDTH = 14.0
 CG_1_LENGHT = 2057.56
 CG_1_WIDTH = 15.0
 UPPER_BOUND_DAMAGE = 1500
+POOL = ThreadPool(NUMBER_SERVERS)
+# ELEMENTS OF COST FUNCTION
+cost_function = {}
 
 def print_hi(name):
     # Use a breakpoint in the code line below to debug your script.
@@ -60,26 +66,15 @@ class TorcsProblem(Problem):
     def __init__(self, variables_to_change, controller_variables, lb, ub):
         
         super().__init__(n_var=lb.shape[0], n_obj=1, n_constr=0, 
-                         xl=np.array([-100000 for i in range(lb.shape[0])]), xu=np.array([100000 for i in range(lb.shape[0])]))
+                         xl = lb, xu = ub)
+                         #xl=np.array([-100000 for i in range(lb.shape[0])]), xu=np.array([100000 for i in range(lb.shape[0])]),
         self.variable_to_change = variables_to_change
         self.controller_variables = controller_variables
-
-    def run_simulations(indx, num_individuals_to_run, fitness, x, variable_to_change, controller_variables):
-        if indx != NUMBER_SERVERS - 1:
-            # compute the start agent index
-            start_agent_indx = num_individuals_to_run * indx
-            # compute the end agent index
-            end_agent_indx = start_agent_indx + num_individuals_to_run
-        else:
-            # compute the start agent index
-            start_agent_indx = x.shape[0]-num_individuals_to_run
-            # compute the end agent index
-            end_agent_indx = x.shape[0]
-
-        done_agents = 1
-        # for each agent that the thread must run
-        for agent_indx in range(start_agent_indx, end_agent_indx):
-            
+           
+    # evaluate function
+    def _evaluate(self, X, out, *args, **kwargs):
+        
+        def run_simulations(x, port_number, variable_to_change, controller_variables):
             i = 0
             for key in variable_to_change.keys():
                 # change the value of contreller_variables
@@ -89,30 +84,20 @@ class TorcsProblem(Problem):
                     #print(f"key: {key} - starting value: {controller_variables[key]:.2f} - modified value: {x[agent_indx][i]}")
                     global lb, ub
                     
-                    if key == 'dnsh1rpm' or key == 'dnsh2rpm' or key == 'dnsh3rpm' or key == 'dnsh4rpm' or key == 'dnsh5rpm' or key == 'dnsh6rpm' \
-                       or key == 'upsh1rpm' or key == 'upsh2rpm' or key == 'upsh3rpm' or key == 'upsh4rpm' or key == 'upsh5rpm' or key == 'upsh6rpm':
-                        print(f"Thread {indx} Agent {agent_indx}")
-                        print(f"RPM variabile {key}- Currente value {x[agent_indx][i]} -lb {lb[i]} - ub {ub[i]} - Start value {controller_variables[key]}")
-                    '''
-                    if x[agent_indx][i] <= lb[i] or x[agent_indx][i] >= ub[i]:
-                        print(f"Thread {indx} Agent {agent_indx}")
-                        print(f"Overflow variabile {key}- Currente value {x[agent_indx][i]} -lb {lb[i]} - ub {ub[i]}")
-                    '''
-                    x[agent_indx][i] = clip(x[agent_indx][i], lb[i], ub[i])
-                    controller_variables[key] = x[agent_indx][i]
+                    if x[i] <= lb[i] or x[i] >= ub[i]:
+                        print(f"Overflow variabile {key}- Currente value {x[i]} -lb {lb[i]} - ub {ub[i]}")
+                    
+                    #x[i] = clip(x[i], lb[i], ub[i])
+                    controller_variables[key] = x[i]
                     i += 1
-
-            #print(f"AGENT PARAMS:\n{controller_variables}")
 
             try:
                 #print(f"Run agent {agent_indx} on Port {BASE_PORT+indx+1}")
-                controller = custom_controller.CustomController(port=BASE_PORT+indx+1,
+                controller = custom_controller.CustomController(port=BASE_PORT+port_number+1,
                                                                 parameters=controller_variables, 
                                                                 parameters_from_file=False)
                 
                 history_lap_time, history_speed, history_damage, history_distance_raced, history_track_pos = controller.run_controller()
-                #print(F"SERVER: {indx} - done {done_agents} agents")
-                done_agents += 1
                 # compute the number of laps
                 num_laps = len(history_lap_time) 
                 if num_laps > 0:
@@ -143,12 +128,11 @@ class TorcsProblem(Problem):
                     #if damage > UPPER_BOUND_DAMAGE:
                     #    fitness[agent_indx] = np.inf
                     #else:
-                    fitness[agent_indx] = - normalized_avg_speed - normalized_distance_raced + normalized_damage + average_track_pos
+                    return (- normalized_avg_speed - normalized_distance_raced + normalized_damage + average_track_pos)
                     #print(F"SERVER: {indx} - distance: {distance_raced}")
                     #print(f"SERVER: {indx} - Fitness Value {fitness[agent_indx]:.2f}")
                     #print(f"Fitness Value {fitness[agent_indx]:.2f}\nNormalized AVG SPEED {normalized_avg_speed:.2f}\nNormalized Distance Raced {normalized_distance_raced:.2f}\nNormalized Damage {normalized_damage:.2f}\nAverage Track Pos {average_track_pos:.2f}")
                 else:
-                    fitness[agent_indx] = np.inf
                     '''           
                     # compute the average speed
                     avg_speed = 0
@@ -179,39 +163,24 @@ class TorcsProblem(Problem):
                     #print(f"SERVER: {indx} - Fitness Value {fitness[agent_indx]:.2f}")
                     # fitness[agent_indx] = np.inf
                     '''
+                    return np.inf
             except:
-                print(f"Exception")
-                fitness[agent_indx] = np.inf
+                    print(f"Exception")
+                    return np.inf
 
-    # evaluate function
-    def _evaluate(self, x, out, *args, **kwargs):
-
-        # list of fitness values
-        fitness = [np.inf for i in range(x.shape[0])]
-        # compute the number of agents that each thread must run
-        number_of_individuals_per_thread, remainder = divmod(x.shape[0], NUMBER_SERVERS)
-        # list of thread
-        threads = []
-        for i in range(NUMBER_SERVERS):
-            # check for the last thread
-            # assign the reaminder number of individuals to the last thread
-            if i == NUMBER_SERVERS - 1:
-                num_individuals_to_run = number_of_individuals_per_thread + remainder
-            else:
-                num_individuals_to_run = number_of_individuals_per_thread
-
-            threads.append(threading.Thread(target=TorcsProblem.run_simulations, 
-                                            args=(i, num_individuals_to_run, fitness, x, deepcopy(self.variable_to_change), deepcopy(self.controller_variables)), daemon = True))
-            
-            # run the i-th thread
-            threads[i].start()
-
-        # wait for all thread to end
-        for i in range(NUMBER_SERVERS):
-            threads[i].join()
-
-        out["F"] = np.array(fitness).T
-        print(out["F"])
+        # prepare the parameters for the pool
+        port_number = 0
+        params = []
+        for k in range(len(X)):
+            print(port_number)
+            params.append((X[k], 
+                           port_number%NUMBER_SERVERS,
+                           deepcopy(self.variable_to_change), 
+                           deepcopy(self.controller_variables)))
+            port_number += 1
+        
+        F = POOL.starmap(run_simulations, params)
+        out["F"] = np.array(F)
 
 if __name__ == "__main__":
 
@@ -241,13 +210,13 @@ if __name__ == "__main__":
     
     print(f"Number of parameters {n_parameters}")
     # population size
-    n_pop = 10
+    n_pop = 
     # number of variables for the problem visualization
     n_vars = n_parameters
     # maximum number of generations
-    max_gens = 5
+    max_gens = 10
     # Cross-over rate
-    cr = 0.5
+    cr = 0.6
     # Scaling factor F
     f = 0.9
 
