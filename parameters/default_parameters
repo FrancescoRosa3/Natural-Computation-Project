@@ -83,7 +83,7 @@
 "senslim": 0.031006049843539912, 
 "clutchspin": 50.291035172311716, 
 "fullstis": 0.81987358172808966, 
-"brake": 0.00011033489913893834, 
+"brake": 0.5, 
 "carmin": 33.868780217679259, 
 "METApointingahead": 0, 
 "METAwheeldia": 0, 

@@ -35,7 +35,7 @@ parameters_to_change = json.load(pfile)
 # CONSTANT DEFINITION
 NUMBER_SERVERS = 10
 BASE_PORT = 3000
-PERCENTAGE_OF_VARIATION = 10
+PERCENTAGE_OF_VARIATION = 20
 
 # CONSTANT FOR NORMALIZATION
 EXPECTED_NUM_LAPS = 2
@@ -72,13 +72,12 @@ class TorcsProblem(Problem):
     # Problem initialization
     def __init__(self, variables_to_change, controller_variables, lb, ub):
         
-        super().__init__(n_var=lb.shape[0], n_obj=1, n_constr=lb.shape[0], 
+        """super().__init__(n_var=lb.shape[0], n_obj=1, n_constr=lb.shape[0], 
                         xl=np.array([-100000 for i in range(lb.shape[0])]), xu=np.array([100000 for i in range(lb.shape[0])]))#,xl = lb, xu = ub)
-        
-        '''             
+        """
         super().__init__(n_var=lb.shape[0], n_obj=1, n_constr=0, 
                         xl=np.array([-100000 for i in range(lb.shape[0])]), xu=np.array([100000 for i in range(lb.shape[0])]))#,xl = lb, xu = ub)
-        '''
+        
         self.variable_to_change = variables_to_change
         self.controller_variables = controller_variables
         self.lb = lb
@@ -165,18 +164,18 @@ class TorcsProblem(Problem):
                 #print(message)
                 fitness = np.inf
             
-            
+            """
             # check for constraint
             constraint = []
             for i in range(x.shape[0]):
                 constraint.append( int((x[i] < self.lb[i] or x[i] > self.ub[i])) )
-            
+            """
             agents_cnt_lock.acquire(blocking=True)
             self.agents_cnt += 1
             print(f"Agent runned {self.agents_cnt}")
             agents_cnt_lock.release()
 
-            return fitness, constraint
+            return fitness#, constraint
             
         # prepare the parameters for the pool
         port_number = 0
@@ -190,14 +189,16 @@ class TorcsProblem(Problem):
         
         
         results = POOL.starmap(run_simulations, params)
+        
+        """
         fitness = []
         constraints = []
         for i in range(len(results)):
             fitness.append(results[i][0])
             constraints.append(results[i][1])
-    
-        out["F"] = np.array(fitness)
-        out["G"] = np.array(constraints)
+        """ 
+        out["F"] = np.array(results)
+        #out["G"] = np.array(constraints)
         
         print(f"Current solution fitness:\n{out['F']}")
         #print(f"Current solution constraing:\n{out['G']}")
@@ -210,10 +211,10 @@ def create_checkpoint_dir(checkpoint_folder):
         os.makedirs(checkpoint_folder)
 
 def save_checkpoint(algorithm, iter):
-    global np_seed, de_seed, n_pop, max_gens, n_vars, cr, f
-    checkpoint_folder = dir_path + "/Checkpoints"+ f"/{np_seed}_{de_seed}_{n_pop}_{max_gens}_{n_vars}_{cr}_{f}"
+    global np_seed, de_seed, n_pop, max_gens, n_vars, cr, f, PARAMETERS_STRING
+    checkpoint_folder = dir_path + "/Checkpoints/"+ PARAMETERS_STRING + "/"
     create_checkpoint_dir(checkpoint_folder)
-    checkpoint_file_name = checkpoint_folder + f"/{np_seed}_{de_seed}_{n_pop}_{max_gens}_{n_vars}_{cr}_{f}_pop-iter-{iter}.npy"
+    checkpoint_file_name = checkpoint_folder + f"iter-{iter}.npy"
     try:
         with open(checkpoint_file_name, 'wb') as file:
             np.save(file, algorithm)
@@ -289,7 +290,7 @@ if __name__ == "__main__":
     
     print(f"Number of parameters {n_parameters}")
     # population size
-    n_pop = 10
+    n_pop = 30
     # number of variables for the problem visualization
     n_vars = n_parameters
     # maximum number of generations
@@ -298,6 +299,8 @@ if __name__ == "__main__":
     cr = 0.9
     # Scaling factor F
     f = 0.9
+
+    PARAMETERS_STRING = f"{np_seed}_{de_seed}_{n_pop}_{max_gens}_{n_vars}_{cr}_{f}_{PERCENTAGE_OF_VARIATION}"
 
     # define the problem
     problem = TorcsProblem(variables_to_change = parameters_to_change, controller_variables = parameters, lb = lb, ub = ub)
@@ -325,7 +328,7 @@ if __name__ == "__main__":
     for iter in range(last_iteration, max_gens):
         res = minimize(problem, algorithm, ('n_gen', 1), seed=de_seed, verbose=True, save_history=True)
         checkpoint_file_name = save_checkpoint(algorithm, iter+1)
-        algorithm, last_iteration = load_checkpoint(checkpoint_file_name)
+        algorithm , _ = load_checkpoint(checkpoint_file_name)
         algorithm.has_terminated = False
 
     if res != None:
@@ -346,7 +349,7 @@ if __name__ == "__main__":
                 # this parameter is under evolution
                 parameters[key] = res.X[i]
                 i += 1
-        file_name = dir_path+"/Results/"+"Forza/"+f"{np_seed}_{de_seed}_{n_pop}_{max_gens}_{n_vars}_{cr}_{f}.xml"
+        file_name = dir_path+"/Results/"+"Forza/"+PARAMETERS_STRING + ".xml"
         with open(file_name, 'w') as outfile:
             json.dump(parameters, outfile)
         
