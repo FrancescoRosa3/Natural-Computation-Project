@@ -5,6 +5,7 @@ import json, random, sys, threading, signal
 from copy import deepcopy
 import time
 from multiprocessing.pool import ThreadPool
+from threading import Lock
 
 from numpy.lib.function_base import _select_dispatcher
 
@@ -45,6 +46,9 @@ CG_1_LENGHT = 2057.56
 CG_1_WIDTH = 15.0
 UPPER_BOUND_DAMAGE = 1500
 MAX_OUT_OF_TRACK_TICKS = 1000       # corresponds to 20 sec
+
+
+agents_cnt_lock = Lock()
 POOL = ThreadPool(NUMBER_SERVERS)
 # ELEMENTS OF COST FUNCTION
 cost_function = {}
@@ -78,11 +82,13 @@ class TorcsProblem(Problem):
         self.lb = lb
         self.ub = ub
         self.fitness_terms = {}
+        self.agents_cnt = 0
            
     # evaluate function
     def _evaluate(self, X, out, *args, **kwargs):
         
         def run_simulations(x, port_number, variable_to_change, controller_variables):
+          
             i = 0
             for key in variable_to_change.keys():
                 # change the value of contreller_variables
@@ -154,7 +160,7 @@ class TorcsProblem(Problem):
             except Exception as ex:
                 template = "An exception of type {0} occurred. Arguments:\n{1!r}"
                 message = template.format(type(ex).__name__, ex.args)
-                print(message)
+                #print(message)
                 fitness = np.inf
             
             
@@ -163,6 +169,11 @@ class TorcsProblem(Problem):
             for i in range(x.shape[0]):
                 constraint.append( int((x[i] < self.lb[i] or x[i] > self.ub[i])) )
             
+            agents_cnt_lock.acquire(blocking=True)
+            self.agents_cnt += 1
+            print(f"Agent runned {self.agents_cnt}")
+            agents_cnt_lock.release()
+
             return fitness, constraint
             
         # prepare the parameters for the pool
@@ -187,7 +198,7 @@ class TorcsProblem(Problem):
         out["G"] = np.array(constraints)
         
         print(f"Current solution fitness:\n{out['F']}")
-        print(f"Current solution constraing:\n{out['G']}")
+        #print(f"Current solution constraing:\n{out['G']}")
         best_fit = np.min(out["F"])
         if best_fit != np.inf:
             print(f"BEST FITNESS: {best_fit} - terms: {self.fitness_terms[best_fit]}")
@@ -224,7 +235,7 @@ if __name__ == "__main__":
     # number of variables for the problem visualization
     n_vars = n_parameters
     # maximum number of generations
-    max_gens = 2
+    max_gens = 5
     # Cross-over rate
     cr = 0.9
     # Scaling factor F
