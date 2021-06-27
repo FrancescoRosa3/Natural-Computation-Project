@@ -88,6 +88,11 @@ class TorcsProblem(Problem):
     # evaluate function
     def _evaluate(self, X, out, *args, **kwargs):
 
+        # restart evaluated agents counter
+        agents_cnt_lock.acquire(blocking=True)
+        self.agents_cnt = 0
+        agents_cnt_lock.release()
+
         def run_simulations(x, port_number, variable_to_change, controller_variables):
           
             i = 0
@@ -324,9 +329,12 @@ if __name__ == "__main__":
                     jitter=False,
                     eliminate_duplicates=True)
 
+        algorithm.setup(problem, ('n_gen', max_gens), seed=de_seed, verbose=True, save_history=True)
+
     res = None
     for iter in range(last_iteration, max_gens):
-        res = minimize(problem, algorithm, ('n_gen', 1), seed=de_seed, verbose=True, save_history=True)
+        res = algorithm.next()
+        print(algorithm.n_gen)
         checkpoint_file_name = save_checkpoint(algorithm, iter+1)
         algorithm , _ = load_checkpoint(checkpoint_file_name)
         algorithm.has_terminated = False
