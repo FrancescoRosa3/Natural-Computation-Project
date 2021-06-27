@@ -1,49 +1,49 @@
 {   
-    "dnsh3rpm": [1, 0, 15000],
+    "dnsh3rpm": [0, 0, 15000],
     
-    "consideredstr8": [0, 0, 10], 
+    "consideredstr8": [1, 0, 10],  
     
-    "upsh6rpm": [1, 0, 15000], 
+    "upsh6rpm": [0, 0, 15000], 
     
-    "dnsh2rpm": [1, 0, 15000], 
+    "dnsh2rpm": [0, 0, 15000], 
     
-    "str8thresh":  [1, 0, 10], 
+    "str8thresh":  [0, 0, 10], 
     
     "safeatanyspeed": [0, 0, 1], 
     
     "offroad": [0, 1, 2], 
     
-    "fullstmaxsx": [0, 10, 330], 
+    "fullstmaxsx": [1, 10, 330], 
     
-    "wwlim": [0, 0.1, 10], 
+    "wwlim": [1, 0.1, 10], 
     
-    "upsh4rpm": [1, 0, 15000], 
+    "upsh4rpm": [0, 0, 15000], 
     
-    "dnsh1rpm": [1, 0, 15000], 
+    "dnsh1rpm": [0, 0, 15000], 
     
-    "sxappropriatest1": [1, 5, 30], 
+    "sxappropriatest1": [0, 5, 30], 
     
-    "oksyp": [0, 0.01, 0.1], 
+    "oksyp": [1, 0.01, 0.1], 
     
-    "slipdec": [0, 0.005, 0.1], 
+    "slipdec": [1, 0.005, 0.1], 
     
-    "spincutslp": [0, 0.01, 0.1], 
+    "spincutslp": [1, 0.01, 0.1], 
     
     "ignoreinfleA": [0, 5, 30], 
     
-    "s2sen": [1, 0, 20], 
+    "s2sen": [0, 0, 20], 
     
-    "dnsh4rpm": [1, 0, 15000], 
+    "dnsh4rpm": [0, 0, 15000], 
     
     "seriousABS": [1, 0, 330], 
     
-    "dnsh5rpm": [1, 0, 15000], 
+    "dnsh5rpm": [0, 0, 15000], 
     
     "obviousbase": [1, 70, 330], 
     
-    "stst":[1, 100, 1000], 
+    "stst":[1, 100, 1000],  
     
-    "upsh3rpm": [1, 0, 15000], 
+    "upsh3rpm": [0, 0, 15000], 
     
     "clutch_release": [0], 
     
@@ -57,9 +57,9 @@
     
     "obvious": [1, 1, 3], 
     
-    "backontracksx": [1, 70, 330], 
+    "backontracksx": [1, 50, 330], 
     
-    "upsh2rpm": [1, 0, 15000], 
+    "upsh2rpm": [0, 0, 15000], 
     
     "senslim": [0], 
     
@@ -73,15 +73,15 @@
     
     "sycon2": [0], 
     
-    "s2cen": [1, 0.1, 1], 
+    "s2cen": [0, 0.1, 1], 
     
     "sycon1": [0], 
     
-    "upsh5rpm": [1, 0, 15000], 
+    "upsh5rpm": [0, 0, 15000], 
     
-    "carmaxvisib": [1, 1, 10], 
+    "carmaxvisib": [1, 1, 10],
     
-    "sxappropriatest2": [1, 0.1, 1], 
+    "sxappropriatest2": [0, 0.1, 1], 
     
     "skidsev1": [0], 
     
@@ -89,17 +89,17 @@
     
     "brakingpacefast": [1, 0.5, 1.5], 
     
-    "sensang": [1, -1.5, 1.5], 
+    "sensang": [0, -1.5, 1.5], 
     
-    "spincutint": [1, 0.5, 3],
+    "spincutint": [1, 0.5, 3], 
     
-    "st": [1, 400, 1000],
+    "st": [1, 400, 1000], 
     
     "brakingpaceslow":  [1, 1.5, 3], 
     
     "sortofontrack": [0], 
     
-    "steer2edge": [1, -1, 1], 
+    "steer2edge": [0, -1, 1], 
     
-    "backward": [1, 0.1, 2.5]
+    "backward": [0, 0.1, 2.5]
 }
