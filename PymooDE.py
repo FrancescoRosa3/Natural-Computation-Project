@@ -15,6 +15,8 @@ from pymoo.operators.sampling.latin_hypercube_sampling import LatinHypercubeSamp
 
 from pymoo.model.problem import Problem
 
+import argparse
+
 # Load the custom_controller module
 import custom_controller
 # define the path were the parameters are defined
@@ -76,7 +78,7 @@ class TorcsProblem(Problem):
            
     # evaluate function
     def _evaluate(self, X, out, *args, **kwargs):
-        
+
         def run_simulations(x, port_number, variable_to_change, controller_variables):
             i = 0
             for key in variable_to_change.keys():
@@ -93,8 +95,6 @@ class TorcsProblem(Problem):
                     #x[i] = clip(x[i], lb[i], ub[i])
                     controller_variables[key] = x[i]
                     i += 1
-
-            
 
             try:
                 #print(f"Run agent {agent_indx} on Port {BASE_PORT+indx+1}")
@@ -179,10 +179,66 @@ class TorcsProblem(Problem):
         if best_fit != np.inf:
             print(f"BEST FITNESS: {best_fit} - terms: {self.fitness_terms[best_fit]}")
 
+def create_checkpoint_dir(checkpoint_folder):
+    if not os.path.exists(checkpoint_folder):
+        os.makedirs(checkpoint_folder)
+
+def save_checkpoint(algorithm, iter):
+    global np_seed, de_seed, n_pop, max_gens, n_vars, cr, f
+    checkpoint_folder = dir_path + "/Checkpoints"+ f"/{np_seed}_{de_seed}_{n_pop}_{max_gens}_{n_vars}_{cr}_{f}"
+    create_checkpoint_dir(checkpoint_folder)
+    checkpoint_file_name = checkpoint_folder + f"/{np_seed}_{de_seed}_{n_pop}_{max_gens}_{n_vars}_{cr}_{f}_pop-iter-{iter}.npy"
+    try:
+        with open(checkpoint_file_name, 'wb') as file:
+            np.save(file, algorithm)
+        file.close()
+        print(f"iteration {iter} checkpoint created")
+        return checkpoint_file_name
+    except:
+        print(f"iteration {iter} checkpoint creation failed")
+        return None
+
+def load_checkpoint(checkpoint_file_name):
+    try:
+        with open(checkpoint_file_name, 'rb') as file:
+            checkpoint, = np.load(file, allow_pickle=True).flatten()
+            last_iteration = checkpoint_file_name.split("-")[-1].split(".")[0]
+            last_iteration = int(last_iteration)
+        file.close()
+        print(f"iteration {last_iteration} checkpoint restored")
+        return checkpoint, last_iteration
+    except:
+        print(f"iteration {last_iteration} checkpoint could not be restored")
+        return None, None
+
+def create_population(n_pop, n_vars, name_parameters_to_change):
+    # initialize the population
+    for i in range(n_pop):
+        # for each parameter to change
+        for j,key in enumerate(name_parameters_to_change):
+            # compute the variation based on the default parameters
+            variation = (PERCENTAGE_OF_VARIATION * parameters[key])/100
+            operation = np.random.choice([0,1,2])
+            offset = np.random.uniform(0, variation)
+            if operation == 0:
+                population[i][j] = parameters[key] + offset
+            elif operation == 1:
+                population[i][j] = parameters[key] - offset
+            else:
+                population[i][j] = parameters[key]
+            #print(f"PARAMETER: {key}: {parameters[key]} - variation: {variation} - final_value: {population[i][j]}")
+    return population
+
+
 if __name__ == "__main__":
 
-    np_seed = 0
-    de_seed = 123
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--checkpoint_file', '-cf', help="checkpoint file containing the starting population for the algorithm", type= str,
+                        default= "None")
+    args = parser.parse_args()
+
+    np_seed = 1
+    de_seed = 124
     # set the np seed
     np.random.seed(np_seed)
 
@@ -217,64 +273,61 @@ if __name__ == "__main__":
     # Scaling factor F
     f = 0.9
 
-    # initialize the population
-    population = np.zeros((n_pop, n_vars))
-    for i in range(n_pop):
-        # for each parameter to change
-        for j,key in enumerate(name_parameters_to_change):
-            # compute the variation based on the default parameters
-            variation = (PERCENTAGE_OF_VARIATION * parameters[key])/100
-            operation = np.random.choice([0,1,2])
-            offset = np.random.uniform(0, variation)
-            if operation == 0:
-                population[i][j] = parameters[key] + offset
-            elif operation == 1:
-                population[i][j] = parameters[key] - offset
-            else:
-                population[i][j] = parameters[key]
-            #print(f"PARAMETER: {key}: {parameters[key]} - variation: {variation} - final_value: {population[i][j]}")
-
-
     # define the problem
     problem = TorcsProblem(variables_to_change = parameters_to_change, controller_variables = parameters, lb = lb, ub = ub)
-    # define the termination criteria
-    termination = get_termination("n_gen", max_gens)
+
+    # Initializing the population randomly from the base controller or from the provided checkpoint file
+    population = np.zeros((n_pop, n_vars))
+    last_iteration = 0
+    algorithm = None
+    if args.checkpoint_file != "None":
+        algorithm, last_iteration = load_checkpoint(args.checkpoint_file)
+        if algorithm == None:
+            sys.exit()
+    else:
+        create_population(n_pop, n_vars, name_parameters_to_change)
+        algorithm = DE(pop_size=n_pop, 
+                    sampling= population,
+                    variant="DE/rand/1/bin", 
+                    CR=cr,
+                    F=f,
+                    dither="no",
+                    jitter=False,
+                    eliminate_duplicates=True)
+
+    res = None
+    for iter in range(last_iteration, max_gens):
+        res = minimize(problem, algorithm, ('n_gen', 1), seed=de_seed, verbose=True, save_history=True)
+        checkpoint_file_name = save_checkpoint(algorithm, iter+1)
+        algorithm, last_iteration = load_checkpoint(checkpoint_file_name)
+        algorithm.has_terminated = False
+
+    if res != None:
+        print(f"final population fitness: {res.pop.get('F')}")
+        print("Best solution found: \nX = %s\nF = %s" % (res.X, res.F))
+
+        # plot convergence
+        n_evals = np.array([e.evaluator.n_eval for e in res.history])
+        opt = np.array([e.opt[0].F for e in res.history])
         
-    algorithm = DE(pop_size=n_pop, 
-                   sampling= population,
-                   variant="DE/rand/1/bin", 
-                   CR=cr,
-                   F=f,
-                   dither="no", 
-                   jitter=False,
-                   eliminate_duplicates=True)
-
-    res = minimize(problem, algorithm, termination, seed=de_seed, verbose=True, save_history=True)
-    print(f"final population fitness: {res.pop.get('F')}")
-    print("Best solution found: \nX = %s\nF = %s" % (res.X, res.F))
-
-    # plot convergence
-    n_evals = np.array([e.evaluator.n_eval for e in res.history])
-    opt = np.array([e.opt[0].F for e in res.history])
-    
-    # save best result
-    print("Saving the best result on file.....")
-    i = 0
-    for key in parameters_to_change.keys():
-        # change the value of contreller_variables
-        # if the given variable is under evolution
-        if parameters_to_change[key][0] == 1:
-            # this parameter is under evolution
-            parameters[key] = res.X[i]
-            i += 1
-    file_name = dir_path+"/Results/"+"Forza/"+f"{np_seed}_{de_seed}_{n_pop}_{max_gens}_{n_vars}_{cr}_{f}.xml"
-    with open(file_name, 'w') as outfile:
-        json.dump(parameters, outfile)
-    
-    plt.title("Convergence")
-    plt.plot(n_evals, opt, "-")
-    #plt.yscale("log")
-    plt.show()
+        # save best result
+        print("Saving the best result on file.....")
+        i = 0
+        for key in parameters_to_change.keys():
+            # change the value of contreller_variables
+            # if the given variable is under evolution
+            if parameters_to_change[key][0] == 1:
+                # this parameter is under evolution
+                parameters[key] = res.X[i]
+                i += 1
+        file_name = dir_path+"/Results/"+"Forza/"+f"{np_seed}_{de_seed}_{n_pop}_{max_gens}_{n_vars}_{cr}_{f}.xml"
+        with open(file_name, 'w') as outfile:
+            json.dump(parameters, outfile)
+        
+        plt.title("Convergence")
+        plt.plot(n_evals, opt, "-")
+        #plt.yscale("log")
+        plt.show()
 
 '''
 if __name__ == "__main__":
