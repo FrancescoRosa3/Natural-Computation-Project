@@ -66,12 +66,17 @@ class TorcsProblem(Problem):
     # Problem initialization
     def __init__(self, variables_to_change, controller_variables, lb, ub):
         
+        super().__init__(n_var=lb.shape[0], n_obj=1, n_constr=lb.shape[0], 
+                        xl=np.array([-100000 for i in range(lb.shape[0])]), xu=np.array([100000 for i in range(lb.shape[0])]))#,xl = lb, xu = ub)
+        
+        '''             
         super().__init__(n_var=lb.shape[0], n_obj=1, n_constr=0, 
                         xl=np.array([-100000 for i in range(lb.shape[0])]), xu=np.array([100000 for i in range(lb.shape[0])]))#,xl = lb, xu = ub)
-                         
+        '''
         self.variable_to_change = variables_to_change
         self.controller_variables = controller_variables
-
+        self.lb = lb
+        self.ub = ub
         self.fitness_terms = {}
            
     # evaluate function
@@ -85,16 +90,8 @@ class TorcsProblem(Problem):
                 if variable_to_change[key][0] == 1:
                     # this parameter is under evolution
                     #print(f"key: {key} - starting value: {controller_variables[key]:.2f} - modified value: {x[agent_indx][i]}")
-                    global lb, ub
-                    '''
-                    if x[i] <= lb[i] or x[i] >= ub[i]:
-                        print(f"Overflow variabile {key}- Currente value {x[i]} -lb {lb[i]} - ub {ub[i]}")
-                    '''
-                    #x[i] = clip(x[i], lb[i], ub[i])
                     controller_variables[key] = x[i]
                     i += 1
-
-            
 
             try:
                 #print(f"Run agent {agent_indx} on Port {BASE_PORT+indx+1}")
@@ -153,14 +150,21 @@ class TorcsProblem(Problem):
                 else:
                     print(f"THE AGENTS COULDN'T COMPLETE THE FIRST LAP")
                     fitness = np.inf  
-                return fitness
+                #return fitness
             except Exception as ex:
                 template = "An exception of type {0} occurred. Arguments:\n{1!r}"
                 message = template.format(type(ex).__name__, ex.args)
                 print(message)
-                return np.inf
-                
-                
+                fitness = np.inf
+            
+            
+            # check for constraint
+            constraint = []
+            for i in range(x.shape[0]):
+                constraint.append( int((x[i] < self.lb[i] or x[i] > self.ub[i])) )
+            
+            return fitness, constraint
+            
         # prepare the parameters for the pool
         port_number = 0
         params = []
@@ -171,18 +175,27 @@ class TorcsProblem(Problem):
                            deepcopy(self.controller_variables)))
             port_number += 1
         
-        F = POOL.starmap(run_simulations, params)
-        out["F"] = np.array(F)
         
-        print(out["F"])
+        results = POOL.starmap(run_simulations, params)
+        fitness = []
+        constraints = []
+        for i in range(len(results)):
+            fitness.append(results[i][0])
+            constraints.append(results[i][1])
+    
+        out["F"] = np.array(fitness)
+        out["G"] = np.array(constraints)
+        
+        print(f"Current solution fitness:\n{out['F']}")
+        print(f"Current solution constraing:\n{out['G']}")
         best_fit = np.min(out["F"])
         if best_fit != np.inf:
             print(f"BEST FITNESS: {best_fit} - terms: {self.fitness_terms[best_fit]}")
-
+        
 if __name__ == "__main__":
 
-    np_seed = 0
-    de_seed = 123
+    np_seed = 10
+    de_seed = 50
     # set the np seed
     np.random.seed(np_seed)
 
@@ -207,13 +220,13 @@ if __name__ == "__main__":
     
     print(f"Number of parameters {n_parameters}")
     # population size
-    n_pop = 100
+    n_pop = 10
     # number of variables for the problem visualization
     n_vars = n_parameters
     # maximum number of generations
-    max_gens = 20
+    max_gens = 2
     # Cross-over rate
-    cr = 0.7
+    cr = 0.9
     # Scaling factor F
     f = 0.9
 
@@ -232,6 +245,7 @@ if __name__ == "__main__":
                 population[i][j] = parameters[key] - offset
             else:
                 population[i][j] = parameters[key]
+            #population[i][j] = clip(population[i][j], lb[i], ub[i])
             #print(f"PARAMETER: {key}: {parameters[key]} - variation: {variation} - final_value: {population[i][j]}")
 
 
@@ -245,8 +259,8 @@ if __name__ == "__main__":
                    variant="DE/rand/1/bin", 
                    CR=cr,
                    F=f,
-                   dither="no", 
-                   jitter=False,
+                   dither="vector", 
+                   jitter=True,
                    eliminate_duplicates=True)
 
     res = minimize(problem, algorithm, termination, seed=de_seed, verbose=True, save_history=True)
