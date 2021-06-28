@@ -11,11 +11,14 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 
 class CustomController:
     
-    def __init__(self, port=None, parameters = None, parameters_from_file = True, parameter_file = "\Baseline_snakeoil\default_parameters"):
+    def __init__(self, port=None, parameters = None, parameters_from_file = True, parameter_file = "\Baseline_snakeoil\default_parameters",
+                 stage = 3, track = "unknown"):
         self.port = port
         self.parameters = parameters
         self.parameters_from_file = parameters_from_file
-        self.parameter_file = parameter_file        
+        self.parameter_file = parameter_file
+        self.stage = stage
+        self.track = track        
 
         self.target_speed= 0 
         self.lap= 0 
@@ -521,7 +524,6 @@ class CustomController:
                                             infleX,infleA)
                     self.target_speed*= self.damage_speed_adjustment(S['damage'])
                 else:
-                    print("Set target speed to 50")
                     self.target_speed= 50
         self.target_speed= min(self.target_speed,333)
         caution= 1
@@ -530,14 +532,14 @@ class CustomController:
             snow= self.T.section_in_now(S['distFromStart'])
             snext= self.T.section_ahead(S['distFromStart'])
             if snow:
-                if snow.self.badness>100: caution= .80
-                if snow.self.badness>1000: caution= .65
-                if snow.self.badness>10000: caution= .4
+                if snow.badness>100: caution= .80
+                if snow.badness>1000: caution= .65
+                if snow.badness>10000: caution= .4
                 if snext:
                     if snow.end - S['distFromStart'] < 200: 
-                        if snext.self.badness>100: caution= .90
-                        if snext.self.badness>1000: caution= .75
-                        if snext.self.badness>10000: caution= .5
+                        if snext.badness>100: caution= .90
+                        if snext.badness>1000: caution= .75
+                        if snext.badness>10000: caution= .5
         self.target_speed*= caution
         # In unknown this if is true
         if self.T.usable_model or c.stage>1:
@@ -636,13 +638,14 @@ class CustomController:
     def run_controller(self, plot_history = False):
         # load parameters
         if self.parameters_from_file:
-            pfile= open(dir_path + self.parameter_file,'r') 
+            pfile= open(dir_path + self.parameter_file,'r')
+            print(f"Load parameter from {self.parameter_file}") 
             P = json.load(pfile)
         else:
             P = self.parameters
 
         self.T = Track()
-        self.C = snakeoil.Client(p=self.port, P=P)
+        self.C = snakeoil.Client(p=self.port, P=P, t=self.track, s=self.stage)
             
         if self.C.stage == 1 or self.C.stage == 2:
             try:
@@ -650,7 +653,7 @@ class CustomController:
             except:
                 print(f"Could not load the track: {self.C.trackname}") 
                 sys.exit()
-            print("Track loaded!")
+            #print("Track loaded!")
 
         self.initialize_car(self.C)
         self.C.S.d['stucktimer']= 0
@@ -714,9 +717,14 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--parameters_file', '-pf', help="file name where take the controller parameters", type= str,
                         default= "\Baseline_snakeoil\default_parameters")
-
+    parser.add_argument('--stage', '-s', help="stage 0:warm-up, 1:qualification, 2:race, 3:unknown", type= int,
+                        default= 3)
+    parser.add_argument('--track', '-t', help="track name", type= str,
+                        default= "forza")
+    
     args = parser.parse_args()
 
     print(f"Take parameters from {args.parameters_file}")
-    controller = CustomController(parameter_file=args.parameters_file, port=3001)
+    controller = CustomController(parameter_file=args.parameters_file, port=3001, stage = args.stage, track = args.track)
     controller.run_controller(plot_history=True)
+    

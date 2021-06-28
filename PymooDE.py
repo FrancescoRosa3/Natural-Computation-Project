@@ -1,3 +1,4 @@
+from Baseline_snakeoil.client import Track
 from math import inf
 import numpy as np
 import matplotlib.pyplot as plt
@@ -5,6 +6,7 @@ import json, random, sys, threading, signal
 from copy import deepcopy
 import time
 from multiprocessing.pool import ThreadPool
+import xml.etree.ElementTree as ET
 from threading import Lock
 
 from numpy.lib.function_base import _select_dispatcher
@@ -35,7 +37,7 @@ parameters_to_change = json.load(pfile)
 # CONSTANT DEFINITION
 NUMBER_SERVERS = 10
 BASE_PORT = 3000
-PERCENTAGE_OF_VARIATION = 20
+PERCENTAGE_OF_VARIATION = 50
 
 # CONSTANT FOR NORMALIZATION
 EXPECTED_NUM_LAPS = 2
@@ -49,6 +51,8 @@ CG_1_WIDTH = 15.0
 UPPER_BOUND_DAMAGE = 1500
 MAX_OUT_OF_TRACK_TICKS = 1000       # corresponds to 20 sec
 
+# list of track names
+track_names = []
 
 agents_cnt_lock = Lock()
 POOL = ThreadPool(NUMBER_SERVERS)
@@ -66,6 +70,7 @@ def clip(param, lb, ub):
         return ub
     return param
 
+#'''
 # class that defines the problem to solve
 class TorcsProblem(Problem):
 
@@ -89,9 +94,9 @@ class TorcsProblem(Problem):
     def _evaluate(self, X, out, *args, **kwargs):
 
         # restart evaluated agents counter
-        agents_cnt_lock.acquire(blocking=True)
+        #agents_cnt_lock.acquire(blocking=True)
         self.agents_cnt = 0
-        agents_cnt_lock.release()
+        #agents_cnt_lock.release()
 
         def run_simulations(x, port_number, variable_to_change, controller_variables):
           
@@ -104,83 +109,86 @@ class TorcsProblem(Problem):
                     #print(f"key: {key} - starting value: {controller_variables[key]:.2f} - modified value: {x[agent_indx][i]}")
                     controller_variables[key] = x[i]
                     i += 1
-
-            try:
-                #print(f"Run agent {agent_indx} on Port {BASE_PORT+indx+1}")
-                controller = custom_controller.CustomController(port=BASE_PORT+port_number+1,
-                                                                parameters=controller_variables, 
-                                                                parameters_from_file=False)
-                
-                history_lap_time, history_speed, history_damage, history_distance_raced, history_track_pos, ticks = controller.run_controller()
-                
-                normalized_ticks = ticks/controller.C.maxSteps
-
-                # compute the number of laps
-                num_laps = len(history_lap_time)
-
-                if num_laps > 0:
-                    # compute the average speed
-                    avg_speed = 0
-                    for key in history_speed.keys():
-                        for value in history_speed[key]:
-                            avg_speed += value
-                    avg_speed /= ticks
-                    #print(f"Num Laps {num_laps} - Average Speed {avg_speed} - Num ticks {ticks}")
+            for track in track_names:
+                try:
+                    #print(f"Run agent {agent_indx} on Port {BASE_PORT+indx+1}")
+                    controller = custom_controller.CustomController(port=BASE_PORT+port_number+1,
+                                                                    parameters=controller_variables, 
+                                                                    parameters_from_file=False,
+                                                                    stage=2,
+                                                                    track=track)
                     
-                    normalized_avg_speed = avg_speed/MAX_SPEED
-                
-                    distance_raced = history_distance_raced[num_laps][-1]
-                    normalized_distance_raced = distance_raced/(FORZA_LENGTH*EXPECTED_NUM_LAPS)
-                
-                    # take the damage
-                    damage = history_damage[num_laps][-1]
-                    normalized_damage = damage/UPPER_BOUND_DAMAGE
-                
-                    # compute the average from the center line
-                    """
-                    average_track_pos = 0
-                    steps = 0
-                    for key in history_track_pos.keys():
-                        for value in history_track_pos[key]:
-                            steps += 1
-                            if abs(value) > 1:
-                                average_track_pos += (abs(value) - 1)
-                    average_track_pos /= steps
-                    """
-
-                    # compute out of track ticks and normilize it with respect to the total amount of ticks
-                    ticks_out_of_track = 0
-                    for key in history_track_pos.keys():
-                        for value in history_track_pos[key]:
-                            if abs(value) > 1:
-                                ticks_out_of_track += 1
-                    norm_out_of_track_ticks = ticks_out_of_track/MAX_OUT_OF_TRACK_TICKS                    
-                                
-                    fitness = -normalized_avg_speed -normalized_distance_raced +normalized_damage +norm_out_of_track_ticks +normalized_ticks
-                    self.fitness_terms[fitness] = {"Norm AVG SPEED": -normalized_avg_speed, "Norm Distance Raced": -normalized_distance_raced, "Norm Damage": normalized_damage, "norm out_of_track_ticks": norm_out_of_track_ticks, "normalized ticks": normalized_ticks, "Sim seconds": ticks/50}
+                    history_lap_time, history_speed, history_damage, history_distance_raced, history_track_pos, ticks = controller.run_controller()
                     
-                else:
-                    print(f"THE AGENTS COULDN'T COMPLETE THE FIRST LAP")
-                    fitness = np.inf  
-                #return fitness
-            except Exception as ex:
-                template = "An exception of type {0} occurred. Arguments:\n{1!r}"
-                message = template.format(type(ex).__name__, ex.args)
-                #print(message)
-                fitness = np.inf
-            
-            """
-            # check for constraint
-            constraint = []
-            for i in range(x.shape[0]):
-                constraint.append( int((x[i] < self.lb[i] or x[i] > self.ub[i])) )
-            """
-            agents_cnt_lock.acquire(blocking=True)
-            self.agents_cnt += 1
-            print(f"Agent runned {self.agents_cnt}")
-            agents_cnt_lock.release()
+                    normalized_ticks = ticks/controller.C.maxSteps
 
-            return fitness#, constraint
+                    # compute the number of laps
+                    num_laps = len(history_lap_time)
+
+                    if num_laps > 0:
+                        # compute the average speed
+                        avg_speed = 0
+                        for key in history_speed.keys():
+                            for value in history_speed[key]:
+                                avg_speed += value
+                        avg_speed /= ticks
+                        #print(f"Num Laps {num_laps} - Average Speed {avg_speed} - Num ticks {ticks}")
+                        
+                        normalized_avg_speed = avg_speed/MAX_SPEED
+                    
+                        distance_raced = history_distance_raced[num_laps][-1]
+                        normalized_distance_raced = distance_raced/(FORZA_LENGTH*EXPECTED_NUM_LAPS)
+                    
+                        # take the damage
+                        damage = history_damage[num_laps][-1]
+                        normalized_damage = damage/UPPER_BOUND_DAMAGE
+                    
+                        # compute the average from the center line
+                        """
+                        average_track_pos = 0
+                        steps = 0
+                        for key in history_track_pos.keys():
+                            for value in history_track_pos[key]:
+                                steps += 1
+                                if abs(value) > 1:
+                                    average_track_pos += (abs(value) - 1)
+                        average_track_pos /= steps
+                        """
+
+                        # compute out of track ticks and normilize it with respect to the total amount of ticks
+                        ticks_out_of_track = 0
+                        for key in history_track_pos.keys():
+                            for value in history_track_pos[key]:
+                                if abs(value) > 1:
+                                    ticks_out_of_track += 1
+                        norm_out_of_track_ticks = ticks_out_of_track/MAX_OUT_OF_TRACK_TICKS                    
+                                    
+                        fitness = -normalized_avg_speed -normalized_distance_raced +normalized_damage +norm_out_of_track_ticks +normalized_ticks
+                        self.fitness_terms[fitness] = {"Norm AVG SPEED": -normalized_avg_speed, "Norm Distance Raced": -normalized_distance_raced, "Norm Damage": normalized_damage, "norm out_of_track_ticks": norm_out_of_track_ticks, "normalized ticks": normalized_ticks, "Sim seconds": ticks/50}
+                        
+                    else:
+                        print(f"THE AGENTS COULDN'T COMPLETE THE FIRST LAP")
+                        fitness = np.inf  
+                    #return fitness
+                except Exception as ex:
+                    template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+                    message = template.format(type(ex).__name__, ex.args)
+                    #print(message)
+                    fitness = np.inf
+                
+                """
+                # check for constraint
+                constraint = []
+                for i in range(x.shape[0]):
+                    constraint.append( int((x[i] < self.lb[i] or x[i] > self.ub[i])) )
+                """
+                
+                agents_cnt_lock.acquire(blocking=True)
+                self.agents_cnt += 1
+                print(f"Agent runned {self.agents_cnt}")
+                agents_cnt_lock.release()
+                
+                return fitness#, constraint
             
         # prepare the parameters for the pool
         port_number = 0
@@ -210,6 +218,22 @@ class TorcsProblem(Problem):
         best_fit = np.min(out["F"])
         if best_fit != np.inf:
             print(f"BEST FITNESS: {best_fit} - terms: {self.fitness_terms[best_fit]}")
+
+def take_track_names(args):
+    track_names = []
+
+    path_name = dir_path + "/configuration_file/" + args.configuration_file + f"_{1}.xml"
+    
+    configuration_file = ET.parse(path_name)
+    root = configuration_file.getroot()
+
+    for child in root:
+        if child.attrib['name'] == 'Tracks':
+            for section in child.findall('section'):
+                for sub_section in section.findall('attstr'):
+                    if sub_section.attrib['name'] == 'name':
+                        track_names.append(sub_section.attrib['val'])
+    return track_names 
 
 def create_checkpoint_dir(checkpoint_folder):
     if not os.path.exists(checkpoint_folder):
@@ -267,7 +291,12 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--checkpoint_file', '-cf', help="checkpoint file containing the starting population for the algorithm", type= str,
                         default= "None")
+    parser.add_argument('--configuration_file', '-conf', help="name of the configuration file to use, without extension or port number", type= str,
+                    default= "quickrace_forza_no_adv")
+                    
     args = parser.parse_args()
+    
+    track_names = take_track_names(args)
 
     np_seed = 1
     de_seed = 124
@@ -295,15 +324,15 @@ if __name__ == "__main__":
     
     print(f"Number of parameters {n_parameters}")
     # population size
-    n_pop = 30
+    n_pop = 10
     # number of variables for the problem visualization
     n_vars = n_parameters
-    # maximum number of generations
-    max_gens = 5
+    # maximum number of generatios
+    max_gens = 10
     # Cross-over rate
-    cr = 0.9
+    cr = 0.7
     # Scaling factor F
-    f = 0.9
+    f = 0.5
 
     PARAMETERS_STRING = f"{np_seed}_{de_seed}_{n_pop}_{max_gens}_{n_vars}_{cr}_{f}_{PERCENTAGE_OF_VARIATION}"
 
@@ -331,14 +360,14 @@ if __name__ == "__main__":
 
         algorithm.setup(problem, ('n_gen', max_gens), seed=de_seed, verbose=True, save_history=True)
 
-    res = None
     for iter in range(last_iteration, max_gens):
-        res = algorithm.next()
+        algorithm.next()
         print(algorithm.n_gen)
         checkpoint_file_name = save_checkpoint(algorithm, iter+1)
         algorithm , _ = load_checkpoint(checkpoint_file_name)
         algorithm.has_terminated = False
-
+    
+    res = algorithm.result()
     if res != None:
         print(f"final population fitness: {res.pop.get('F')}")
         print("Best solution found: \nX = %s\nF = %s" % (res.X, res.F))
@@ -365,11 +394,69 @@ if __name__ == "__main__":
         plt.plot(n_evals, opt, "-")
         #plt.yscale("log")
         plt.show()
+#'''
 
 '''
 if __name__ == "__main__":
+    """
     par = {'dnsh3rpm': 7043.524501178322, 'consideredstr8': 0.010033102875417081, 'upsh6rpm': 14789.41256679235, 'dnsh2rpm': 7062.974503018889, 'str8thresh': 0.14383741216415255, 'safeatanyspeed': 0.0012800919243947557, 'offroad': 1.0002653228126588, 'fullstmaxsx': 20.070818862674596, 'wwlim': 4.487048259980536, 'upsh4rpm': 9850.06473842414, 'dnsh1rpm': 4086.4281437604054, 'sxappropriatest1': 16.08326982212498, 'oksyp': 0.06586706491973668, 'slipdec': 0.018047798233552067, 'spincutslp': 0.05142589453207698, 'ignoreinfleA': 10.793558810628733, 's2sen': 3.4996561397948263, 'dnsh4rpm': 7474.1667888177535, 'seriousABS': 30.237506792415605, 'dnsh5rpm': 8106.559743640354, 'obviousbase': 93.7374985607152, 'stst': 513.5298776779491, 'upsh3rpm': 9520.747330115491, 'clutch_release': 0.050017716984125785, 'stC': 297.23435114322194, 'pointingahead': 2.196445074922305, 'spincutclip': 0.10803464385693813, 'clutchslip': 90.34100694329528, 'obvious': 1.3232214861047789, 'backontracksx': 69.09088237263713, 'upsh2rpm': 10116.745791908856, 'senslim': 0.031006049843539912, 'clutchspin': 50.291035172311716, 'fullstis': 0.7759314134954662, 'brake': 0.5230215749291802, 'carmin': 34.98602774087677, 'sycon2': 1.000239198433143, 's2cen': 0.4701703131364017, 'sycon1': 0.6429244177717478, 'upsh5rpm': 9309.101130251716, 'carmaxvisib': 2.317604406633401, 'sxappropriatest2': 0.5520202884372154, 'skidsev1': 0.576616694479842, 'wheeldia': 0.8554277668777635, 'brakingpacefast': 1.0083267830865785, 'sensang': -0.7558273506842333, 'spincutint': 1.7810420061006913, 'st': 648.0720326063517, 'brakingpaceslow': 2.0841388650800172, 'sortofontrack': 1.5040683093640903, 'steer2edge': 0.9193250804761118, 'backward': 1.5085149570615013}
     file_name = dir_path+"/Results/"+"Forza/"+f"sgaso.xml"
     with open(file_name, 'w') as outfile:
         json.dump(parameters, outfile)
+    """
+    #controller = custom_controller.CustomController(stage=2, track='forza')
+    controller = custom_controller.CustomController(stage=3)
+       
+    history_lap_time, history_speed, history_damage, history_distance_raced, history_track_pos, ticks = controller.run_controller()
+    
+    normalized_ticks = ticks/controller.C.maxSteps
+
+    # compute the number of laps
+    num_laps = len(history_lap_time)
+
+    if num_laps > 0:
+        # compute the average speed
+        avg_speed = 0
+        for key in history_speed.keys():
+            for value in history_speed[key]:
+                avg_speed += value
+        avg_speed /= ticks
+        #print(f"Num Laps {num_laps} - Average Speed {avg_speed} - Num ticks {ticks}")
+        
+        normalized_avg_speed = avg_speed/MAX_SPEED
+    
+        distance_raced = history_distance_raced[num_laps][-1]
+        normalized_distance_raced = distance_raced/(FORZA_LENGTH*EXPECTED_NUM_LAPS)
+    
+        # take the damage
+        damage = history_damage[num_laps][-1]
+        normalized_damage = damage/UPPER_BOUND_DAMAGE
+    
+        # compute the average from the center line
+        """
+        average_track_pos = 0
+        steps = 0
+        for key in history_track_pos.keys():
+            for value in history_track_pos[key]:
+                steps += 1
+                if abs(value) > 1:
+                    average_track_pos += (abs(value) - 1)
+        average_track_pos /= steps
+        """
+
+        # compute out of track ticks and normilize it with respect to the total amount of ticks
+        ticks_out_of_track = 0
+        for key in history_track_pos.keys():
+            for value in history_track_pos[key]:
+                if abs(value) > 1:
+                    ticks_out_of_track += 1
+        norm_out_of_track_ticks = ticks_out_of_track/MAX_OUT_OF_TRACK_TICKS                    
+                    
+        fitness = -normalized_avg_speed -normalized_distance_raced +normalized_damage +norm_out_of_track_ticks +normalized_ticks
+        print(f"Fitness {fitness} - Norm AVG SPEED: {-normalized_avg_speed}, Norm Distance Raced: {-normalized_distance_raced},\
+Norm Damage: {normalized_damage}, norm out_of_track_ticks: {norm_out_of_track_ticks}, normalized ticks: {normalized_ticks}, Sim seconds: {ticks/50}")
+        
+    else:
+        print(f"THE AGENTS COULDN'T COMPLETE THE FIRST LAP")
+        fitness = np.inf  
 '''
