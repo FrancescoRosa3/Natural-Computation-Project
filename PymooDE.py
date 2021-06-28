@@ -35,7 +35,7 @@ pfile= open(dir_path + "\parameter_change_condition",'r')
 parameters_to_change = json.load(pfile)
 
 # CONSTANT DEFINITION
-NUMBER_SERVERS = 10
+NUMBER_SERVERS = 5
 BASE_PORT = 3000
 PERCENTAGE_OF_VARIATION = 50
 
@@ -83,7 +83,7 @@ class TorcsProblem(Problem):
         """super().__init__(n_var=lb.shape[0], n_obj=1, n_constr=lb.shape[0], 
                         xl=np.array([-100000 for i in range(lb.shape[0])]), xu=np.array([100000 for i in range(lb.shape[0])]))#,xl = lb, xu = ub)
         """
-        super().__init__(n_var=lb.shape[0], n_obj=1, n_constr=0, 
+        super().__init__(n_var=lb.shape[0], n_obj=3, n_constr=0, 
                         xl=np.array([-100000 for i in range(lb.shape[0])]), xu=np.array([100000 for i in range(lb.shape[0])]))#,xl = lb, xu = ub)
         
         self.variable_to_change = variables_to_change
@@ -353,11 +353,11 @@ if __name__ == "__main__":
     
     print(f"Number of parameters {n_parameters}")
     # population size
-    n_pop = 10
+    n_pop = 5
     # number of variables for the problem visualization
     n_vars = n_parameters
     # maximum number of generatios
-    max_gens = 3
+    max_gens = 1
     # Cross-over rate
     cr = 0.7
     # Scaling factor F
@@ -422,9 +422,9 @@ if __name__ == "__main__":
             # if the given variable is under evolution
             if parameters_to_change[key][0] == 1:
                 # this parameter is under evolution
-                parameters[key] = res.X[i]
+                parameters[key] = res.X[0][i]
                 i += 1
-        file_name = dir_path+"/Results/"+"Forza/"+PARAMETERS_STRING + ".xml"
+        file_name = dir_path+"/Results/"+"forza_wheel_1/"+PARAMETERS_STRING + ".xml"
         with open(file_name, 'w') as outfile:
             json.dump(parameters, outfile)
         
@@ -442,9 +442,10 @@ if __name__ == "__main__":
     with open(file_name, 'w') as outfile:
         json.dump(parameters, outfile)
     """
-    controller = custom_controller.CustomController(stage=2, track='g-track-2')
+    
+    controller = custom_controller.CustomController(stage=2, track='forza')
     #controller = custom_controller.CustomController(stage=3)
-       
+    
     history_lap_time, history_speed, history_damage, history_distance_raced, history_track_pos, ticks = controller.run_controller(plot_history=True)
     
     normalized_ticks = ticks/controller.C.maxSteps
