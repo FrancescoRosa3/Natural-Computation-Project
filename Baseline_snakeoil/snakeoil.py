@@ -64,7 +64,7 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 # Constant definition
 RACE_ENDED = 1
 NO_DATA_FROM_SERVER = -1
-MAX_STEPS = 25000  
+MAX_STEPS = 25000 #1000000  
 
 # Initialize help messages
 ophelp = 'Options:\n'
@@ -368,7 +368,7 @@ class Client():
         self.sid = 'SCR'
         self.maxEpisodes = 1  # "Maximum number of learning episodes to perform"
         self.trackname = 'unknown'
-        self.stage = 3  # 0=Warm-up, 1=Qualifying 2=Race, 3=unknown <Default=3>
+        self.stage = s  # 0=Warm-up, 1=Qualifying 2=Race, 3=unknown <Default=3>
         self.debug = False
         self.maxSteps = MAX_STEPS # 50steps/second
         self.pfilename = dir_path + '\default_parameters'
