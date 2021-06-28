@@ -45,15 +45,15 @@
     
     "upsh3rpm": [0, 0, 15000], 
     
-    "clutch_release": [0], 
+    "clutch_release": [0, -100000, 100000], 
     
     "stC": [1, 100, 1000], 
     
-    "pointingahead": [0], 
+    "pointingahead": [0, -100000, 100000], 
     
     "spincutclip": [1, 0, 1], 
     
-    "clutchslip": [0], 
+    "clutchslip": [0, -100000, 100000], 
     
     "obvious": [1, 0.5, 3], 
     
@@ -61,9 +61,9 @@
     
     "upsh2rpm": [0, 0, 15000], 
     
-    "senslim": [0], 
+    "senslim": [0, -100000, 100000], 
     
-    "clutchspin": [0], 
+    "clutchspin": [0, -100000, 100000], 
     
     "fullstis":  [1, -1, 1], 
     
@@ -83,9 +83,9 @@
     
     "sxappropriatest2": [0, 0.1, 1], 
     
-    "skidsev1": [0], 
+    "skidsev1": [0, -100000, 100000], 
     
-    "wheeldia": [0], 
+    "wheeldia": [0, -100000, 100000], 
     
     "brakingpacefast": [1, 0.5, 1.5], 
     
@@ -97,7 +97,7 @@
     
     "brakingpaceslow":  [1, 1, 5], 
     
-    "sortofontrack": [0], 
+    "sortofontrack": [0, -100000, 100000], 
     
     "steer2edge": [0, -2, 2], 
     

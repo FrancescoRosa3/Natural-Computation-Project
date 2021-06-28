@@ -279,9 +279,9 @@ def create_population(n_pop, n_vars, name_parameters_to_change):
             operation = np.random.choice([0,1,2])
             offset = np.random.uniform(0, variation)
             if operation == 0:
-                population[i][j] = parameters[key]# + offset
+                population[i][j] = parameters[key] + offset
             elif operation == 1:
-                population[i][j] = parameters[key]# - offset
+                population[i][j] = parameters[key] - offset
             else:
                 population[i][j] = parameters[key]
             #print(f"PARAMETER: {key}: {parameters[key]} - variation: {variation} - final_value: {population[i][j]}")
@@ -365,6 +365,12 @@ if __name__ == "__main__":
     for iter in range(last_iteration, max_gens):
         algorithm.next()
         print(algorithm.n_gen)
+
+        res = algorithm.result()
+        print(f"Best solution found at iteration {iter}: \nX = {res.X}")
+        for j,key in enumerate(name_parameters_to_change):
+            print(f"{key}: {res.X[j] - parameters[key]}")
+
         if SAVE_CHECKPOINT:
             checkpoint_file_name = save_checkpoint(algorithm, iter+1)
             algorithm , _ = load_checkpoint(checkpoint_file_name)
