@@ -51,7 +51,7 @@ CG_1_WIDTH = 15.0
 UPPER_BOUND_DAMAGE = 1500
 MAX_OUT_OF_TRACK_TICKS = 1000       # corresponds to 20 sec
 
-SAVE_CHECKPOINT = False
+SAVE_CHECKPOINT = True
 
 # list of track names
 track_names = []
@@ -60,10 +60,6 @@ agents_cnt_lock = Lock()
 POOL = ThreadPool(NUMBER_SERVERS)
 # ELEMENTS OF COST FUNCTION
 cost_function = {}
-
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press ⌘F8 to toggle the breakpoint.
 
 def clip(param, lb, ub):
     if param < lb:
@@ -126,52 +122,56 @@ class TorcsProblem(Problem):
 
                     # compute the number of laps
                     num_laps = len(history_lap_time)
+                    num_laps = 1 if num_laps == 0 else num_laps
 
-                    if num_laps > 0:
-                        # compute the average speed
-                        avg_speed = 0
-                        for key in history_speed.keys():
-                            for value in history_speed[key]:
-                                avg_speed += value
-                        avg_speed /= ticks
-                        #print(f"Num Laps {num_laps} - Average Speed {avg_speed} - Num ticks {ticks}")
-                        
-                        normalized_avg_speed = avg_speed/MAX_SPEED
+                    # if num_laps > 0:
+                    # compute the average speed
+                    avg_speed = 0
+                    for key in history_speed.keys():
+                        for value in history_speed[key]:
+                            avg_speed += value
+                    avg_speed /= ticks
+                    #print(f"Num Laps {num_laps} - Average Speed {avg_speed} - Num ticks {ticks}")
                     
-                        distance_raced = history_distance_raced[num_laps][-1]
-                        normalized_distance_raced = distance_raced/(FORZA_LENGTH*EXPECTED_NUM_LAPS)
-                    
-                        # take the damage
-                        damage = history_damage[num_laps][-1]
-                        normalized_damage = damage/UPPER_BOUND_DAMAGE
-                    
-                        # compute the average from the center line
-                        """
-                        average_track_pos = 0
-                        steps = 0
-                        for key in history_track_pos.keys():
-                            for value in history_track_pos[key]:
-                                steps += 1
-                                if abs(value) > 1:
-                                    average_track_pos += (abs(value) - 1)
-                        average_track_pos /= steps
-                        """
+                    normalized_avg_speed = avg_speed/MAX_SPEED
+                
+                    distance_raced = history_distance_raced[num_laps][-1]
+                    normalized_distance_raced = distance_raced/(FORZA_LENGTH*EXPECTED_NUM_LAPS)
+                
+                    # take the damage
+                    damage = history_damage[num_laps][-1]
+                    normalized_damage = damage/UPPER_BOUND_DAMAGE
+                
+                    # compute the average from the center line
+                    """
+                    average_track_pos = 0
+                    steps = 0
+                    for key in history_track_pos.keys():
+                        for value in history_track_pos[key]:
+                            steps += 1
+                            if abs(value) > 1:
+                                average_track_pos += (abs(value) - 1)
+                    average_track_pos /= steps
+                    """
 
-                        # compute out of track ticks and normilize it with respect to the total amount of ticks
-                        ticks_out_of_track = 0
-                        for key in history_track_pos.keys():
-                            for value in history_track_pos[key]:
-                                if abs(value) > 1:
-                                    ticks_out_of_track += 1
-                        norm_out_of_track_ticks = ticks_out_of_track/MAX_OUT_OF_TRACK_TICKS                    
-                                    
-                        fitness = -normalized_avg_speed -normalized_distance_raced +normalized_damage +norm_out_of_track_ticks +normalized_ticks
-                        self.fitness_terms[fitness] = {"Norm AVG SPEED": -normalized_avg_speed, "Norm Distance Raced": -normalized_distance_raced, "Norm Damage": normalized_damage, "norm out_of_track_ticks": norm_out_of_track_ticks, "normalized ticks": normalized_ticks, "Sim seconds": ticks/50}
-                        
+                    # compute out of track ticks and normilize it with respect to the total amount of ticks
+                    ticks_out_of_track = 0
+                    for key in history_track_pos.keys():
+                        for value in history_track_pos[key]:
+                            if abs(value) > 1:
+                                ticks_out_of_track += 1
+                    norm_out_of_track_ticks = ticks_out_of_track/MAX_OUT_OF_TRACK_TICKS                    
+                    
+                    speed_comp_multiplier = 2
+                    fitness = -normalized_avg_speed * speed_comp_multiplier -normalized_distance_raced +normalized_damage +norm_out_of_track_ticks +normalized_ticks
+                    self.fitness_terms[fitness] = {"Norm AVG SPEED": -normalized_avg_speed, "Norm Distance Raced": -normalized_distance_raced, "Norm Damage": normalized_damage, "norm out_of_track_ticks": norm_out_of_track_ticks, "normalized ticks": normalized_ticks, "Sim seconds": ticks/50}
+                    
+                    """
                     else:
                         print(f"THE AGENTS COULDN'T COMPLETE THE FIRST LAP")
                         fitness = np.inf  
                     #return fitness
+                    """
                 except Exception as ex:
                     template = "An exception of type {0} occurred. Arguments:\n{1!r}"
                     message = template.format(type(ex).__name__, ex.args)
@@ -306,7 +306,7 @@ if __name__ == "__main__":
     np.random.seed(np_seed)
 
     # Pymoo Differential Evolution
-    print_hi('Pymoo Differential Evolution')
+    print('Pymoo Differential Evolution')
 
     # compute the number of parameters to change
     # the lower and upper bound
@@ -369,7 +369,7 @@ if __name__ == "__main__":
         res = algorithm.result()
         print(f"Best solution found at iteration {iter}: \nX = {res.X}")
         for j,key in enumerate(name_parameters_to_change):
-            print(f"{key}: {res.X[j] - parameters[key]}")
+            print(f"{key}: {(res.X[j] - parameters[key]):.2f} - original value: {parameters[key]:.2f}")
 
         if SAVE_CHECKPOINT:
             checkpoint_file_name = save_checkpoint(algorithm, iter+1)
