@@ -2,10 +2,10 @@
 <!DOCTYPE params SYSTEM "params.dtd">
 
 
-<params name="CG Track2 no adversarial">
+<params name="Wheel1 no adversarial">
   <section name="Header">
-    <attstr name="name" val="CG Track2 no adversarial"/>
-    <attstr name="description" val="CG Track2 no adversarial"/>
+    <attstr name="name" val="Wheel1 no adversarial"/>
+    <attstr name="description" val="Wheel1 no adversarial"/>
     <attnum name="priority" val="10"/>
     <attstr name="menu image" val="data/img/splash-qr.png"/>
   </section>
@@ -14,7 +14,7 @@
     <attnum name="maximum number" val="3"/>
 
     <section name="1">
-      <attstr name="name" val="g-track-2"/>
+      <attstr name="name" val="wheel-1"/>
       <attstr name="category" val="road"/>
     </section>
 
@@ -22,18 +22,18 @@
 
   <section name="Races">
     <section name="1">
-      <attstr name="name" val="CG Track2 no adversarial"/>
+      <attstr name="name" val="Wheel1 no adversarial"/>
     </section>
 
   </section>
 
-  <section name="CG Track2 no adversarial">
+  <section name="Wheel1 no adversarial">
     <attnum name="distance" unit="km" val="0"/>
     <attstr name="type" val="race"/>
     <attstr name="starting order" val="drivers list"/>
     <attstr name="restart" val="yes"/>
     <!-- Number of laps -->
-    <attnum name="laps" val="3"/>
+    <attnum name="laps" val="2"/>
     <section name="Starting Grid">
       <attnum name="rows" val="2"/>
       <attnum name="distance to start" val="25"/>
@@ -113,7 +113,7 @@
 
     <section name="3">
       <attstr name="type" val="race config"/>
-      <attstr name="race" val="CG Track2 no adversarial"/>
+      <attstr name="race" val="Wheel1 no adversarial"/>
       <section name="Options">
         <section name="1">
           <attstr name="type" val="race length"/>

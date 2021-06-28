@@ -46,12 +46,12 @@ FORZA_LENGTH = 5784.10
 FORZA_WIDTH = 11.0
 WHEEL_LENGHT = 4328.54
 WHEEL_WIDTH = 14.0
-CG_1_LENGHT = 2057.56
-CG_1_WIDTH = 15.0
+CG_2_LENGHT = 2057.56
+CG_2_WIDTH = 15.0
 UPPER_BOUND_DAMAGE = 1500
 MAX_OUT_OF_TRACK_TICKS = 1000       # corresponds to 20 sec
 
-SAVE_CHECKPOINT = False
+SAVE_CHECKPOINT = True
 
 # list of track names
 track_names = []
@@ -300,8 +300,8 @@ if __name__ == "__main__":
     
     track_names = take_track_names(args)
 
-    np_seed = 123
-    de_seed = 123
+    np_seed = 1
+    de_seed = 124
     # set the np seed
     np.random.seed(np_seed)
 
@@ -334,7 +334,7 @@ if __name__ == "__main__":
     # Cross-over rate
     cr = 0.7
     # Scaling factor F
-    f = 0.5
+    f = 0.9
 
     PARAMETERS_STRING = f"{np_seed}_{de_seed}_{n_pop}_{max_gens}_{n_vars}_{cr}_{f}_{PERCENTAGE_OF_VARIATION}"
 
@@ -413,10 +413,10 @@ if __name__ == "__main__":
     with open(file_name, 'w') as outfile:
         json.dump(parameters, outfile)
     """
-    #controller = custom_controller.CustomController(stage=2, track='forza')
-    controller = custom_controller.CustomController(stage=3)
+    controller = custom_controller.CustomController(stage=2, track='cg_track_2')
+    #controller = custom_controller.CustomController(stage=3)
        
-    history_lap_time, history_speed, history_damage, history_distance_raced, history_track_pos, ticks = controller.run_controller()
+    history_lap_time, history_speed, history_damage, history_distance_raced, history_track_pos, ticks = controller.run_controller(plot_history=True)
     
     normalized_ticks = ticks/controller.C.maxSteps
 
@@ -435,7 +435,7 @@ if __name__ == "__main__":
         normalized_avg_speed = avg_speed/MAX_SPEED
     
         distance_raced = history_distance_raced[num_laps][-1]
-        normalized_distance_raced = distance_raced/(FORZA_LENGTH*EXPECTED_NUM_LAPS)
+        normalized_distance_raced = distance_raced/(CG_2_LENGHT*EXPECTED_NUM_LAPS)
     
         # take the damage
         damage = history_damage[num_laps][-1]
