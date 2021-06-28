@@ -1,0 +1,12 @@
+# MAX_STEPS = 25000
+
+Sim Time:    68.75 [s], Leader Laps:    1, Leader Distance:    3.186 [km]
+Sim Time:   132.12 [s], Leader Laps:    2, Leader Distance:    6.372 [km]
+
+Fitness -1.3215394840367691
+Norm AVG SPEED: -0.5728472766894426
+Norm Distance Raced: -1.0038388740139932
+Norm Damage: 0.0006666666666666666
+norm out_of_track_ticks: 0.0
+normalized ticks: 0.25448
+Sim seconds: 127.24
