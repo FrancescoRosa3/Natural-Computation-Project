@@ -35,7 +35,7 @@ parameters_to_change = json.load(pfile)
 # CONSTANT DEFINITION
 NUMBER_SERVERS = 10
 BASE_PORT = 3000
-PERCENTAGE_OF_VARIATION = 20
+PERCENTAGE_OF_VARIATION = 50
 
 # CONSTANT FOR NORMALIZATION
 EXPECTED_NUM_LAPS = 2
@@ -48,6 +48,8 @@ CG_1_LENGHT = 2057.56
 CG_1_WIDTH = 15.0
 UPPER_BOUND_DAMAGE = 1500
 MAX_OUT_OF_TRACK_TICKS = 1000       # corresponds to 20 sec
+
+SAVE_CHECKPOINT = False
 
 
 agents_cnt_lock = Lock()
@@ -253,9 +255,9 @@ def create_population(n_pop, n_vars, name_parameters_to_change):
             operation = np.random.choice([0,1,2])
             offset = np.random.uniform(0, variation)
             if operation == 0:
-                population[i][j] = parameters[key] + offset
+                population[i][j] = parameters[key]# + offset
             elif operation == 1:
-                population[i][j] = parameters[key] - offset
+                population[i][j] = parameters[key]# - offset
             else:
                 population[i][j] = parameters[key]
             #print(f"PARAMETER: {key}: {parameters[key]} - variation: {variation} - final_value: {population[i][j]}")
@@ -269,8 +271,8 @@ if __name__ == "__main__":
                         default= "None")
     args = parser.parse_args()
 
-    np_seed = 1
-    de_seed = 124
+    np_seed = 123
+    de_seed = 123
     # set the np seed
     np.random.seed(np_seed)
 
@@ -295,11 +297,11 @@ if __name__ == "__main__":
     
     print(f"Number of parameters {n_parameters}")
     # population size
-    n_pop = 30
+    n_pop = 150
     # number of variables for the problem visualization
     n_vars = n_parameters
     # maximum number of generations
-    max_gens = 5
+    max_gens = 15
     # Cross-over rate
     cr = 0.9
     # Scaling factor F
@@ -335,8 +337,9 @@ if __name__ == "__main__":
     for iter in range(last_iteration, max_gens):
         res = algorithm.next()
         print(algorithm.n_gen)
-        checkpoint_file_name = save_checkpoint(algorithm, iter+1)
-        algorithm , _ = load_checkpoint(checkpoint_file_name)
+        if SAVE_CHECKPOINT:
+            checkpoint_file_name = save_checkpoint(algorithm, iter+1)
+            algorithm , _ = load_checkpoint(checkpoint_file_name)
         algorithm.has_terminated = False
 
     if res != None:
