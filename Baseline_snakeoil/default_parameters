@@ -49,5 +49,8 @@
     "brakingpaceslow": 2.2425656876338924, 
     "sortofontrack": 1.5040683093640903, 
     "steer2edge": 0.95021144003154068, 
-    "backward": 1.6692247869011361 
+    "backward": 1.6692247869011361,
+    "steer_min_dist_opp": 7.0,
+    "steer_opp_adj": 0.5,
+    "steer_front_opp_adj": 0.1
 }
