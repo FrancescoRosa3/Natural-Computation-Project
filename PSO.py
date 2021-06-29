@@ -180,7 +180,7 @@ class TorcsProblem():
                         fitness_dict_component[track] = f"Fitness {fitness}-Car position {norm_car_position}- Norm AVG SPEED {-normalized_avg_speed}- Norm Distance Raced {-normalized_distance_raced}-Norm Damage {normalized_damage}- norm out_of_track_ticks {norm_out_of_track_ticks}- normalized ticks {normalized_ticks}- Sim seconds {ticks/50}"
                         
                     else:
-                        print(f"THE AGENTS COULDN'T COMPLETE THE FIRST LAP")
+                        #print(f"THE AGENTS COULDN'T COMPLETE THE FIRST LAP")
                         fitness = 10  
                     #return fitness
                     
@@ -210,7 +210,7 @@ class TorcsProblem():
 
             agents_cnt_lock.acquire(blocking=True)
             self.agents_cnt += 1
-            print(f"Agent runned {self.agents_cnt}")
+            print(f"Agent runned {self.agents_cnt}", end="\r")
             agents_cnt_lock.release()
             
             servers_port_state_lock.acquire(blocking=True)
@@ -240,7 +240,7 @@ class TorcsProblem():
         fitness = np.array(results)
         #out["G"] = np.array(constraints)
         
-        print(f"Current solution fitness:\n{fitness}")
+        #print(f"Current solution fitness:\n{fitness}")
         #print(f"Current solution constraing:\n{out['G']}")
         # best_fit = np.min(out["F"])
         best_fit_indx = np.argmin(fitness)
@@ -305,6 +305,15 @@ def create_population(n_pop, name_parameters_to_change):
 
 
 if __name__ == '__main__':
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+
+    # load default parameters
+    pfile= open(dir_path + "\Baseline_snakeoil\default_parameters",'r') 
+    parameters = json.load(pfile)
+
+    # load the change condition file
+    pfile= open(dir_path + "\parameter_change_condition",'r') 
+    parameters_to_change = json.load(pfile)
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--configuration_file', '-conf', help="name of the configuration file to use, without extension or port number", type= str,
@@ -315,16 +324,6 @@ if __name__ == '__main__':
 
     np_seed = 0
     np.random.seed(np_seed)
-
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-
-    # load default parameters
-    pfile= open(dir_path + "\Baseline_snakeoil\default_parameters",'r') 
-    parameters = json.load(pfile)
-
-    # load the change condition file
-    pfile= open(dir_path + "\parameter_change_condition",'r') 
-    parameters_to_change = json.load(pfile)
 
     # compute the number of parameters to change
     # the lower and upper bound
@@ -342,8 +341,6 @@ if __name__ == '__main__':
     lb = np.array(lb)
     ub = np.array(ub)
 
-    tp = TorcsProblem(variables_to_change=parameters_to_change, controller_variables=parameters, lb=lb, ub=ub)
-
     # Set-up hyperparameters
     #options = {'c1': 0.5, 'c2': 0.3, 'w': 0.9, 'k': 2, 'p': 2}
     options = {'c1': 1, 'c2': 0.8, 'w': 0.7298, 'k': 10, 'p': 2}
@@ -352,7 +349,9 @@ if __name__ == '__main__':
     iterations = 10
 
     PARAMETERS_STRING = f"{np_seed}_{swarm_size}_{iterations}_{n_parameters}_{options['c1']}_{options['c2']}_{options['w']}_{options['k']}_{options['p']}_{PERCENTAGE_OF_VARIATION}"
-    
+
+    tp = TorcsProblem(variables_to_change=parameters_to_change, controller_variables=parameters, lb=lb, ub=ub)
+
     population = np.zeros((swarm_size, n_parameters))
     create_population(swarm_size, name_parameters_to_change)
 
@@ -362,7 +361,7 @@ if __name__ == '__main__':
     # Perform optimization
     cost, pos = optimizer.optimize(func, iters=iterations)
 
-    print(cost)
+    print(cost) 
 
     # save best result
     print("Saving the best result on file.....")

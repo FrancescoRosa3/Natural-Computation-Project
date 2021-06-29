@@ -44,7 +44,7 @@ CG_2_WIDTH = 15.0
 TRACK_LENGTH = {'forza': FORZA_LENGTH, 'wheel-1': WHEEL_LENGHT, 'g-track-2': CG_2_LENGHT}
 UPPER_BOUND_DAMAGE = 1500
 MAX_OUT_OF_TRACK_TICKS = 1000       # corresponds to 20 sec
-NUMBER_AVAILABLE_POSITION = 9
+OPPONENTS_NUMBER = 8
 
 SAVE_CHECKPOINT = True
 
@@ -167,7 +167,8 @@ class TorcsProblem(Problem):
 
                         # take the car position at the end of the race
                         car_position = history_car_pos[history_key][-1]
-                        norm_car_position = car_position/NUMBER_AVAILABLE_POSITION
+                        car_position -= 1
+                        norm_car_position = car_position/OPPONENTS_NUMBER
 
                         # compute the average from the center line
                         """
@@ -257,7 +258,7 @@ class TorcsProblem(Problem):
         out["F"] = np.array(results)
         #out["G"] = np.array(constraints)
         
-        print(f"Current solution fitness:\n{out['F']}")
+        #print(f"Current solution fitness:\n{out['F']}")
         #print(f"Current solution constraing:\n{out['G']}")
         # best_fit = np.min(out["F"])
         best_fit_indx = np.argmin(out["F"])
