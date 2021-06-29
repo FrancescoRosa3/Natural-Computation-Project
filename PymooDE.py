@@ -344,8 +344,12 @@ if __name__ == "__main__":
                     default= "quickrace_forza_no_adv")
     parser.add_argument('--controller_params', '-ctrlpar', help="initial controller parameters", type= str,
                     default= "Baseline_snakeoil\default_parameters")
+    parser.add_argument('--adversary', '-adv', help="boolean for adversary (1 if present else 0)", type= int,
+                    default=0)
                     
     args = parser.parse_args()
+
+    isAdv = args.adversary
 
     # load default parameters
     args.controller_params = '\\' + args.controller_params
@@ -353,7 +357,10 @@ if __name__ == "__main__":
     parameters = json.load(pfile)
 
     # load the change condition file
-    pfile= open(dir_path + "\parameter_change_condition",'r') 
+    if isAdv == 1:
+        pfile= open(dir_path + "\parameter_change_condition_adv",'r') 
+    else:
+        pfile= open(dir_path + "\parameter_change_condition_no_adv",'r') 
     parameters_to_change = json.load(pfile)
     
     track_names = take_track_names(args)

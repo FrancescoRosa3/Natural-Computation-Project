@@ -307,20 +307,30 @@ def create_population(n_pop, name_parameters_to_change):
 if __name__ == '__main__':
     dir_path = os.path.dirname(os.path.realpath(__file__))
 
-    # load default parameters
-    pfile= open(dir_path + "\Baseline_snakeoil\default_parameters",'r') 
-    parameters = json.load(pfile)
-
-    # load the change condition file
-    pfile= open(dir_path + "\parameter_change_condition",'r') 
-    parameters_to_change = json.load(pfile)
-
     parser = argparse.ArgumentParser()
     parser.add_argument('--configuration_file', '-conf', help="name of the configuration file to use, without extension or port number", type= str,
                     default= "quickrace_forza_no_adv")
+    parser.add_argument('--controller_params', '-ctrlpar', help="initial controller parameters", type= str,
+                    default= "Baseline_snakeoil\default_parameters")
+    parser.add_argument('--adversary', '-adv', help="boolean for adversary (1 if present else 0)", type= int,
+                    default=0)
                     
     args = parser.parse_args()
     track_names = take_track_names(args)
+
+    # load default parameters
+    args.controller_params = '\\' + args.controller_params
+    pfile= open(dir_path + args.controller_params,'r') 
+    parameters = json.load(pfile)
+
+    isAdv = args.adversary
+
+    # load the change condition file
+    if isAdv == 1:
+        pfile= open(dir_path + "\parameter_change_condition_adv",'r') 
+    else:
+        pfile= open(dir_path + "\parameter_change_condition_no_adv",'r') 
+    parameters_to_change = json.load(pfile)
 
     np_seed = 0
     np.random.seed(np_seed)
