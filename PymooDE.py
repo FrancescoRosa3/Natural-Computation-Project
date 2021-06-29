@@ -290,7 +290,7 @@ def create_dir(folder_path):
 
 def save_checkpoint(algorithm, iter):
     global np_seed, de_seed, n_pop, max_gens, n_vars, cr, f, PARAMETERS_STRING
-    checkpoint_folder = dir_path + "/Checkpoints/"+ PARAMETERS_STRING + "/"
+    checkpoint_folder = results_folder + "/Checkpoints/"+ PARAMETERS_STRING + "/"
     create_dir(checkpoint_folder)
     checkpoint_file_name = checkpoint_folder + f"iter-{iter}.npy"
     try:
@@ -336,7 +336,7 @@ def create_population(n_pop, name_parameters_to_change):
 
 
 if __name__ == "__main__":
-
+    ####################### SETUP ################################
     parser = argparse.ArgumentParser()
     parser.add_argument('--checkpoint_file', '-cp', help="checkpoint file containing the starting population for the algorithm", type= str,
                         default= "None")
@@ -365,6 +365,11 @@ if __name__ == "__main__":
     
     track_names = take_track_names(args)
 
+    tracks_folder = args.configuration_file
+    results_folder = dir_path+"/Results_DE/"+ tracks_folder
+    create_dir(results_folder)
+
+    ####################### Differential Evolution ################################
     np_seed = 1
     de_seed = 123
     # set the np seed
@@ -391,7 +396,7 @@ if __name__ == "__main__":
     
     print(f"Number of parameters {n_parameters}")
     # population size
-    n_pop = 5
+    n_pop = 10
     # number of variables for the problem visualization
     n_vars = n_parameters
     # maximum number of generations
@@ -466,9 +471,7 @@ if __name__ == "__main__":
         for track in track_names:
             tracks_folder += (track + "_")        
         """
-        tracks_folder = args.configuration_file
-        results_folder = dir_path+"/Results_DE/"+ tracks_folder
-        create_dir(results_folder)
+
         
         file_name = results_folder  + "/" +PARAMETERS_STRING + ".xml"
         with open(file_name, 'w') as outfile:
