@@ -450,9 +450,12 @@ if __name__ == "__main__":
                 parameters[key] = res.X[0][i]
                 i += 1
 
+        """
         tracks_folder = ""
         for track in track_names:
             tracks_folder += (track + "_")        
+        """
+        tracks_folder = args.checkpoint_file
         results_folder = dir_path+"/Results/"+ tracks_folder
         create_dir(results_folder)
         
