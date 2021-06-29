@@ -100,6 +100,8 @@ class TorcsProblem():
                     #print(f"Agent {agent_indx} waked up")
             
 
+            #temp = deepcopy(controller_variables)
+
             i = 0
             for key in variable_to_change.keys():
                 # change the value of contreller_variables
@@ -109,7 +111,7 @@ class TorcsProblem():
                     #print(f"key: {key} - starting value: {controller_variables[key]:.2f} - modified value: {x[agent_indx][i]}")
                     controller_variables[key] = x[i]
                     i += 1
-
+            
             # dict where store the fitness for each track
             fitnesses_dict = {}
             # dict where store the fitness component for each track
@@ -208,6 +210,18 @@ class TorcsProblem():
                 num_track += 1
             total_fitness /= num_track
 
+            """
+            if total_fitness > 10:
+                    print(f"AGENTE: {self.agents_cnt} - fitness: {total_fitness}")
+                    with open("temp.xml", 'w') as outfile:
+                        json.dump(controller_variables, outfile)
+                    outfile.close()
+
+                    for key, val in temp.items():
+                        print(f"key: {key} - starting value: {val:.2f} - modified value: {controller_variables[key]:.2f}")
+
+                    print("\n")
+            """
             agents_cnt_lock.acquire(blocking=True)
             self.agents_cnt += 1
             print(f"Agent runned {self.agents_cnt}", end="\r")
@@ -343,9 +357,9 @@ if __name__ == '__main__':
 
     # Set-up hyperparameters
     #options = {'c1': 0.5, 'c2': 0.3, 'w': 0.9, 'k': 2, 'p': 2}
-    options = {'c1': 1, 'c2': 0.8, 'w': 0.7298, 'k': 10, 'p': 2}
+    options = {'c1': 0.8, 'c2': 0.6, 'w': 0.7298, 'k': 10, 'p': 2}
     problem_size = n_parameters
-    swarm_size = 50
+    swarm_size = 150
     iterations = 10
 
     PARAMETERS_STRING = f"{np_seed}_{swarm_size}_{iterations}_{n_parameters}_{options['c1']}_{options['c2']}_{options['w']}_{options['k']}_{options['p']}_{PERCENTAGE_OF_VARIATION}"
