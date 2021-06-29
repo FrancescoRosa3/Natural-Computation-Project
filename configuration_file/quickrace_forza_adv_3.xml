@@ -51,7 +51,6 @@
     <attstr name="focused module" val="scr_server"/>
 
     <!-- Adversarial -->
-    
     <section name="1">
       <attnum name="idx" val="0"/>
       <attstr name="module" val="damned"/>
@@ -91,7 +90,6 @@
       <attnum name="idx" val="7"/>
       <attstr name="module" val="berniw3"/>
     </section>
-    
 
     <!--Custom Controller-->
     <section name="9">
