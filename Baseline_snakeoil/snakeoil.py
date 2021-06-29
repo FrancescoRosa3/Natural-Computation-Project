@@ -419,10 +419,10 @@ class Client():
             try:
                 sockdata, addr = self.so.recvfrom(1024)
             except socket.error as emsg:
-                # print "Waiting for server on %d............" % self.port
+                #print("Waiting for server on %d............" % self.port)
                 pass
             if '***identified***' in sockdata.decode():
-                # print "Client connected on %d.............." % self.port
+                #print("Client connected on %d.............." % self.port)
                 break
 
     def parse_the_command_line(self):

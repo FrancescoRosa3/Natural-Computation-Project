@@ -1,3 +1,4 @@
+from typing import Tuple
 from Baseline_snakeoil.client import Track
 from math import inf
 import numpy as np
@@ -7,7 +8,7 @@ from copy import deepcopy
 import time
 from multiprocessing.pool import ThreadPool
 import xml.etree.ElementTree as ET
-from threading import Lock
+from threading import Lock, Condition
 
 from numpy.lib.function_base import _select_dispatcher
 
@@ -35,7 +36,7 @@ pfile= open(dir_path + "\parameter_change_condition",'r')
 parameters_to_change = json.load(pfile)
 
 # CONSTANT DEFINITION
-NUMBER_SERVERS = 5
+NUMBER_SERVERS = 10
 BASE_PORT = 3000
 PERCENTAGE_OF_VARIATION = 50
 
@@ -57,10 +58,16 @@ SAVE_CHECKPOINT = True
 # list of track names
 track_names = []
 
-agents_cnt_lock = Lock()
-POOL = ThreadPool(NUMBER_SERVERS)
 # ELEMENTS OF COST FUNCTION
 cost_function = {}
+
+# lock
+agents_cnt_lock = Lock()
+POOL = ThreadPool(NUMBER_SERVERS)
+
+servers_port_state_lock = Condition(lock=Lock())
+# True: server port free, False: server port busy
+servers_port_state = [True for i in range(NUMBER_SERVERS)]
 
 def clip(param, lb, ub):
     if param < lb:
@@ -99,8 +106,23 @@ class TorcsProblem(Problem):
         self.agents_cnt = 0
         #agents_cnt_lock.release()
 
-        def run_simulations(x, agent_indx, port_number, variable_to_change, controller_variables):
-          
+        def run_simulations(x, agent_indx, variable_to_change, controller_variables):
+            
+            servers_port_state_lock.acquire(blocking=True)
+            port_number = 0
+            while True:
+                try:
+                    port_number = servers_port_state.index(True)
+                    servers_port_state[port_number] = False
+                    servers_port_state_lock.release()
+                    #print(f"Agent {agent_indx}- Found Free port {port_number}")
+                    break
+                except ValueError:
+                    #print(f"Agent {agent_indx} wait....")
+                    servers_port_state_lock.wait()
+                    #print(f"Agent {agent_indx} waked up")
+            
+
             i = 0
             for key in variable_to_change.keys():
                 # change the value of contreller_variables
@@ -210,20 +232,21 @@ class TorcsProblem(Problem):
             print(f"Agent runned {self.agents_cnt}")
             agents_cnt_lock.release()
             
+            servers_port_state_lock.acquire(blocking=True)
+            servers_port_state[port_number] = True
+            servers_port_state_lock.notify_all()
+            servers_port_state_lock.release()
+
             return total_fitness#, constraint
             
         # prepare the parameters for the pool
-        port_number = 0
         params = []
         for k in range(len(X)):
             params.append((X[k],
-                           k, 
-                           port_number%NUMBER_SERVERS,
+                           k,
                            deepcopy(self.variable_to_change), 
                            deepcopy(self.controller_variables)))
-            port_number += 1
-        
-        
+           
         results = POOL.starmap(run_simulations, params)
         
         """
@@ -351,13 +374,13 @@ if __name__ == "__main__":
     
     print(f"Number of parameters {n_parameters}")
     # population size
-    n_pop = 5
+    n_pop = 200
     # number of variables for the problem visualization
     n_vars = n_parameters
     # maximum number of generatios
-    max_gens = 1
+    max_gens = 20
     # Cross-over rate
-    cr = 0.7
+    cr = 0.9
     # Scaling factor F
     f = 0.9
 
