@@ -392,11 +392,10 @@ if __name__ == "__main__":
         print(algorithm.n_gen)
 
         res = algorithm.result()
-        """
+        
         print(f"Best solution found at iteration {iter}: \nX = {res.X}")
         for j,key in enumerate(name_parameters_to_change):
             print(f"{key}: {(res.X[j] - parameters[key]):.2f} - original value: {parameters[key]:.2f}")
-        """
         
         if SAVE_CHECKPOINT:
             checkpoint_file_name = save_checkpoint(algorithm, iter+1)
