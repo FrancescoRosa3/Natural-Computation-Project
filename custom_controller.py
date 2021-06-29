@@ -336,23 +336,29 @@ class CustomController:
         sto= self.steer_centeralign(P,sti,tp,aadj,ttp)
         return self.speed_appropriate_steer(P,sto,sx)
 
-    def traffic_navigation(self, os, sti):
+    def traffic_navigation(self, P, os, sti):
         sto= sti 
         c= min(os[4:32]) 
         cs= os.index(c)  
         if not c: c= .0001
-        if min(os[18:26])<7:
-            sto+= .5/c
-        if min(os[8:17])<7:
-            sto-= .5/c
+        # if there is an opponent within x meters on the right side (in front of the car)
+        if min(os[18:26])<P['steer_min_dist_opp']:#7:
+            sto+= P['steer_opp_adj']/c
+            print(f"avversario sulla destra")
+        # if there is an opponent within x meters on the left side (in front of the car)
+        if min(os[8:17])<P['steer_min_dist_opp']:#7:
+            sto-= P['steer_opp_adj']/c
+            print(f"avversario sulla sinistra")
+        # if there is an opponent in front of the car
         if cs == 17:
-            sto+= .1/c
+            sto+= P['steer_front_opp_adj']/c
+        # if there is an opponent in front of the car
         if cs == 18:
-            sto-= .1/c
-        if .1 < os[17] < 40:
+            sto-= P['steer_front_opp_adj']/c
+        """if .1 < os[17] < 40:
             sto+= .01
         if .1 < os[18] < 40:
-            sto-= .01
+            sto-= .01"""
         return sto
 
     # P,R['clutch'],slip,S['speedX'],S['speedY'],S['gear']
@@ -513,9 +519,9 @@ class CustomController:
                                             S['speedX'],S['speedY'],R['steer'],S['angle'],
                                             infleX,infleA)
                 self.target_speed+= self.jump_speed_adjustment(S['z'])
-                if c.stage > 1: 
-                    self.target_speed+= self.traffic_speed_adjustment(
-                            S['opponents'],S['speedX'],self.target_speed,S['track'])
+                #if c.stage > 1: 
+                #    self.target_speed+= self.traffic_speed_adjustment(
+                #            S['opponents'],S['speedX'],self.target_speed,S['track'])
                 self.target_speed*= self.damage_speed_adjustment(S['damage'])
             else:
                 if self.lap > 1 and self.T.usable_model:
@@ -573,8 +579,9 @@ class CustomController:
                 # set the steer based on the current car speed: S['speedX']+50
                 # the desired steer based on the presence of the opponents: self.traffic_navigation(S['opponents'], R['steer'])
                 R['steer']= self.speed_appropriate_steer(P, 
-                                                        self.traffic_navigation(S['opponents'], R['steer']),
+                                                        self.traffic_navigation(P, S['opponents'], R['steer']),
                                                         S['speedX']+50)
+                #print(f"SONO QUI {R['steer']=}")
         
         if not S['stucktimer']:
             self.target_speed= abs(self.target_speed) 
