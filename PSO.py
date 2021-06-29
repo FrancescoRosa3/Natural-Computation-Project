@@ -13,6 +13,8 @@ from multiprocessing.pool import ThreadPool
 import xml.etree.ElementTree as ET
 from threading import Lock, Condition
 from copy import deepcopy
+import argparse
+
 # Change directory to access the pyswarms module
 sys.path.append('../')
 
@@ -22,15 +24,6 @@ sys.path.append('../')
 import custom_controller
 # define the path were the parameters are defined
 import os 
-dir_path = os.path.dirname(os.path.realpath(__file__))
-
-# load default parameters
-pfile= open(dir_path + "\Baseline_snakeoil\default_parameters",'r') 
-parameters = json.load(pfile)
-
-# load the change condition file
-pfile= open(dir_path + "\parameter_change_condition",'r') 
-parameters_to_change = json.load(pfile)
 
 # CONSTANT DEFINITION
 NUMBER_SERVERS = 10
@@ -258,6 +251,23 @@ class TorcsProblem():
 
         return fitness
 
+
+def take_track_names(args):
+    track_names = []
+
+    path_name = dir_path + "/configuration_file/" + args.configuration_file + f"_{1}.xml"
+    
+    configuration_file = ET.parse(path_name)
+    root = configuration_file.getroot()
+
+    for child in root:
+        if child.attrib['name'] == 'Tracks':
+            for section in child.findall('section'):
+                for sub_section in section.findall('attstr'):
+                    if sub_section.attrib['name'] == 'name':
+                        track_names.append(sub_section.attrib['val'])
+    return track_names
+
 # function to optimize
 def func(x):
     global tp
@@ -270,12 +280,51 @@ def clip(param, lb, ub):
         return ub
     return param
 
+def create_dir(folder_path):
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+
+def create_population(n_pop, name_parameters_to_change):
+    # initialize the population
+    for i in range(n_pop):
+        # for each parameter to change
+        for j,key in enumerate(name_parameters_to_change):
+            # compute the variation based on the default parameters
+            variation = (PERCENTAGE_OF_VARIATION * parameters[key])/100
+            operation = np.random.choice([0,1,2])
+            offset = np.random.uniform(0, variation)
+            if operation == 0:
+                population[i][j] = parameters[key] + offset
+            elif operation == 1:
+                population[i][j] = parameters[key] - offset
+            else:
+                population[i][j] = parameters[key]
+            population[i][j] = clip(population[i][j], lb[j], ub[j])
+            #print(f"PARAMETER: {key}: {parameters[key]} - variation: {variation} - final_value: {population[i][j]}")
+    return population
+
+
 if __name__ == '__main__':
 
-    np_seed = 0
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--configuration_file', '-conf', help="name of the configuration file to use, without extension or port number", type= str,
+                    default= "quickrace_forza_no_adv")
+                    
+    args = parser.parse_args()
+    track_names = take_track_names(args)
 
-    # set the np seed
+    np_seed = 0
     np.random.seed(np_seed)
+
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+
+    # load default parameters
+    pfile= open(dir_path + "\Baseline_snakeoil\default_parameters",'r') 
+    parameters = json.load(pfile)
+
+    # load the change condition file
+    pfile= open(dir_path + "\parameter_change_condition",'r') 
+    parameters_to_change = json.load(pfile)
 
     # compute the number of parameters to change
     # the lower and upper bound
@@ -297,34 +346,15 @@ if __name__ == '__main__':
 
     # Set-up hyperparameters
     #options = {'c1': 0.5, 'c2': 0.3, 'w': 0.9, 'k': 2, 'p': 2}
-    options = {'c1': 1.49618, 'c2': 1.49618, 'w': 0.7298, 'k': 2, 'p': 2}
+    options = {'c1': 1, 'c2': 0.8, 'w': 0.7298, 'k': 10, 'p': 2}
     problem_size = n_parameters
     swarm_size = 50
-    iterations = 10 #1000
+    iterations = 10
 
-    # initialize the population
+    PARAMETERS_STRING = f"{np_seed}_{swarm_size}_{iterations}_{n_parameters}_{options['c1']}_{options['c2']}_{options['w']}_{options['k']}_{options['p']}_{PERCENTAGE_OF_VARIATION}"
+    
     population = np.zeros((swarm_size, n_parameters))
-    for i in range(swarm_size):
-        # for each parameter to change
-        for j,key in enumerate(name_parameters_to_change):
-            # compute the variation based on the default parameters
-            variation = (PERCENTAGE_OF_VARIATION * parameters[key])/100
-            operation = np.random.choice([0,1,2])
-            if operation == 0:
-                population[i][j] = parameters[key] + variation
-            elif operation == 1:
-                population[i][j] = parameters[key] - variation
-            else:
-                population[i][j] = parameters[key]
-            population[i][j] = clip(population[i][j], lb[j], ub[j])
-
-    '''
-    for i in range(swarm_size):
-        # for each parameter to change
-        for j,key in enumerate(name_parameters_to_change):
-            print("TRUE" if parameters[key]>=lb[j] and parameters[key]<=ub[j] else "FALSE", end=' ')
-            print(f"{key=} {parameters[key]=} {lb[j]=} {ub[j]=}")
-    '''
+    create_population(swarm_size, name_parameters_to_change)
 
     # Call instance of PSO
     optimizer = ps.single.LocalBestPSO(n_particles=swarm_size, dimensions=problem_size, options=options, init_pos=population, bounds=(lb,ub))
@@ -342,9 +372,15 @@ if __name__ == '__main__':
         # if the given variable is under evolution
         if parameters_to_change[key][0] == 1:
             # this parameter is under evolution
-            parameters[key] = res.X[i]
+            parameters[key] = pos[i]
             i += 1
-    file_name = dir_path+"/Results/"+"Forza/"+f"{np_seed}.xml"
+    
+    tracks_folder = args.configuration_file
+    results_folder = dir_path + "/Results_PSO/" + tracks_folder
+    create_dir(results_folder)
+    
+    file_name = results_folder  + "/" + PARAMETERS_STRING + ".xml"
+    
     with open(file_name, 'w') as outfile:
         json.dump(parameters, outfile)
 

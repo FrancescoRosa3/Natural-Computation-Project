@@ -322,7 +322,7 @@ def load_checkpoint(checkpoint_file_name):
         print(f"iteration {last_iteration} checkpoint could not be restored")
         return None, None
 
-def create_population(n_pop, n_vars, name_parameters_to_change):
+def create_population(n_pop, name_parameters_to_change):
     # initialize the population
     for i in range(n_pop):
         # for each parameter to change
@@ -403,7 +403,7 @@ if __name__ == "__main__":
         if algorithm == None:
             sys.exit()
     else:
-        create_population(n_pop, n_vars, name_parameters_to_change)
+        create_population(n_pop, name_parameters_to_change)
         algorithm = DE(pop_size=n_pop, 
                     sampling= population,
                     variant="DE/rand/1/bin", 
@@ -455,8 +455,8 @@ if __name__ == "__main__":
         for track in track_names:
             tracks_folder += (track + "_")        
         """
-        tracks_folder = args.checkpoint_file
-        results_folder = dir_path+"/Results/"+ tracks_folder
+        tracks_folder = args.configuration_file
+        results_folder = dir_path+"/Results_DE/"+ tracks_folder
         create_dir(results_folder)
         
         file_name = results_folder  + "/" +PARAMETERS_STRING + ".xml"
