@@ -702,7 +702,7 @@ class CustomController:
                     history_car_pos[lap_cnt] = [self.C.S.d['racePos']]
 
             if return_code == snakeoil.RACE_ENDED:
-                print("Race ended")
+                #print("Race ended")
                 break
         
             self.drive(self.C, step)

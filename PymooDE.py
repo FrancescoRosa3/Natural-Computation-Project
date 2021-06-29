@@ -27,14 +27,6 @@ import custom_controller
 import os 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
-# load default parameters
-pfile= open(dir_path + "\Baseline_snakeoil\default_parameters",'r') 
-parameters = json.load(pfile)
-
-# load the change condition file
-pfile= open(dir_path + "\parameter_change_condition",'r') 
-parameters_to_change = json.load(pfile)
-
 # CONSTANT DEFINITION
 NUMBER_SERVERS = 10
 BASE_PORT = 3000
@@ -199,12 +191,13 @@ class TorcsProblem(Problem):
                         
                         # compute the fitness for the current track
                         speed_comp_multiplier = 2
-                        fitness = -normalized_avg_speed * speed_comp_multiplier -normalized_distance_raced +normalized_damage +norm_out_of_track_ticks +normalized_ticks +norm_car_position
+                        car_pos_multiplier = 2
+                        fitness = (-normalized_avg_speed * speed_comp_multiplier) -normalized_distance_raced +normalized_damage +norm_out_of_track_ticks +normalized_ticks + (norm_car_position * car_pos_multiplier)
                         # store the fitness for the current track
                         fitness_dict_component[track] = f"Fitness {fitness}-Car position {norm_car_position}- Norm AVG SPEED {-normalized_avg_speed}- Norm Distance Raced {-normalized_distance_raced}-Norm Damage {normalized_damage}- norm out_of_track_ticks {norm_out_of_track_ticks}- normalized ticks {normalized_ticks}- Sim seconds {ticks/50}"
                         
                     else:
-                        print(f"THE AGENTS COULDN'T COMPLETE THE FIRST LAP")
+                        #print(f"THE AGENTS COULDN'T COMPLETE THE FIRST LAP")
                         fitness = 10  
                     #return fitness
                     
@@ -234,7 +227,7 @@ class TorcsProblem(Problem):
 
             agents_cnt_lock.acquire(blocking=True)
             self.agents_cnt += 1
-            print(f"Agent runned {self.agents_cnt}")
+            print(f"Agent runned {self.agents_cnt}",end="\r")
             agents_cnt_lock.release()
             
             servers_port_state_lock.acquire(blocking=True)
@@ -344,17 +337,28 @@ def create_population(n_pop, n_vars, name_parameters_to_change):
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--checkpoint_file', '-cf', help="checkpoint file containing the starting population for the algorithm", type= str,
+    parser.add_argument('--checkpoint_file', '-cp', help="checkpoint file containing the starting population for the algorithm", type= str,
                         default= "None")
     parser.add_argument('--configuration_file', '-conf', help="name of the configuration file to use, without extension or port number", type= str,
                     default= "quickrace_forza_no_adv")
+    parser.add_argument('--controller_params', '-ctrlpar', help="initial controller parameters", type= str,
+                    default= "Baseline_snakeoil\default_parameters")
                     
     args = parser.parse_args()
+
+    # load default parameters
+    args.controller_params = '\\' + args.controller_params
+    pfile= open(dir_path + args.controller_params,'r') 
+    parameters = json.load(pfile)
+
+    # load the change condition file
+    pfile= open(dir_path + "\parameter_change_condition",'r') 
+    parameters_to_change = json.load(pfile)
     
     track_names = take_track_names(args)
 
     np_seed = 1
-    de_seed = 124
+    de_seed = 123
     # set the np seed
     np.random.seed(np_seed)
 
@@ -379,7 +383,7 @@ if __name__ == "__main__":
     
     print(f"Number of parameters {n_parameters}")
     # population size
-    n_pop = 50
+    n_pop = 5
     # number of variables for the problem visualization
     n_vars = n_parameters
     # maximum number of generations
@@ -417,13 +421,12 @@ if __name__ == "__main__":
 
     for iter in range(last_iteration, max_gens):
         algorithm.next()
-        print(algorithm.n_gen)
 
         res = algorithm.result()
         
-        print(f"Best solution found at iteration {iter}: \nX = {res.X}")
-        for j,key in enumerate(name_parameters_to_change):
-            print(f"{key}: {(res.X[0][j] - parameters[key]):.2f} - original value: {parameters[key]:.2f}")
+        #print(f"Best solution found at iteration {iter}: \nX = {res.X}")
+        """for j,key in enumerate(name_parameters_to_change):
+            print(f"{key}: {(res.X[0][j] - parameters[key]):.2f} - original value: {parameters[key]:.2f}")"""
         
         if SAVE_CHECKPOINT:
             checkpoint_file_name = save_checkpoint(algorithm, iter+1)
@@ -456,7 +459,7 @@ if __name__ == "__main__":
             tracks_folder += (track + "_")        
         """
         tracks_folder = args.checkpoint_file
-        results_folder = dir_path+"/Results/"+ tracks_folder
+        results_folder = dir_path+"/Results_DE/"+ tracks_folder
         create_dir(results_folder)
         
         file_name = results_folder  + "/" +PARAMETERS_STRING + ".xml"
