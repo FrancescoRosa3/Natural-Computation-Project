@@ -25,4 +25,5 @@ __pycache__/
 report.log
 .vscode/
 Checkpoints/
-Results/
+Results_DE/
+Results_PSO/
