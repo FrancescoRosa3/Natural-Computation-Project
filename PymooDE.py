@@ -52,6 +52,7 @@ CG_2_WIDTH = 15.0
 TRACK_LENGTH = {'forza': FORZA_LENGTH, 'wheel-1': WHEEL_LENGHT, 'g-track-2': CG_2_LENGHT}
 UPPER_BOUND_DAMAGE = 1500
 MAX_OUT_OF_TRACK_TICKS = 1000       # corresponds to 20 sec
+NUMBER_AVAILABLE_POSITION = 9
 
 SAVE_CHECKPOINT = True
 
@@ -146,7 +147,7 @@ class TorcsProblem(Problem):
                                                                     stage=2,
                                                                     track=track)
                     
-                    history_lap_time, history_speed, history_damage, history_distance_raced, history_track_pos, ticks = controller.run_controller()
+                    history_lap_time, history_speed, history_damage, history_distance_raced, history_track_pos, history_car_pos, ticks = controller.run_controller()
                     
                     normalized_ticks = ticks/controller.C.maxSteps
 
@@ -171,7 +172,11 @@ class TorcsProblem(Problem):
                         # take the damage
                         damage = history_damage[history_key][-1]
                         normalized_damage = damage/UPPER_BOUND_DAMAGE
-                    
+
+                        # take the car position at the end of the race
+                        car_position = history_car_pos[history_key][-1]
+                        norm_car_position = car_position/NUMBER_AVAILABLE_POSITION
+
                         # compute the average from the center line
                         """
                         average_track_pos = 0
@@ -194,9 +199,9 @@ class TorcsProblem(Problem):
                         
                         # compute the fitness for the current track
                         speed_comp_multiplier = 2
-                        fitness = -normalized_avg_speed * speed_comp_multiplier -normalized_distance_raced +normalized_damage +norm_out_of_track_ticks +normalized_ticks
+                        fitness = -normalized_avg_speed * speed_comp_multiplier -normalized_distance_raced +normalized_damage +norm_out_of_track_ticks +normalized_ticks +norm_car_position
                         # store the fitness for the current track
-                        fitness_dict_component[track] = f"Fitness {fitness}-Norm AVG SPEED {-normalized_avg_speed}- Norm Distance Raced {-normalized_distance_raced}-Norm Damage {normalized_damage}- norm out_of_track_ticks {norm_out_of_track_ticks}- normalized ticks {normalized_ticks}- Sim seconds {ticks/50}"
+                        fitness_dict_component[track] = f"Fitness {fitness}-Car position {norm_car_position}- Norm AVG SPEED {-normalized_avg_speed}- Norm Distance Raced {-normalized_distance_raced}-Norm Damage {normalized_damage}- norm out_of_track_ticks {norm_out_of_track_ticks}- normalized ticks {normalized_ticks}- Sim seconds {ticks/50}"
                         
                     else:
                         print(f"THE AGENTS COULDN'T COMPLETE THE FIRST LAP")

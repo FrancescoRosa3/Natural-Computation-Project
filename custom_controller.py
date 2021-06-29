@@ -671,6 +671,7 @@ class CustomController:
         history_lap_time = {}
         history_distance_raced = {}
         history_track_pos = {}
+        history_car_pos = {}
 
         lap_cnt = 1
         last_lap_time_prev = 0.0
@@ -692,6 +693,7 @@ class CustomController:
                     history_damage[lap_cnt].append(self.C.S.d['damage'])
                     history_distance_raced[lap_cnt].append(self.C.S.d['distRaced'])
                     history_track_pos[lap_cnt].append(self.C.S.d['trackPos'])
+                    history_car_pos[lap_cnt].append(self.C.S.d['racePos'])
             except KeyError as e:
                 if lap_cnt >= 1:
                     # initialize the history for the current lap
@@ -699,6 +701,7 @@ class CustomController:
                     history_damage[lap_cnt] = [self.C.S.d['damage']]
                     history_distance_raced[lap_cnt] = [self.C.S.d['distRaced']]
                     history_track_pos[lap_cnt] = [self.C.S.d['trackPos']]
+                    history_car_pos[lap_cnt] = [self.C.S.d['racePos']]
 
             if return_code == snakeoil.RACE_ENDED:
                 print("Race ended")
@@ -717,7 +720,7 @@ class CustomController:
         self.C.respond_to_server()
         #C.shutdown()
         
-        return history_lap_time, history_speed, history_damage, history_distance_raced, history_track_pos, ticks
+        return history_lap_time, history_speed, history_damage, history_distance_raced, history_track_pos, history_car_pos, ticks
 
 if __name__ == "__main__":
     import argparse
