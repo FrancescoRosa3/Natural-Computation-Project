@@ -51,7 +51,11 @@
     <attstr name="focused module" val="scr_server"/>
 
     <!-- Adversarial -->
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> eb1955dc80c5fdf71d3b3de86d820a12322a8000
     <section name="1">
       <attnum name="idx" val="0"/>
       <attstr name="module" val="damned"/>
@@ -91,6 +95,10 @@
       <attnum name="idx" val="7"/>
       <attstr name="module" val="berniw3"/>
     </section>
+<<<<<<< HEAD
+=======
+    
+>>>>>>> eb1955dc80c5fdf71d3b3de86d820a12322a8000
 
     <!--Custom Controller-->
     <section name="9">

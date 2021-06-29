@@ -344,11 +344,9 @@ class CustomController:
         # if there is an opponent within x meters on the right side (in front of the car)
         if min(os[18:26])<P['steer_min_dist_opp']:#7:
             sto+= P['steer_opp_adj']/c
-            print(f"avversario sulla destra")
         # if there is an opponent within x meters on the left side (in front of the car)
         if min(os[8:17])<P['steer_min_dist_opp']:#7:
             sto-= P['steer_opp_adj']/c
-            print(f"avversario sulla sinistra")
         # if there is an opponent in front of the car
         if cs == 17:
             sto+= P['steer_front_opp_adj']/c

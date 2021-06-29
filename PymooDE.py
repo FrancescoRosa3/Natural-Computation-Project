@@ -290,14 +290,14 @@ def take_track_names(args):
                         track_names.append(sub_section.attrib['val'])
     return track_names 
 
-def create_checkpoint_dir(checkpoint_folder):
-    if not os.path.exists(checkpoint_folder):
-        os.makedirs(checkpoint_folder)
+def create_dir(folder_path):
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
 
 def save_checkpoint(algorithm, iter):
     global np_seed, de_seed, n_pop, max_gens, n_vars, cr, f, PARAMETERS_STRING
     checkpoint_folder = dir_path + "/Checkpoints/"+ PARAMETERS_STRING + "/"
-    create_checkpoint_dir(checkpoint_folder)
+    create_dir(checkpoint_folder)
     checkpoint_file_name = checkpoint_folder + f"iter-{iter}.npy"
     try:
         with open(checkpoint_file_name, 'wb') as file:
@@ -379,11 +379,11 @@ if __name__ == "__main__":
     
     print(f"Number of parameters {n_parameters}")
     # population size
-    n_pop = 200
+    n_pop = 50
     # number of variables for the problem visualization
     n_vars = n_parameters
-    # maximum number of generatios
-    max_gens = 20
+    # maximum number of generations
+    max_gens = 5
     # Cross-over rate
     cr = 0.9
     # Scaling factor F
@@ -420,11 +420,10 @@ if __name__ == "__main__":
         print(algorithm.n_gen)
 
         res = algorithm.result()
-        """
+        
         print(f"Best solution found at iteration {iter}: \nX = {res.X}")
         for j,key in enumerate(name_parameters_to_change):
-            print(f"{key}: {(res.X[j] - parameters[key]):.2f} - original value: {parameters[key]:.2f}")
-        """
+            print(f"{key}: {(res.X[0][j] - parameters[key]):.2f} - original value: {parameters[key]:.2f}")
         
         if SAVE_CHECKPOINT:
             checkpoint_file_name = save_checkpoint(algorithm, iter+1)
@@ -450,7 +449,17 @@ if __name__ == "__main__":
                 # this parameter is under evolution
                 parameters[key] = res.X[0][i]
                 i += 1
-        file_name = dir_path+"/Results/"+"forza_wheel_1/"+PARAMETERS_STRING + ".xml"
+
+        """
+        tracks_folder = ""
+        for track in track_names:
+            tracks_folder += (track + "_")        
+        """
+        tracks_folder = args.checkpoint_file
+        results_folder = dir_path+"/Results/"+ tracks_folder
+        create_dir(results_folder)
+        
+        file_name = results_folder  + "/" +PARAMETERS_STRING + ".xml"
         with open(file_name, 'w') as outfile:
             json.dump(parameters, outfile)
         
