@@ -319,7 +319,7 @@ def get_parameters_to_change(path):
     version = path.split("_")[-1].split(".")[0]
     pfile= open(f"{dir_path}\{path}",'r') 
     parameters_to_change = json.load(pfile)
-    return version, parameters_to_change
+    return parameters_to_change, version
 
 
 def create_population(n_pop, name_parameters_to_change):
@@ -350,8 +350,8 @@ if __name__ == "__main__":
                     default= "quickrace_forza_no_adv")
     parser.add_argument('--controller_params', '-ctrlpar', help="initial controller parameters", type= str,
                     default= "Baseline_snakeoil\default_parameters")
-    parser.add_argument('--param_change_cond_version', '-param_vers', help="path to the file containing the parameters to be changed by the algorithm", type= int,
-                    default=0)
+    parser.add_argument('--param_change_cond_version', '-param_vers', help="path to the file containing the parameters to be changed by the algorithm", type= str,
+                    default="parameter_change_condition_no_adv_v_2")
                     
     args = parser.parse_args()
 
@@ -371,8 +371,8 @@ if __name__ == "__main__":
     create_dir(results_folder)
 
     ####################### Differential Evolution ################################
-    np_seed = 16
-    de_seed = 124
+    np_seed = 32
+    de_seed = 248
     # set the np seed
     np.random.seed(np_seed)
 
@@ -397,7 +397,7 @@ if __name__ == "__main__":
     
     print(f"Number of parameters {n_parameters}")
     # population size
-    n_pop = 150
+    n_pop = 100
     # number of variables for the problem visualization
     n_vars = n_parameters
     # maximum number of generations
