@@ -42,7 +42,7 @@ CG_2_WIDTH = 15.0
 TRACK_LENGTH = {'forza': FORZA_LENGTH, 'wheel-1': WHEEL_LENGHT, 'g-track-2': CG_2_LENGHT}
 UPPER_BOUND_DAMAGE = 1500
 MAX_OUT_OF_TRACK_TICKS = 1000       # corresponds to 20 sec
-NUMBER_AVAILABLE_POSITION = 9
+OPPONENTS_NUMBER = 8
 
 # list of track names
 track_names = []
@@ -153,7 +153,8 @@ class TorcsProblem():
 
                         # take the car position at the end of the race
                         car_position = history_car_pos[history_key][-1]
-                        norm_car_position = car_position/NUMBER_AVAILABLE_POSITION
+                        car_position -= 1
+                        norm_car_position = car_position/OPPONENTS_NUMBER
 
                         # compute the average from the center line
                         """
@@ -369,7 +370,7 @@ if __name__ == '__main__':
     #options = {'c1': 0.5, 'c2': 0.3, 'w': 0.9, 'k': 2, 'p': 2}
     options = {'c1': 0.8, 'c2': 0.6, 'w': 0.7298, 'k': 10, 'p': 2}
     problem_size = n_parameters
-    swarm_size = 150
+    swarm_size = 50
     iterations = 10
 
     PARAMETERS_STRING = f"{np_seed}_{swarm_size}_{iterations}_{n_parameters}_{options['c1']}_{options['c2']}_{options['w']}_{options['k']}_{options['p']}_{PERCENTAGE_OF_VARIATION}"

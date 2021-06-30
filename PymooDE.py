@@ -370,8 +370,8 @@ if __name__ == "__main__":
     create_dir(results_folder)
 
     ####################### Differential Evolution ################################
-    np_seed = 1
-    de_seed = 123
+    np_seed = 16
+    de_seed = 124
     # set the np seed
     np.random.seed(np_seed)
 
@@ -396,11 +396,11 @@ if __name__ == "__main__":
     
     print(f"Number of parameters {n_parameters}")
     # population size
-    n_pop = 10
+    n_pop = 150
     # number of variables for the problem visualization
     n_vars = n_parameters
     # maximum number of generations
-    max_gens = 5
+    max_gens = 20
     # Cross-over rate
     cr = 0.9
     # Scaling factor F
