@@ -301,9 +301,12 @@ def create_dir(folder_path):
 
 def get_parameters_to_change(path):
     version = path.split("_")[-1].split(".")[0]
-    pfile= open(f"{dir_path}\{path}",'r') 
+    print(f"version: {version}")
+    condition_path = f"{dir_path}\{path}"
+    print(f"condition_path: {condition_path}")
+    pfile= open(condition_path,'r')
     parameters_to_change = json.load(pfile)
-    return version, parameters_to_change
+    return parameters_to_change, version
 
 def create_population(n_pop, name_parameters_to_change):
     # initialize the population
@@ -333,10 +336,8 @@ if __name__ == '__main__':
                     default= "quickrace_forza_no_adv")
     parser.add_argument('--controller_params', '-ctrlpar', help="initial controller parameters", type= str,
                     default= "Baseline_snakeoil\default_parameters")
-    parser.add_argument('--adversary', '-adv', help="boolean for adversary (1 if present else 0)", type= int,
-                    default=0)
-    parser.add_argument('--param_change_cond_version', '-param_vers', help="path to the file containing the parameters to be changed by the algorithm", type= int,
-                    default=0)
+    parser.add_argument('--param_change_cond_version', '-param_vers', help="path to the file containing the parameters to be changed by the algorithm", type= str,
+                    default="parameter_change_condition_no_adv_v_2")
                     
     args = parser.parse_args()
     track_names = take_track_names(args)
@@ -345,8 +346,6 @@ if __name__ == '__main__':
     args.controller_params = '\\' + args.controller_params
     pfile= open(dir_path + args.controller_params,'r') 
     parameters = json.load(pfile)
-
-    isAdv = args.adversary
 
     # load the change condition file
     parameters_to_change, change_cond_version = get_parameters_to_change(args.param_change_cond_version)
@@ -374,8 +373,8 @@ if __name__ == '__main__':
     #options = {'c1': 0.5, 'c2': 0.3, 'w': 0.9, 'k': 2, 'p': 2}
     options = {'c1': 0.8, 'c2': 0.6, 'w': 0.7298, 'k': 10, 'p': 2}
     problem_size = n_parameters
-    swarm_size = 100
-    iterations = 10
+    swarm_size = 50
+    iterations = 20
 
     PARAMETERS_STRING = f"{np_seed}_{swarm_size}_{iterations}_{n_parameters}_{options['c1']}_{options['c2']}_{options['w']}_{options['k']}_{options['p']}_{PERCENTAGE_OF_VARIATION}_{change_cond_version}"
 

@@ -101,7 +101,7 @@
     
     "steer2edge": [0, -2, 2], 
     
-    "backward": [o, 0.1, 5],
+    "backward": [0, 0.1, 5],
 
     "steer_min_dist_opp": [0, 0, 30],
 
