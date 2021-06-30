@@ -316,6 +316,13 @@ def load_checkpoint(checkpoint_file_name):
         print(f"iteration {last_iteration} checkpoint could not be restored")
         return None, None
 
+def get_parameters_to_change(path):
+    version = path.split("_")[-1].split(".")[0]
+    pfile= open(f"{dir_path}\{path}",'r') 
+    parameters_to_change = json.load(pfile)
+    return version, parameters_to_change
+
+
 def create_population(n_pop, name_parameters_to_change):
     # initialize the population
     for i in range(n_pop):
@@ -344,12 +351,11 @@ if __name__ == "__main__":
                     default= "quickrace_forza_no_adv")
     parser.add_argument('--controller_params', '-ctrlpar', help="initial controller parameters", type= str,
                     default= "Baseline_snakeoil\default_parameters")
-    parser.add_argument('--adversary', '-adv', help="boolean for adversary (1 if present else 0)", type= int,
+    parser.add_argument('--param_change_cond_version', '-param_vers', help="path to the file containing the parameters to be changed by the algorithm", type= int,
                     default=0)
                     
     args = parser.parse_args()
 
-    isAdv = args.adversary
 
     # load default parameters
     args.controller_params = '\\' + args.controller_params
@@ -357,11 +363,7 @@ if __name__ == "__main__":
     parameters = json.load(pfile)
 
     # load the change condition file
-    if isAdv == 1:
-        pfile= open(dir_path + "\parameter_change_condition_adv",'r') 
-    else:
-        pfile= open(dir_path + "\parameter_change_condition_no_adv",'r') 
-    parameters_to_change = json.load(pfile)
+    parameters_to_change, change_cond_version = get_parameters_to_change(args.param_change_cond_version)
     
     track_names = take_track_names(args)
 
@@ -406,7 +408,7 @@ if __name__ == "__main__":
     # Scaling factor F
     f = 0.9
 
-    PARAMETERS_STRING = f"{np_seed}_{de_seed}_{n_pop}_{max_gens}_{n_vars}_{cr}_{f}_{PERCENTAGE_OF_VARIATION}"
+    PARAMETERS_STRING = f"{np_seed}_{de_seed}_{n_pop}_{max_gens}_{n_vars}_{cr}_{f}_{PERCENTAGE_OF_VARIATION}_{change_cond_version}"
 
     # define the problem
     problem = TorcsProblem(variables_to_change = parameters_to_change, controller_variables = parameters, lb = lb, ub = ub)

@@ -75,12 +75,12 @@
     "ignoreinfleA": 10.793558810628733, ## linea 310, confrontata con infleA
     "str8thresh": 0.14383741216415255, ## straightness, linea 310, utilizzata per confronto con 
     straightness, definisce la soglia per indicare la rettilineità di un tratto di percorso. []
-    "s2cen": 0.51134607943433941, ## [-1, 1] linea 282 
     "s2sen": 3.0044320966938169, ## linea 308, 
     "sensang": -0.90182079063412712,
 
     """ STEER CENTER ALIGN """
     # MODIFICARE
+    "s2cen": 0.51134607943433941, ## [-1, 1] linea 282 
     "steer2edge": 0.95021144003154068, ## [-1, 1], linea 282
     "backward": 1.6692247869011361 ### linea 278
     "offroad": 1.0002653228126588, ### linea 278 

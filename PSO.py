@@ -28,7 +28,7 @@ import os
 # CONSTANT DEFINITION
 NUMBER_SERVERS = 10
 BASE_PORT = 3000
-PERCENTAGE_OF_VARIATION = 20
+PERCENTAGE_OF_VARIATION = 50
 
 # CONSTANT FOR NORMALIZATION
 EXPECTED_NUM_LAPS = 2
@@ -299,6 +299,12 @@ def create_dir(folder_path):
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
 
+def get_parameters_to_change(path):
+    version = path.split("_")[-1].split(".")[0]
+    pfile= open(f"{dir_path}\{path}",'r') 
+    parameters_to_change = json.load(pfile)
+    return version, parameters_to_change
+
 def create_population(n_pop, name_parameters_to_change):
     # initialize the population
     for i in range(n_pop):
@@ -329,6 +335,8 @@ if __name__ == '__main__':
                     default= "Baseline_snakeoil\default_parameters")
     parser.add_argument('--adversary', '-adv', help="boolean for adversary (1 if present else 0)", type= int,
                     default=0)
+    parser.add_argument('--param_change_cond_version', '-param_vers', help="path to the file containing the parameters to be changed by the algorithm", type= int,
+                    default=0)
                     
     args = parser.parse_args()
     track_names = take_track_names(args)
@@ -341,11 +349,7 @@ if __name__ == '__main__':
     isAdv = args.adversary
 
     # load the change condition file
-    if isAdv == 1:
-        pfile= open(dir_path + "\parameter_change_condition_adv",'r') 
-    else:
-        pfile= open(dir_path + "\parameter_change_condition_no_adv",'r') 
-    parameters_to_change = json.load(pfile)
+    parameters_to_change, change_cond_version = get_parameters_to_change(args.param_change_cond_version)
 
     np_seed = 0
     np.random.seed(np_seed)
@@ -373,7 +377,7 @@ if __name__ == '__main__':
     swarm_size = 50
     iterations = 10
 
-    PARAMETERS_STRING = f"{np_seed}_{swarm_size}_{iterations}_{n_parameters}_{options['c1']}_{options['c2']}_{options['w']}_{options['k']}_{options['p']}_{PERCENTAGE_OF_VARIATION}"
+    PARAMETERS_STRING = f"{np_seed}_{swarm_size}_{iterations}_{n_parameters}_{options['c1']}_{options['c2']}_{options['w']}_{options['k']}_{options['p']}_{PERCENTAGE_OF_VARIATION}_{change_cond_version}"
 
     tp = TorcsProblem(variables_to_change=parameters_to_change, controller_variables=parameters, lb=lb, ub=ub)
 
