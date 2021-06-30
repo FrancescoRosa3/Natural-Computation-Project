@@ -536,14 +536,14 @@ class CustomController:
             snow= self.T.section_in_now(S['distFromStart'])
             snext= self.T.section_ahead(S['distFromStart'])
             if snow:
-                if snow.badness>100: caution= .80
-                if snow.badness>1000: caution= .65
-                if snow.badness>10000: caution= .4
+                if snow.badness>100: caution= P['caution_badness_snow_100']
+                if snow.badness>1000: caution= P['caution_badness_snow_1000']
+                if snow.badness>10000: caution= P['caution_badness_snow_10000']
                 if snext:
                     if snow.end - S['distFromStart'] < 200: 
-                        if snext.badness>100: caution= .90
-                        if snext.badness>1000: caution= .75
-                        if snext.badness>10000: caution= .5
+                        if snext.badness>100: caution= P['caution_badness_snext_100']
+                        if snext.badness>1000: caution= P['caution_badness_snext_1000']
+                        if snext.badness>10000: caution= P['caution_badness_snext_10000']
         self.target_speed*= caution
         # In unknown this if is true
         if self.T.usable_model or c.stage>1:

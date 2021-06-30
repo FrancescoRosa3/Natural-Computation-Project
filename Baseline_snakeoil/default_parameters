@@ -50,7 +50,16 @@
     "sortofontrack": 1.5040683093640903, 
     "steer2edge": 0.95021144003154068, 
     "backward": 1.6692247869011361,
+    
     "steer_min_dist_opp": 7.0,
     "steer_opp_adj": 0.5,
-    "steer_front_opp_adj": 0.1
+    "steer_front_opp_adj": 0.1,
+
+    "caution_badness_snow_100": 0.8,
+    "caution_badness_snow_1000": 0.65,
+    "caution_badness_snow_10000": 0.4,
+    
+    "caution_badness_snext_100": 0.90,
+    "caution_badness_snext_1000": 0.75,
+    "caution_badness_snext_10000": 0.5
 }
