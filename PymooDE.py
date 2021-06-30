@@ -100,7 +100,6 @@ class TorcsProblem(Problem):
         #agents_cnt_lock.release()
 
         def run_simulations(x, agent_indx, variable_to_change, controller_variables):
-            
             servers_port_state_lock.acquire(blocking=True)
             port_number = 0
             while True:
@@ -317,6 +316,7 @@ def load_checkpoint(checkpoint_file_name):
         return None, None
 
 def create_population(n_pop, name_parameters_to_change):
+    global population
     # initialize the population
     for i in range(n_pop):
         # for each parameter to change
@@ -332,7 +332,6 @@ def create_population(n_pop, name_parameters_to_change):
             else:
                 population[i][j] = parameters[key]
             #print(f"PARAMETER: {key}: {parameters[key]} - variation: {variation} - final_value: {population[i][j]}")
-    return population
 
 
 if __name__ == "__main__":
@@ -371,7 +370,7 @@ if __name__ == "__main__":
 
     ####################### Differential Evolution ################################
     np_seed = 1
-    de_seed = 123
+    de_seed = 124
     # set the np seed
     np.random.seed(np_seed)
 
@@ -396,11 +395,11 @@ if __name__ == "__main__":
     
     print(f"Number of parameters {n_parameters}")
     # population size
-    n_pop = 10
+    n_pop = 50
     # number of variables for the problem visualization
     n_vars = n_parameters
     # maximum number of generations
-    max_gens = 5
+    max_gens = 10
     # Cross-over rate
     cr = 0.9
     # Scaling factor F
