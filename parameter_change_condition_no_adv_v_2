@@ -1,5 +1,5 @@
-{   
-    "dnsh3rpm": [0, 0, 15000],
+ {
+   "dnsh3rpm": [0, 0, 15000],
     
     "consideredstr8": [1, 0, 10],  
     
@@ -107,7 +107,7 @@
 
     "steer_opp_adj": [0, 0.1, 1],
 
-    "steer_front_opp_adj": [0, 0.01, 1]
+    "steer_front_opp_adj": [0, 0.01, 1],
 
     "caution_badness_snow_100": [1, 0, 1],
     "caution_badness_snow_1000": [1, 0, 1],

@@ -30,7 +30,7 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 # CONSTANT DEFINITION
 NUMBER_SERVERS = 10
 BASE_PORT = 3000
-PERCENTAGE_OF_VARIATION = 50
+PERCENTAGE_OF_VARIATION = 40
 
 # CONSTANT FOR NORMALIZATION
 EXPECTED_NUM_LAPS = 2
@@ -69,7 +69,7 @@ def clip(param, lb, ub):
         return ub
     return param
 
-#'''
+
 # class that defines the problem to solve
 class TorcsProblem(Problem):
 
@@ -100,7 +100,6 @@ class TorcsProblem(Problem):
         #agents_cnt_lock.release()
 
         def run_simulations(x, agent_indx, variable_to_change, controller_variables):
-            
             servers_port_state_lock.acquire(blocking=True)
             port_number = 0
             while True:
@@ -324,6 +323,7 @@ def get_parameters_to_change(path):
 
 
 def create_population(n_pop, name_parameters_to_change):
+    global population
     # initialize the population
     for i in range(n_pop):
         # for each parameter to change
@@ -339,9 +339,8 @@ def create_population(n_pop, name_parameters_to_change):
             else:
                 population[i][j] = parameters[key]
             #print(f"PARAMETER: {key}: {parameters[key]} - variation: {variation} - final_value: {population[i][j]}")
-    return population
 
-
+#'''
 if __name__ == "__main__":
     ####################### SETUP ################################
     parser = argparse.ArgumentParser()
@@ -487,66 +486,112 @@ if __name__ == "__main__":
 
 '''
 if __name__ == "__main__":
-    """
-    par = {'dnsh3rpm': 7043.524501178322, 'consideredstr8': 0.010033102875417081, 'upsh6rpm': 14789.41256679235, 'dnsh2rpm': 7062.974503018889, 'str8thresh': 0.14383741216415255, 'safeatanyspeed': 0.0012800919243947557, 'offroad': 1.0002653228126588, 'fullstmaxsx': 20.070818862674596, 'wwlim': 4.487048259980536, 'upsh4rpm': 9850.06473842414, 'dnsh1rpm': 4086.4281437604054, 'sxappropriatest1': 16.08326982212498, 'oksyp': 0.06586706491973668, 'slipdec': 0.018047798233552067, 'spincutslp': 0.05142589453207698, 'ignoreinfleA': 10.793558810628733, 's2sen': 3.4996561397948263, 'dnsh4rpm': 7474.1667888177535, 'seriousABS': 30.237506792415605, 'dnsh5rpm': 8106.559743640354, 'obviousbase': 93.7374985607152, 'stst': 513.5298776779491, 'upsh3rpm': 9520.747330115491, 'clutch_release': 0.050017716984125785, 'stC': 297.23435114322194, 'pointingahead': 2.196445074922305, 'spincutclip': 0.10803464385693813, 'clutchslip': 90.34100694329528, 'obvious': 1.3232214861047789, 'backontracksx': 69.09088237263713, 'upsh2rpm': 10116.745791908856, 'senslim': 0.031006049843539912, 'clutchspin': 50.291035172311716, 'fullstis': 0.7759314134954662, 'brake': 0.5230215749291802, 'carmin': 34.98602774087677, 'sycon2': 1.000239198433143, 's2cen': 0.4701703131364017, 'sycon1': 0.6429244177717478, 'upsh5rpm': 9309.101130251716, 'carmaxvisib': 2.317604406633401, 'sxappropriatest2': 0.5520202884372154, 'skidsev1': 0.576616694479842, 'wheeldia': 0.8554277668777635, 'brakingpacefast': 1.0083267830865785, 'sensang': -0.7558273506842333, 'spincutint': 1.7810420061006913, 'st': 648.0720326063517, 'brakingpaceslow': 2.0841388650800172, 'sortofontrack': 1.5040683093640903, 'steer2edge': 0.9193250804761118, 'backward': 1.5085149570615013}
-    file_name = dir_path+"/Results/"+"Forza/"+f"sgaso.xml"
-    with open(file_name, 'w') as outfile:
-        json.dump(parameters, outfile)
-    """
-    
-    controller = custom_controller.CustomController(stage=2, track='forza')
-    #controller = custom_controller.CustomController(stage=3)
-    
-    history_lap_time, history_speed, history_damage, history_distance_raced, history_track_pos, ticks = controller.run_controller(plot_history=True)
-    
-    normalized_ticks = ticks/controller.C.maxSteps
-
-    # compute the number of laps
-    num_laps = len(history_lap_time)
-
-    if num_laps > 0:
-        # compute the average speed
-        avg_speed = 0
-        for key in history_speed.keys():
-            for value in history_speed[key]:
-                avg_speed += value
-        avg_speed /= ticks
-        #print(f"Num Laps {num_laps} - Average Speed {avg_speed} - Num ticks {ticks}")
-        
-        normalized_avg_speed = avg_speed/MAX_SPEED
-    
-        distance_raced = history_distance_raced[num_laps][-1]
-        normalized_distance_raced = distance_raced/(CG_2_LENGHT*EXPECTED_NUM_LAPS)
-    
-        # take the damage
-        damage = history_damage[num_laps][-1]
-        normalized_damage = damage/UPPER_BOUND_DAMAGE
-    
-        # compute the average from the center line
-        """
-        average_track_pos = 0
-        steps = 0
-        for key in history_track_pos.keys():
-            for value in history_track_pos[key]:
-                steps += 1
-                if abs(value) > 1:
-                    average_track_pos += (abs(value) - 1)
-        average_track_pos /= steps
-        """
-
-        # compute out of track ticks and normilize it with respect to the total amount of ticks
-        ticks_out_of_track = 0
-        for key in history_track_pos.keys():
-            for value in history_track_pos[key]:
-                if abs(value) > 1:
-                    ticks_out_of_track += 1
-        norm_out_of_track_ticks = ticks_out_of_track/MAX_OUT_OF_TRACK_TICKS                    
+    ####################### SETUP ################################
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--configuration_file', '-conf', help="name of the configuration file to use, without extension or port number", type= str,
+                    default= "quickrace_forza_no_adv")
+    parser.add_argument('--controller_params', '-ctrlpar', help="initial controller parameters", type= str,
+                    default= "Baseline_snakeoil\default_parameters")
+   
                     
-        fitness = -normalized_avg_speed -normalized_distance_raced +normalized_damage +norm_out_of_track_ticks +normalized_ticks
-        print(f"Fitness {fitness} - Norm AVG SPEED: {-normalized_avg_speed}, Norm Distance Raced: {-normalized_distance_raced},\
-Norm Damage: {normalized_damage}, norm out_of_track_ticks: {norm_out_of_track_ticks}, normalized ticks: {normalized_ticks}, Sim seconds: {ticks/50}")
+    args = parser.parse_args()
+
+    # load default parameters
+    args.controller_params = '\\' + args.controller_params
+    pfile= open(dir_path + args.controller_params,'r') 
+    parameters = json.load(pfile)
+    
+    track_names = take_track_names(args)
+
+    fitness_dict_component = {}
+    fitnesses_dict = {}
+    for track in track_names:
+        try:
+            #print(f"Run agent {agent_indx} on Port {BASE_PORT+indx+1}")
+            controller = custom_controller.CustomController(port=3001,
+                                                            parameters=parameters, 
+                                                            parameters_from_file=False,
+                                                            stage=2,
+                                                            track=track)
+
+            history_lap_time, history_speed, history_damage, history_distance_raced, history_track_pos, history_car_pos, ticks = controller.run_controller(plot_history = True)
+
+            normalized_ticks = ticks/controller.C.maxSteps
+
+            # compute the number of laps
+            num_laps = len(history_lap_time)
+
+            # the car has completed at least the first lap
+            if num_laps > 0:
+                # compute the average speed
+                avg_speed = 0
+                for history_key in history_speed.keys():
+                    for value in history_speed[history_key]:
+                        avg_speed += value
+                avg_speed /= ticks
+                #print(f"Num Laps {num_laps} - Average Speed {avg_speed} - Num ticks {ticks}")
+                
+                normalized_avg_speed = avg_speed/MAX_SPEED
+
+                distance_raced = history_distance_raced[history_key][-1]
+                normalized_distance_raced = distance_raced/(TRACK_LENGTH[track]*EXPECTED_NUM_LAPS)
+
+                # take the damage
+                damage = history_damage[history_key][-1]
+                normalized_damage = damage/UPPER_BOUND_DAMAGE
+
+                # take the car position at the end of the race
+                car_position = history_car_pos[history_key][-1]
+                car_position -= 1
+                norm_car_position = car_position/OPPONENTS_NUMBER
+
+                # compute the average from the center line
+                """
+                average_track_pos = 0
+                steps = 0
+                for key in history_track_pos.keys():
+                    for value in history_track_pos[key]:
+                        steps += 1
+                        if abs(value) > 1:
+                            average_track_pos += (abs(value) - 1)
+                average_track_pos /= steps
+                """
+
+                # compute out of track ticks and normilize it with respect to the total amount of ticks
+                ticks_out_of_track = 0
+                for key in history_track_pos.keys():
+                    for value in history_track_pos[key]:
+                        if abs(value) > 1:
+                            ticks_out_of_track += 1
+                norm_out_of_track_ticks = ticks_out_of_track/MAX_OUT_OF_TRACK_TICKS                    
+                
+                # compute the fitness for the current track
+                speed_comp_multiplier = 2
+                car_pos_multiplier = 2
+                fitness = (-normalized_avg_speed * speed_comp_multiplier) -normalized_distance_raced +normalized_damage +norm_out_of_track_ticks +normalized_ticks + (norm_car_position * car_pos_multiplier)
+                # store the fitness for the current track
+                fitness_dict_component[track] = f"Fitness {fitness}-Car position {norm_car_position}- Norm AVG SPEED {-normalized_avg_speed}- Norm Distance Raced {-normalized_distance_raced}-Norm Damage {normalized_damage}- norm out_of_track_ticks {norm_out_of_track_ticks}- normalized ticks {normalized_ticks}- Sim seconds {ticks/50}"
+                
+            else:
+                #print(f"THE AGENTS COULDN'T COMPLETE THE FIRST LAP")
+                fitness = 10  
+            #return fitness
+        except Exception as ex:
+            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            #print(message)
+            fitness = 20
+
+        fitnesses_dict[track] = fitness
         
-    else:
-        print(f"THE AGENTS COULDN'T COMPLETE THE FIRST LAP")
-        fitness = np.inf  
+
+    total_fitness = 0
+    num_track = 0
+    for fitness_on_track in fitnesses_dict.keys():
+        total_fitness += fitnesses_dict[fitness_on_track]
+        num_track += 1
+    total_fitness /= num_track
+
+    print(f"Total fitness {total_fitness}\nFitness components {fitness_dict_component}")
+
 '''

@@ -374,7 +374,7 @@ if __name__ == '__main__':
     #options = {'c1': 0.5, 'c2': 0.3, 'w': 0.9, 'k': 2, 'p': 2}
     options = {'c1': 0.8, 'c2': 0.6, 'w': 0.7298, 'k': 10, 'p': 2}
     problem_size = n_parameters
-    swarm_size = 50
+    swarm_size = 100
     iterations = 10
 
     PARAMETERS_STRING = f"{np_seed}_{swarm_size}_{iterations}_{n_parameters}_{options['c1']}_{options['c2']}_{options['w']}_{options['k']}_{options['p']}_{PERCENTAGE_OF_VARIATION}_{change_cond_version}"
