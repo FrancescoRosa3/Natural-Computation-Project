@@ -79,7 +79,8 @@
     "s2sen": 3.0044320966938169, ## linea 308, 
     "sensang": -0.90182079063412712,
 
-    # DA MODIFICARE
+    """ STEER CENTER ALIGN """
+    # MODIFICARE
     "steer2edge": 0.95021144003154068, ## [-1, 1], linea 282
     "backward": 1.6692247869011361 ### linea 278
     "offroad": 1.0002653228126588, ### linea 278 

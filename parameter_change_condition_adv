@@ -11,7 +11,7 @@
     
     "safeatanyspeed": [1, 0, 1], 
     
-    "offroad": [1, 0.1, 2], 
+    "offroad": [0, 0.1, 2], 
     
     "fullstmaxsx": [1, 10, 330], 
     
@@ -49,7 +49,7 @@
     
     "stC": [1, 100, 1000], 
     
-    "pointingahead": [1, -100000, 100000], 
+    "pointingahead": [0, -100000, 100000], 
     
     "spincutclip": [0, 0, 1], 
     
@@ -97,15 +97,23 @@
     
     "brakingpaceslow":  [1, 1, 5], 
     
-    "sortofontrack": [1, -100000, 100000], 
+    "sortofontrack": [0, -100000, 100000], 
     
-    "steer2edge": [1, -2, 2], 
+    "steer2edge": [0, -2, 2], 
     
-    "backward": [1, 0.1, 5],
+    "backward": [0, 0.1, 5],
 
     "steer_min_dist_opp": [1, 0, 30],
 
     "steer_opp_adj": [1, 0.1, 1],
 
-    "steer_front_opp_adj": [1, 0.01, 1]
+    "steer_front_opp_adj": [1, 0.01, 1],
+    
+    "caution_badness_snow_100": [1, 0, 1],
+    "caution_badness_snow_1000": [1, 0, 1],
+    "caution_badness_snow_10000": [1, 0, 1],
+    
+    "caution_badness_snext_100": [1, 0, 1],
+    "caution_badness_snext_1000": [1, 0, 1],
+    "caution_badness_snext_10000": [1, 0, 1]
 }
