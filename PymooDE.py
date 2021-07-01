@@ -199,7 +199,7 @@ class TorcsProblem(Problem):
                         car_pos_multiplier = 2
                         fitness = (-normalized_avg_speed * speed_comp_multiplier) -normalized_distance_raced +normalized_damage +norm_out_of_track_ticks +normalized_ticks + (norm_car_position * car_pos_multiplier)
                         # store the fitness for the current track
-                        fitness_dict_component[track] = f"Fitness {fitness}-Car position {norm_car_position}- Norm AVG SPEED {-normalized_avg_speed}- Norm Distance Raced {-normalized_distance_raced}-Norm Damage {normalized_damage}- norm out_of_track_ticks {norm_out_of_track_ticks}- normalized ticks {normalized_ticks}- Sim seconds {ticks/50}"
+                        fitness_dict_component[track] = f"Fitness {fitness:.4f}\nCar position {norm_car_position:.4f}\nNorm AVG SPEED {-normalized_avg_speed:.4f}\nNorm Distance Raced {-normalized_distance_raced:.4f}\nNorm Damage {normalized_damage:.4f}\nnorm out_of_track_ticks {norm_out_of_track_ticks:.4f}\nnormalized ticks {normalized_ticks:.4f}\nSim seconds {ticks/50}"
                         
                     else:
                         #print(f"THE AGENTS COULDN'T COMPLETE THE FIRST LAP")
@@ -331,6 +331,24 @@ def get_configuration(path):
         print("Adversarial {adversarial}")
     return parameters_to_change, version
 
+def save_results(result_params):
+    global parameters_to_change, parameters, results_folder
+    print("Saving the best result on file.....")
+    i = 0
+    for key in parameters_to_change.keys():
+        # change the value of contreller_variables
+        # if the given variable is under evolution
+        if parameters_to_change[key][0] == 1:
+            # this parameter is under evolution
+            parameters[key] = result_params[i]
+            i += 1
+    
+    create_dir(results_folder)
+    file_name = results_folder  + "/" + PARAMETERS_STRING + ".xml"
+    
+    with open(file_name, 'w') as outfile:
+        json.dump(parameters, outfile)
+
 
 def create_population(n_pop, name_parameters_to_change):
     global population
@@ -448,9 +466,8 @@ if __name__ == "__main__":
 
         res = algorithm.result()
         
-        #print(f"Best solution found at iteration {iter}: \nX = {res.X}")
-        """for j,key in enumerate(name_parameters_to_change):
-            print(f"{key}: {(res.X[0][j] - parameters[key]):.2f} - original value: {parameters[key]:.2f}")"""
+        # save best result
+        save_results(res.X[0])
         
         if SAVE_CHECKPOINT:
             checkpoint_file_name = save_checkpoint(algorithm, iter+1)
@@ -467,26 +484,7 @@ if __name__ == "__main__":
         opt = np.array([e.opt[0].F for e in res.history])
         
         # save best result
-        print("Saving the best result on file.....")
-        i = 0
-        for key in parameters_to_change.keys():
-            # change the value of contreller_variables
-            # if the given variable is under evolution
-            if parameters_to_change[key][0] == 1:
-                # this parameter is under evolution
-                parameters[key] = res.X[0][i]
-                i += 1
-
-        """
-        tracks_folder = ""
-        for track in track_names:
-            tracks_folder += (track + "_")        
-        """
-
-        
-        file_name = results_folder  + "/" +PARAMETERS_STRING + ".xml"
-        with open(file_name, 'w') as outfile:
-            json.dump(parameters, outfile)
+        save_results(res.X[0])
         
         plt.title("Convergence")
         plt.plot(n_evals, opt, "-")

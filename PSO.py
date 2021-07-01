@@ -78,6 +78,8 @@ class TorcsProblem():
         global swarm_size
         self.agents_cnt = 0
         self.fitness_terms = [None for i in range(swarm_size)]
+
+        self.prev_best = np.inf
            
     # evaluate function
     def evaluate(self, X):
@@ -185,7 +187,7 @@ class TorcsProblem():
                         speed_comp_multiplier = 2
                         fitness = -normalized_avg_speed * speed_comp_multiplier -normalized_distance_raced +normalized_damage +norm_out_of_track_ticks +normalized_ticks +norm_car_position
                         # store the fitness for the current track
-                        fitness_dict_component[track] = f"Fitness {fitness}-Car position {norm_car_position}- Norm AVG SPEED {-normalized_avg_speed}- Norm Distance Raced {-normalized_distance_raced}-Norm Damage {normalized_damage}- norm out_of_track_ticks {norm_out_of_track_ticks}- normalized ticks {normalized_ticks}- Sim seconds {ticks/50}"
+                        fitness_dict_component[track] = f"Fitness {fitness:.4f}\nCar position {norm_car_position:.4f}\nNorm AVG SPEED {-normalized_avg_speed:.4f}\nNorm Distance Raced {-normalized_distance_raced:.4f}\nNorm Damage {normalized_damage:.4f}\nnorm out_of_track_ticks {norm_out_of_track_ticks:.4f}\nnormalized ticks {normalized_ticks:.4f}\nSim seconds {ticks/50}"
                         
                     else:
                         #print(f"THE AGENTS COULDN'T COMPLETE THE FIRST LAP")
@@ -264,10 +266,15 @@ class TorcsProblem():
         #print(f"Current solution constraing:\n{out['G']}")
         # best_fit = np.min(out["F"])
         best_fit_indx = np.argmin(fitness)
+
+        if fitness[best_fit_indx] < self.prev_best:
+            self.prev_best = fitness[best_fit_indx]
+            save_results(X[best_fit_indx])
+
         print(f"BEST FITNESS: {fitness[best_fit_indx]}")
         best_fitness_terms = self.fitness_terms[best_fit_indx]
         for track in best_fitness_terms:
-            print(f"Track {track}: {best_fitness_terms[track]}")
+            print(f"TRACK {track}: {best_fitness_terms[track]}")
 
         return fitness
 
@@ -316,6 +323,25 @@ def get_configuration(path):
         adversarial = False
     return parameters_to_change, version
 
+def save_results(result_params):
+    global parameters_to_change, parameters, results_folder
+    print("Saving the best result on file.....")
+    i = 0
+    for key in parameters_to_change.keys():
+        # change the value of contreller_variables
+        # if the given variable is under evolution
+        if parameters_to_change[key][0] == 1:
+            # this parameter is under evolution
+            parameters[key] = result_params[i]
+            i += 1
+    
+    create_dir(results_folder)
+    file_name = results_folder  + "/" + PARAMETERS_STRING + ".xml"
+    
+    with open(file_name, 'w') as outfile:
+        json.dump(parameters, outfile)
+
+
 def create_population(n_pop, name_parameters_to_change):
     # initialize the population
     for i in range(n_pop):
@@ -349,6 +375,9 @@ if __name__ == '__main__':
                     
     args = parser.parse_args()
     track_names = take_track_names(args)
+    
+    tracks_folder = args.configuration_file
+    results_folder = dir_path + "/Results_PSO/" + tracks_folder
 
     # load default parameters
     args.controller_params = '\\' + args.controller_params
@@ -400,24 +429,7 @@ if __name__ == '__main__':
     print(cost) 
 
     # save best result
-    print("Saving the best result on file.....")
-    i = 0
-    for key in parameters_to_change.keys():
-        # change the value of contreller_variables
-        # if the given variable is under evolution
-        if parameters_to_change[key][0] == 1:
-            # this parameter is under evolution
-            parameters[key] = pos[i]
-            i += 1
-    
-    tracks_folder = args.configuration_file
-    results_folder = dir_path + "/Results_PSO/" + tracks_folder
-    create_dir(results_folder)
-    
-    file_name = results_folder  + "/" + PARAMETERS_STRING + ".xml"
-    
-    with open(file_name, 'w') as outfile:
-        json.dump(parameters, outfile)
+    save_results(pos)
 
     plot_cost_history(cost_history=optimizer.cost_history)
     plt.show()
