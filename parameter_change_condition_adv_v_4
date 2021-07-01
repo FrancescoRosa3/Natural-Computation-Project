@@ -1,0 +1,123 @@
+{   
+    "dnsh3rpm": [0, 0, 15000],
+    
+    "consideredstr8": [1, 0, 10],  
+    
+    "upsh6rpm": [1, 0, 15000], 
+    
+    "dnsh2rpm": [0, 0, 15000], 
+    
+    "str8thresh":  [0, 0, 10], 
+    
+    "safeatanyspeed": [1, 0, 1], 
+    
+    "offroad": [0, 0.1, 2], 
+    
+    "fullstmaxsx": [1, 10, 330], 
+    
+    "wwlim": [0, 0.1, 10], 
+    
+    "upsh4rpm": [0, 0, 15000], 
+    
+    "dnsh1rpm": [0, 0, 15000], 
+    
+    "sxappropriatest1": [1, 5, 30], 
+    
+    "oksyp": [1, 0.01, 0.1], 
+    
+    "slipdec": [0, 0.005, 0.1], 
+    
+    "spincutslp": [0, 0.01, 0.1], 
+    
+    "ignoreinfleA": [1, 5, 30], 
+    
+    "s2sen": [1, 0, 20], 
+    
+    "dnsh4rpm": [1, 0, 15000], 
+    
+    "seriousABS": [0,10, 330], 
+    
+    "dnsh5rpm": [1, 0, 15000], 
+    
+    "obviousbase": [1, 10, 330], 
+    
+    "stst":[1, 100, 1000],  
+    
+    "upsh3rpm": [0, 0, 15000], 
+    
+    "clutch_release": [0, -100000, 100000], 
+    
+    "stC": [1, 100, 1000], 
+    
+    "pointingahead": [0, -100000, 100000], 
+    
+    "spincutclip": [0, 0, 1], 
+    
+    "clutchslip": [0, -100000, 100000], 
+    
+    "obvious": [1, 0.5, 3], 
+    
+    "backontracksx": [1, 10, 330], 
+    
+    "upsh2rpm": [0, 0, 15000], 
+    
+    "senslim": [0, -100000, 100000], 
+    
+    "clutchspin": [0, -100000, 100000], 
+    
+    "fullstis":  [1, -1, 1], 
+    
+    "brake": [1, 0.1, 1], 
+    
+    "carmin":  [1, 10, 330], 
+    
+    "sycon2": [0, 0.1, 2], 
+    
+    "s2cen": [0, 0.1, 1], 
+    
+    "sycon1": [0, 0.1, 2], 
+    
+    "upsh5rpm": [1, 0, 15000], 
+    
+    "carmaxvisib": [1, 1, 10],
+    
+    "sxappropriatest2": [1, 0.1, 1], 
+    
+    "skidsev1": [0, -100000, 100000], 
+    
+    "wheeldia": [0, -100000, 100000], 
+    
+    "brakingpacefast": [1, 0.5, 1.5], 
+    
+    "sensang": [1, -2, 2], 
+    
+    "spincutint": [0, 0.1, 5], 
+    
+    "st": [1, 300, 1000], 
+    
+    "brakingpaceslow":  [1, 1, 5], 
+    
+    "sortofontrack": [0, -100000, 100000], 
+    
+    "steer2edge": [0, -2, 2], 
+    
+    "backward": [0, 0.1, 5],
+
+    "steer_min_dist_opp": [1, 0, 30],
+
+    "steer_opp_adj": [1, 0.1, 1],
+
+    "steer_front_opp_adj": [1, 0.01, 1],
+
+    "sn": [1, 0, 10],
+    "max_worry": [1, 0, 150],
+    "full_serious": [1, 0, 100],
+    
+    "caution_badness_snow_100": [1, 0, 1],
+    "caution_badness_snow_1000": [0, 0, 1],
+    "caution_badness_snow_10000": [1, 0, 1],
+    
+    "caution_badness_snext_100": [1, 0, 1],
+    "caution_badness_snext_1000": [0, 0, 1],
+    "caution_badness_snext_10000": [1, 0, 1]
+}

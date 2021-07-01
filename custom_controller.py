@@ -231,8 +231,8 @@ class CustomController:
         offtheground= snakeoil.clip(z-.350,0,1000)
         jsa= offtheground * -800
         return jsa
-
-    def traffic_speed_adjustment(self, os,sx,ts,tsen):
+    # S['opponents'],S['speedX'],self.target_speed,S['track']
+    def traffic_speed_adjustment(self, P, os,sx,ts,tsen):
         if not self.opHistory: 
             self.opHistory= os 
             return 0 
@@ -246,7 +246,9 @@ class CustomController:
         if sn < 8:
             sn=  min(sn , os[15],os[20])  
         sn-= 5 
-        if sn<3: 
+        
+        # soglia sulla distanza sotto la quale si frena
+        if sn<P["sn"]: 
             self.opHistory= os 
             return -ts 
         opn= mpn+sn 
@@ -262,9 +264,10 @@ class CustomController:
         osx= (opn-opp) * 180 
         osx= snakeoil.clip(osx,0,300) 
         if osx-sx > 0: return 0 
-        max_tsa= osx - ts 
-        max_worry= 80 
-        full_serious= 20 
+        max_tsa= osx - ts
+
+        max_worry= P["max_worry"] 
+        full_serious= P["full_serious"]
         if sn > max_worry:
             seriousness= 0
         elif sn < full_serious:
@@ -272,7 +275,7 @@ class CustomController:
         else:
             seriousness= (max_worry-sn)/(max_worry-full_serious)
         tsa= max_tsa * seriousness
-        tsa= snakeoil.clip(tsa,-ts,0) 
+        tsa= snakeoil.clip(tsa,-ts,0)
         return tsa
 
     # P,R['steer'],S['trackPos'],S['angle']
@@ -517,9 +520,9 @@ class CustomController:
                                             S['speedX'],S['speedY'],R['steer'],S['angle'],
                                             infleX,infleA)
                 self.target_speed+= self.jump_speed_adjustment(S['z'])
-                #if c.stage > 1: 
-                #    self.target_speed+= self.traffic_speed_adjustment(
-                #            S['opponents'],S['speedX'],self.target_speed,S['track'])
+                if c.stage > 1: 
+                    self.target_speed+= self.traffic_speed_adjustment(
+                            P, S['opponents'],S['speedX'],self.target_speed,S['track'])
                 self.target_speed*= self.damage_speed_adjustment(S['damage'])
             else:
                 if self.lap > 1 and self.T.usable_model:
