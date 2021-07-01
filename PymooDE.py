@@ -43,6 +43,7 @@ CG_2_LENGHT = 3185.83
 CG_2_WIDTH = 15.0
 TRACK_LENGTH = {'forza': FORZA_LENGTH, 'wheel-1': WHEEL_LENGHT, 'g-track-2': CG_2_LENGHT}
 UPPER_BOUND_DAMAGE = 1500
+UPPER_BOUND_DAMAGE_WITH_ADV = 7000
 MAX_OUT_OF_TRACK_TICKS = 1000       # corresponds to 20 sec
 OPPONENTS_NUMBER = 8
 
@@ -61,6 +62,9 @@ POOL = ThreadPool(NUMBER_SERVERS)
 servers_port_state_lock = Condition(lock=Lock())
 # True: server port free, False: server port busy
 servers_port_state = [True for i in range(NUMBER_SERVERS)]
+
+# boolean for adversarial
+adversarial = True
 
 def clip(param, lb, ub):
     if param < lb:
@@ -162,7 +166,8 @@ class TorcsProblem(Problem):
                     
                         # take the damage
                         damage = history_damage[history_key][-1]
-                        normalized_damage = damage/UPPER_BOUND_DAMAGE
+                        global adversarial
+                        normalized_damage = damage/UPPER_BOUND_DAMAGE if not adversarial else damage/UPPER_BOUND_DAMAGE_WITH_ADV
 
                         # take the car position at the end of the race
                         car_position = history_car_pos[history_key][-1]
@@ -315,10 +320,15 @@ def load_checkpoint(checkpoint_file_name):
         print(f"iteration {last_iteration} checkpoint could not be restored")
         return None, None
 
-def get_parameters_to_change(path):
-    version = path.split("_")[-1].split(".")[0]
+def get_configuration(path):
+    conf_split_underscore = path.split("_")
+    version = conf_split_underscore[-1].split(".")[0]
     pfile= open(f"{dir_path}\{path}",'r') 
     parameters_to_change = json.load(pfile)
+    if conf_split_underscore[-4] == 'no':
+        global adversarial
+        adversarial = False
+        print("Adversarial {adversarial}")
     return parameters_to_change, version
 
 
@@ -362,7 +372,7 @@ if __name__ == "__main__":
     parameters = json.load(pfile)
 
     # load the change condition file
-    parameters_to_change, change_cond_version = get_parameters_to_change(args.param_change_cond_version)
+    parameters_to_change, change_cond_version = get_configuration(args.param_change_cond_version)
     
     track_names = take_track_names(args)
 
