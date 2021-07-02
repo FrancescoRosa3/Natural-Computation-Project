@@ -193,18 +193,12 @@ class TorcsProblem():
                         norm_out_of_track_ticks = ticks_out_of_track/MAX_OUT_OF_TRACK_TICKS                    
                         
                         # compute the fitness for the current track
-                        speed_comp_multiplier = 2
-                        car_pos_multiplier = 2
-                        fitness = (-normalized_avg_speed * speed_comp_multiplier) -normalized_distance_raced +normalized_damage +norm_out_of_track_ticks +\
-                                    normalized_ticks + (norm_car_position * car_pos_multiplier)
-                        
+                        fitness = - normalized_avg_speed - norm_max_speed - norm_min_speed + norm_out_of_track_ticks
+                        # store the fitness for the current track
                         fitness_dict_component[track] = {
-                                                          "fitness": fitness, "car_position": norm_car_position, 
-                                                          "norm_avg_speed":-normalized_avg_speed,  "norm_distance_raced": -normalized_distance_raced,
-                                                          "norm_damage": normalized_damage, "norm_out_of_track_ticks": norm_out_of_track_ticks,
-                                                          "normalized_ticks": normalized_ticks, "sim_seconds": ticks/50
+                                                            "fitness": fitness, "norm_avg_speed":-normalized_avg_speed, "norm_out_of_track_ticks": norm_out_of_track_ticks,
+                                                            "norm_max_speed": norm_max_speed, "norm_min_speed": norm_min_speed
                                                         }
-
                     else:
                         if race_failed:
                             print(f"RACE FAILED")
@@ -302,11 +296,9 @@ class TorcsProblem():
                 agent_fitness_term_avg = {}
                 # for each track initialize the average terms.
                 for track in track_names:
-                    agent_fitness_term_avg[track] ={
-                                                    "fitness": 0.0, "car_position": 0.0, 
-                                                    "norm_avg_speed":-0.0,  "norm_distance_raced": -0.0,
-                                                    "norm_damage": 0.0, "norm_out_of_track_ticks": 0.0,
-                                                    "normalized_ticks": 0.0, "sim_seconds": 0.0
+                    agent_fitness_term_avg[track] = {
+                                                        "fitness": 0.0, "norm_avg_speed": 0.0, "norm_out_of_track_ticks": 0.0,
+                                                        "norm_max_speed": 0.0, "norm_min_speed": 0.0
                                                     }
 
                 # for each run of the agent
@@ -333,7 +325,7 @@ class TorcsProblem():
                 failed_counter += 1
         fitness_mean /= len(X)
 
-        print(f"RACE FAILED/TOTAL RACES: {failed_counter}/{len(X)}")
+        #print(f"RACE FAILED/TOTAL RACES: {failed_counter}/{len(X)}")
 
         best_fit_indx = np.argmin(fitness)
 
