@@ -439,6 +439,8 @@ if __name__ == '__main__':
     save_results(pos)
 
     plot_cost_history(cost_history=optimizer.cost_history)
+    file_name = results_folder  + "/" + PARAMETERS_STRING + '.png'
+    plt.savefig(file_name)
     plt.show()
 
     '''

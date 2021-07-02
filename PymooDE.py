@@ -31,6 +31,8 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 NUMBER_SERVERS = 10
 BASE_PORT = 3000
 PERCENTAGE_OF_VARIATION = 40
+MIN_TO_EVALUATE = 3
+NUM_RUN_FOR_BEST_EVALUATION = 3
 
 # CONSTANT FOR NORMALIZATION
 EXPECTED_NUM_LAPS = 2
@@ -199,7 +201,12 @@ class TorcsProblem(Problem):
                         car_pos_multiplier = 2
                         fitness = (-normalized_avg_speed * speed_comp_multiplier) -normalized_distance_raced +normalized_damage +norm_out_of_track_ticks +normalized_ticks + (norm_car_position * car_pos_multiplier)
                         # store the fitness for the current track
-                        fitness_dict_component[track] = f"Fitness {fitness:.4f}\nCar position {norm_car_position:.4f}\nNorm AVG SPEED {-normalized_avg_speed:.4f}\nNorm Distance Raced {-normalized_distance_raced:.4f}\nNorm Damage {normalized_damage:.4f}\nnorm out_of_track_ticks {norm_out_of_track_ticks:.4f}\nnormalized ticks {normalized_ticks:.4f}\nSim seconds {ticks/50}"
+                        fitness_dict_component[track] = {
+                                                          "fitness": fitness, "car_position": norm_car_position, 
+                                                          "norm_avg_speed":-normalized_avg_speed,  "norm_distance_raced": -normalized_distance_raced,
+                                                          "norm_damage": normalized_damage, "norm_out_of_track_ticks": norm_out_of_track_ticks,
+                                                          "normalized_ticks": normalized_ticks, "sim_seconds": ticks/50
+                                                        }
                         
                     else:
                         if race_failed:
@@ -255,6 +262,58 @@ class TorcsProblem(Problem):
            
         results = POOL.starmap(run_simulations, params)
         
+        if adversarial == True:
+            # take the MIN_TO_EVALUATE best agents
+            indices = np.argpartition(results, MIN_TO_EVALUATE)[:MIN_TO_EVALUATE]
+            # prepare the parameters for the pool
+            params = []
+            for indx in indices:
+                params.append((X[indx],
+                            indx,
+                            deepcopy(self.variable_to_change), 
+                            deepcopy(self.controller_variables)))
+            
+            best_agents_fitness_estimation = []
+            best_agent_fitness_terms = [[] for i in range(NUM_RUN_FOR_BEST_EVALUATION)]
+            # run NUM_RUN_FOR_BEST_EVALUATION simulation in order to better estimate
+            # the fitness of the agent.
+            for run in range(NUM_RUN_FOR_BEST_EVALUATION):
+                best_agents_fitness_estimation.append(POOL.starmap(run_simulations, params))
+                for agent in indices:
+                    best_agent_fitness_terms[run].append(self.fitness_terms[agent])
+
+            best_agents_fitness_estimation = np.array(best_agents_fitness_estimation)
+            # compute the average fitness, for each agent
+            for i, agent in enumerate(indices):
+                # compute the average fitness for the given agent
+                results[agent] = np.average(best_agents_fitness_estimation[:, i])
+                
+                # compute the average of the fitness term
+                agent_fitness_term_avg = {}
+                # for each track initialize the average terms.
+                for track in track_names:
+                    agent_fitness_term_avg[track] ={
+                                                    "fitness": 0.0, "car_position": 0.0, 
+                                                    "norm_avg_speed":-0.0,  "norm_distance_raced": -0.0,
+                                                    "norm_damage": 0.0, "norm_out_of_track_ticks": 0.0,
+                                                    "normalized_ticks": 0.0, "sim_seconds": 0.0
+                                                    }
+
+                # for each run of the agent
+                for run in range(NUM_RUN_FOR_BEST_EVALUATION):
+                    # fitness terms of the i-th agent, for the given run 
+                    agent_fitness_term = best_agent_fitness_terms[run][i]
+                    for track in agent_fitness_term:
+                        # for each terms, for the given track.
+                        for term in agent_fitness_term[track].keys():
+                            agent_fitness_term_avg[track][term] += agent_fitness_term[track][term]
+                
+                for track in agent_fitness_term_avg:
+                    for term in agent_fitness_term_avg[track].keys():
+                        agent_fitness_term_avg[track][term] /= NUM_RUN_FOR_BEST_EVALUATION
+                print(f"Agent {agent}, fitness terms {agent_fitness_term_avg}")
+                self.fitness_terms[agent] = agent_fitness_term_avg
+
         """
         fitness = []
         constraints = []
@@ -371,8 +430,7 @@ def create_population(n_pop, name_parameters_to_change):
                 population[i][j] = parameters[key] - offset
             else:
                 population[i][j] = parameters[key]
-            #print(f"PARAMETER: {key}: {parameters[key]} - variation: {variation} - final_value: {population[i][j]}")
-
+                
 #'''
 if __name__ == "__main__":
     ####################### SETUP ################################
@@ -404,8 +462,8 @@ if __name__ == "__main__":
     create_dir(results_folder)
 
     ####################### Differential Evolution ################################
-    np_seed = 32
-    de_seed = 248
+    np_seed = 64
+    de_seed = 100
     # set the np seed
     np.random.seed(np_seed)
 
@@ -430,7 +488,7 @@ if __name__ == "__main__":
     
     print(f"Number of parameters {n_parameters}")
     # population size
-    n_pop = 100
+    n_pop = 5
     # number of variables for the problem visualization
     n_vars = n_parameters
     # maximum number of generations
@@ -494,5 +552,8 @@ if __name__ == "__main__":
         plt.title("Convergence")
         plt.plot(n_evals, opt, "-")
         #plt.yscale("log")
+        file_name = results_folder  + "/" + PARAMETERS_STRING + '.png'
+        plt.savefig(file_name)
         plt.show()
+        
 #'''
