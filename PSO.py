@@ -29,6 +29,8 @@ import os
 NUMBER_SERVERS = 10
 BASE_PORT = 3000
 PERCENTAGE_OF_VARIATION = 50
+MIN_TO_EVALUATE = 3
+NUM_RUN_FOR_BEST_EVALUATION = 3
 
 # CONSTANT FOR NORMALIZATION
 EXPECTED_NUM_LAPS = 2
@@ -132,7 +134,7 @@ class TorcsProblem():
                                                                     stage=2,
                                                                     track=track)
                     
-                    history_lap_time, history_speed, history_damage, history_distance_raced, history_track_pos, history_car_pos, ticks, race_failed = controller.run_controller(adv = True)
+                    history_lap_time, history_speed, history_damage, history_distance_raced, history_track_pos, history_car_pos, ticks, race_failed = controller.run_controller(adv = False)
                     
                     normalized_ticks = ticks/controller.C.maxSteps
 
@@ -143,10 +145,16 @@ class TorcsProblem():
                     if num_laps > 0 and not race_failed:
                         # compute the average speed
                         avg_speed = 0
+                        max_speed = 0
+                        min_speed = MAX_SPEED
                         for history_key in history_speed.keys():
                             for value in history_speed[history_key]:
+                                max_speed = value if value > max_speed else max_speed
+                                min_speed = value if value < min_speed else min_speed
                                 avg_speed += value
                         avg_speed /= ticks
+                        norm_max_speed = max_speed/MAX_SPEED
+                        norm_min_speed = min_speed/MAX_SPEED
                         #print(f"Num Laps {num_laps} - Average Speed {avg_speed} - Num ticks {ticks}")
                         
                         normalized_avg_speed = avg_speed/MAX_SPEED
@@ -187,11 +195,16 @@ class TorcsProblem():
                         # compute the fitness for the current track
                         speed_comp_multiplier = 2
                         car_pos_multiplier = 2
-                        fitness = (-normalized_avg_speed * speed_comp_multiplier) -normalized_distance_raced +normalized_damage +norm_out_of_track_ticks +normalized_ticks + (norm_car_position * car_pos_multiplier)
+                        fitness = (-normalized_avg_speed * speed_comp_multiplier) -normalized_distance_raced +normalized_damage +norm_out_of_track_ticks +\
+                                    normalized_ticks + (norm_car_position * car_pos_multiplier)
                         
-                        # store the fitness for the current track
-                        fitness_dict_component[track] = f"Fitness {fitness:.4f}\nCar position {norm_car_position:.4f}\nNorm AVG SPEED {-normalized_avg_speed:.4f}\nNorm Distance Raced {-normalized_distance_raced:.4f}\nNorm Damage {normalized_damage:.4f}\nnorm out_of_track_ticks {norm_out_of_track_ticks:.4f}\nnormalized ticks {normalized_ticks:.4f}\nSim seconds {ticks/50}"
-                        
+                        fitness_dict_component[track] = {
+                                                          "fitness": fitness, "car_position": norm_car_position, 
+                                                          "norm_avg_speed":-normalized_avg_speed,  "norm_distance_raced": -normalized_distance_raced,
+                                                          "norm_damage": normalized_damage, "norm_out_of_track_ticks": norm_out_of_track_ticks,
+                                                          "normalized_ticks": normalized_ticks, "sim_seconds": ticks/50
+                                                        }
+
                     else:
                         if race_failed:
                             print(f"RACE FAILED")
@@ -259,6 +272,57 @@ class TorcsProblem():
            
         results = POOL.starmap(run_simulations, params)
         
+        if adversarial == True:
+            # take the MIN_TO_EVALUATE best agents
+            indices = np.argpartition(results, MIN_TO_EVALUATE)[:MIN_TO_EVALUATE]
+            # prepare the parameters for the pool
+            params = []
+            for indx in indices:
+                params.append((X[indx],
+                            indx,
+                            deepcopy(self.variable_to_change), 
+                            deepcopy(self.controller_variables)))
+            
+            best_agents_fitness_estimation = []
+            best_agent_fitness_terms = [[] for i in range(NUM_RUN_FOR_BEST_EVALUATION)]
+            # run NUM_RUN_FOR_BEST_EVALUATION simulation in order to better estimate
+            # the fitness of the agent.
+            for run in range(NUM_RUN_FOR_BEST_EVALUATION):
+                best_agents_fitness_estimation.append(POOL.starmap(run_simulations, params))
+                for agent in indices:
+                    best_agent_fitness_terms[run].append(self.fitness_terms[agent])
+
+            best_agents_fitness_estimation = np.array(best_agents_fitness_estimation)
+            # compute the average fitness, for each agent
+            for i, agent in enumerate(indices):
+                # compute the average fitness for the given agent
+                results[agent] = np.average(best_agents_fitness_estimation[:, i])
+                
+                # compute the average of the fitness term
+                agent_fitness_term_avg = {}
+                # for each track initialize the average terms.
+                for track in track_names:
+                    agent_fitness_term_avg[track] ={
+                                                    "fitness": 0.0, "car_position": 0.0, 
+                                                    "norm_avg_speed":-0.0,  "norm_distance_raced": -0.0,
+                                                    "norm_damage": 0.0, "norm_out_of_track_ticks": 0.0,
+                                                    "normalized_ticks": 0.0, "sim_seconds": 0.0
+                                                    }
+
+                # for each run of the agent
+                for run in range(NUM_RUN_FOR_BEST_EVALUATION):
+                    # fitness terms of the i-th agent, for the given run 
+                    agent_fitness_term = best_agent_fitness_terms[run][i]
+                    for track in agent_fitness_term:
+                        # for each terms, for the given track.
+                        for term in agent_fitness_term[track].keys():
+                            agent_fitness_term_avg[track][term] += agent_fitness_term[track][term]
+                
+                for track in agent_fitness_term_avg:
+                    for term in agent_fitness_term_avg[track].keys():
+                        agent_fitness_term_avg[track][term] /= NUM_RUN_FOR_BEST_EVALUATION
+                self.fitness_terms[agent] = agent_fitness_term_avg
+
         fitness = np.array(results)
         
         failed_counter = 0

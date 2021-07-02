@@ -155,10 +155,16 @@ class TorcsProblem(Problem):
                     if num_laps > 0 and not race_failed:
                         # compute the average speed
                         avg_speed = 0
+                        max_speed = 0
+                        min_speed = MAX_SPEED
                         for history_key in history_speed.keys():
                             for value in history_speed[history_key]:
+                                max_speed = value if value > max_speed else max_speed
+                                min_speed = value if value < min_speed else min_speed
                                 avg_speed += value
                         avg_speed /= ticks
+                        norm_max_speed = max_speed/MAX_SPEED
+                        norm_min_speed = min_speed/MAX_SPEED
                         #print(f"Num Laps {num_laps} - Average Speed {avg_speed} - Num ticks {ticks}")
                         
                         normalized_avg_speed = avg_speed/MAX_SPEED
@@ -199,7 +205,8 @@ class TorcsProblem(Problem):
                         # compute the fitness for the current track
                         speed_comp_multiplier = 2
                         car_pos_multiplier = 2
-                        fitness = (-normalized_avg_speed * speed_comp_multiplier) -normalized_distance_raced +normalized_damage +norm_out_of_track_ticks +normalized_ticks + (norm_car_position * car_pos_multiplier)
+                        fitness = (-normalized_avg_speed * speed_comp_multiplier) -normalized_distance_raced +normalized_damage +norm_out_of_track_ticks +\
+                                    normalized_ticks + (norm_car_position * car_pos_multiplier)
                         # store the fitness for the current track
                         fitness_dict_component[track] = {
                                                           "fitness": fitness, "car_position": norm_car_position, 
