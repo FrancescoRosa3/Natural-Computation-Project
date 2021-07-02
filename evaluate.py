@@ -92,7 +92,7 @@ if __name__ == "__main__":
                                                                 stage=2,
                                                                 track=track)
 
-                history_lap_time, history_speed, history_damage, history_distance_raced, history_track_pos, history_car_pos, ticks = controller.run_controller(plot_history = True)
+                history_lap_time, history_speed, history_damage, history_distance_raced, history_track_pos, history_car_pos, ticks, race_failed = controller.run_controller(plot_history = True)
 
                 normalized_ticks = ticks/controller.C.maxSteps
 
@@ -146,10 +146,15 @@ if __name__ == "__main__":
                     # compute the fitness for the current track
                     speed_comp_multiplier = 2
                     car_pos_multiplier = 2
-                    fitness = (-normalized_avg_speed * speed_comp_multiplier) -normalized_distance_raced +normalized_damage +norm_out_of_track_ticks +normalized_ticks + (norm_car_position * car_pos_multiplier)
+                    fitness = (-normalized_avg_speed * speed_comp_multiplier) -normalized_distance_raced +normalized_damage +norm_out_of_track_ticks +\
+                                normalized_ticks + (norm_car_position * car_pos_multiplier)
                     # store the fitness for the current track
-                    fitness_dict_component[track] = f"Fitness {fitness:.4f}\nCar position {norm_car_position:.4f}\nNorm AVG SPEED {-normalized_avg_speed:.4f}\nNorm Distance Raced {-normalized_distance_raced:.4f}\nNorm Damage {normalized_damage:.4f}\nnorm out_of_track_ticks {norm_out_of_track_ticks:.4f}\nnormalized ticks {normalized_ticks:.4f}\nSim seconds {ticks/50}"
-                    
+                    fitness_dict_component[track] = {
+                                                        "fitness": fitness, "car_position": norm_car_position, 
+                                                        "norm_avg_speed":-normalized_avg_speed,  "norm_distance_raced": -normalized_distance_raced,
+                                                        "norm_damage": normalized_damage, "norm_out_of_track_ticks": norm_out_of_track_ticks,
+                                                        "normalized_ticks": normalized_ticks, "sim_seconds": ticks/50
+                                                    }
                 else:
                     #print(f"THE AGENTS COULDN'T COMPLETE THE FIRST LAP")
                     fitness = 10  
