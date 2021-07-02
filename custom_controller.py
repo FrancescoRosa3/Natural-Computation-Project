@@ -342,20 +342,24 @@ class CustomController:
     def traffic_navigation(self, P, os, sti):
         sto= sti 
         c= min(os[4:32]) 
-        cs= os.index(c)  
+        cs= os.index(c)
+        #print(f"{cs=}", end=' ')  
         if not c: c= .0001
+        # if there is an opponent within x meters on the left side (in front of the car)
+        if min(os[8:18])<P['steer_min_dist_opp']:#7:
+            sto-= P['steer_opp_adj']/c
+            #print(f"sx {sto=}", end='')
         # if there is an opponent within x meters on the right side (in front of the car)
         if min(os[18:26])<P['steer_min_dist_opp']:#7:
             sto+= P['steer_opp_adj']/c
-        # if there is an opponent within x meters on the left side (in front of the car)
-        if min(os[8:17])<P['steer_min_dist_opp']:#7:
-            sto-= P['steer_opp_adj']/c
-        # if there is an opponent in front of the car
+            #print(f"dx {sto=}", end='')
+        #print("", end='\r')
+        """# if there is an opponent in front of the car
         if cs == 17:
             sto+= P['steer_front_opp_adj']/c
         # if there is an opponent in front of the car
         if cs == 18:
-            sto-= P['steer_front_opp_adj']/c
+            sto-= P['steer_front_opp_adj']/c"""
         """if .1 < os[17] < 40:
             sto+= .01
         if .1 < os[18] < 40:
@@ -582,7 +586,7 @@ class CustomController:
                 R['steer']= self.speed_appropriate_steer(P, 
                                                         self.traffic_navigation(P, S['opponents'], R['steer']),
                                                         S['speedX']+50)
-                #print(f"SONO QUI {R['steer']=}")
+                #print(f"{R['steer']=}")
         
         if not S['stucktimer']:
             self.target_speed= abs(self.target_speed) 
