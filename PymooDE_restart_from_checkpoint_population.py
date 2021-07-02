@@ -28,7 +28,7 @@ import os
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 # CONSTANT DEFINITION
-NUMBER_SERVERS = 10
+NUMBER_SERVERS = 9
 BASE_PORT = 3000
 PERCENTAGE_OF_VARIATION = 40
 MIN_TO_EVALUATE = 3
@@ -144,7 +144,7 @@ class TorcsProblem(Problem):
                                                                     stage=2,
                                                                     track=track)
                     
-                    history_lap_time, history_speed, history_damage, history_distance_raced, history_track_pos, history_car_pos, ticks, race_failed = controller.run_controller()
+                    history_lap_time, history_speed, history_damage, history_distance_raced, history_track_pos, history_car_pos, ticks = controller.run_controller()
                     
                     normalized_ticks = ticks/controller.C.maxSteps
 
@@ -152,8 +152,8 @@ class TorcsProblem(Problem):
                     num_laps = len(history_lap_time)
 
                     # the car has completed at least the first lap
-                    if num_laps > 0 and not race_failed:
-                        # compute the average speed
+                    if num_laps > 0:
+                        # compute the average, max and min speed
                         avg_speed = 0
                         max_speed = 0
                         min_speed = MAX_SPEED
@@ -205,22 +205,22 @@ class TorcsProblem(Problem):
                         # compute the fitness for the current track
                         speed_comp_multiplier = 2
                         car_pos_multiplier = 2
-                        fitness = (-normalized_avg_speed * speed_comp_multiplier) -normalized_distance_raced +normalized_damage +norm_out_of_track_ticks +\
-                                    normalized_ticks + (norm_car_position * car_pos_multiplier)
+                        fitness = (-normalized_avg_speed * speed_comp_multiplier) \
+                                    -normalized_distance_raced +normalized_damage +norm_out_of_track_ticks \
+                                    +normalized_ticks + (norm_car_position * car_pos_multiplier) \
+                                    -norm_max_speed
                         # store the fitness for the current track
                         fitness_dict_component[track] = {
                                                           "fitness": fitness, "car_position": norm_car_position, 
                                                           "norm_avg_speed":-normalized_avg_speed,  "norm_distance_raced": -normalized_distance_raced,
                                                           "norm_damage": normalized_damage, "norm_out_of_track_ticks": norm_out_of_track_ticks,
-                                                          "normalized_ticks": normalized_ticks, "sim_seconds": ticks/50
+                                                          "normalized_ticks": normalized_ticks, "sim_seconds": ticks/50, 
+                                                          "norm_max_speed": -norm_max_speed
                                                         }
                         
                     else:
-                        if race_failed:
-                            print(f"RACE FAILED")
-                        else:
-                            print(f"THE AGENTS COULDN'T COMPLETE THE FIRST LAP")
-                        fitness = 10   
+                        #print(f"THE AGENTS COULDN'T COMPLETE THE FIRST LAP")
+                        fitness = 10  
                     #return fitness
                     
                 except Exception as ex:
@@ -303,7 +303,8 @@ class TorcsProblem(Problem):
                                                     "fitness": 0.0, "car_position": 0.0, 
                                                     "norm_avg_speed":-0.0,  "norm_distance_raced": -0.0,
                                                     "norm_damage": 0.0, "norm_out_of_track_ticks": 0.0,
-                                                    "normalized_ticks": 0.0, "sim_seconds": 0.0
+                                                    "normalized_ticks": 0.0, "sim_seconds": 0.0,
+                                                    "norm_max_speed": 0.0
                                                     }
 
                 # for each run of the agent
@@ -392,9 +393,7 @@ def load_checkpoint(checkpoint_file_name):
 def get_configuration(path):
     conf_split_underscore = path.split("_")
     version = conf_split_underscore[-1].split(".")[0]
-    print(f"version: {version}")
     pfile= open(f"{dir_path}\{path}",'r')
-    print(f"condition_path: {dir_path}\{path}")
     parameters_to_change = json.load(pfile)
     if conf_split_underscore[-4] == 'no':
         global adversarial
@@ -470,7 +469,7 @@ if __name__ == "__main__":
 
     ####################### Differential Evolution ################################
     np_seed = 32
-    de_seed = 248
+    de_seed = 300
     # set the np seed
     np.random.seed(np_seed)
 
@@ -501,7 +500,7 @@ if __name__ == "__main__":
     # maximum number of generations
     max_gens = 20
     # Cross-over rate
-    cr = 0.9
+    cr = 0.6
     # Scaling factor F
     f = 0.9
 
@@ -518,6 +517,18 @@ if __name__ == "__main__":
         algorithm, last_iteration = load_checkpoint(args.checkpoint_file)
         if algorithm == None:
             sys.exit()
+        
+        algorithm = DE(pop_size=n_pop, 
+                        sampling= algorithm.result().pop.get('X'),
+                        variant="DE/rand/1/bin", 
+                        CR=cr,
+                        F=f,
+                        dither="no",
+                        jitter=False,
+                        eliminate_duplicates=True)
+
+        algorithm.setup(problem, ('n_gen', max_gens), seed=de_seed, verbose=True, save_history=True)
+        last_iteration = 0
     else:
         create_population(n_pop, name_parameters_to_change)
         algorithm = DE(pop_size=n_pop, 
