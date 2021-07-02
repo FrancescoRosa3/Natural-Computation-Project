@@ -29,6 +29,8 @@ import os
 NUMBER_SERVERS = 10
 BASE_PORT = 3000
 PERCENTAGE_OF_VARIATION = 50
+MIN_TO_EVALUATE = 3
+NUM_RUN_FOR_BEST_EVALUATION = 3
 
 # CONSTANT FOR NORMALIZATION
 EXPECTED_NUM_LAPS = 2
@@ -252,19 +254,58 @@ class TorcsProblem():
            
         results = POOL.starmap(run_simulations, params)
         
-        """
-        fitness = []
-        constraints = []
-        for i in range(len(results)):
-            fitness.append(results[i][0])
-            constraints.append(results[i][1])
-        """ 
+        if adversarial == True:
+            # take the MIN_TO_EVALUATE best agents
+            indices = np.argpartition(results, MIN_TO_EVALUATE)[:MIN_TO_EVALUATE]
+            # prepare the parameters for the pool
+            params = []
+            for indx in indices:
+                params.append((X[indx],
+                            indx,
+                            deepcopy(self.variable_to_change), 
+                            deepcopy(self.controller_variables)))
+            
+            best_agents_fitness_estimation = []
+            best_agent_fitness_terms = [[] for i in range(NUM_RUN_FOR_BEST_EVALUATION)]
+            # run NUM_RUN_FOR_BEST_EVALUATION simulation in order to better estimate
+            # the fitness of the agent.
+            for run in range(NUM_RUN_FOR_BEST_EVALUATION):
+                best_agents_fitness_estimation.append(POOL.starmap(run_simulations, params))
+                for agent in indices:
+                    best_agent_fitness_terms[run].append(self.fitness_terms[agent])
+
+            best_agents_fitness_estimation = np.array(best_agents_fitness_estimation)
+            # compute the average fitness, for each agent
+            for i, agent in enumerate(indices):
+                # compute the average fitness for the given agent
+                results[agent] = np.average(best_agents_fitness_estimation[:, i])
+                
+                # compute the average of the fitness term
+                agent_fitness_term_avg = {}
+                # for each track initialize the average terms.
+                for track in track_names:
+                    agent_fitness_term_avg[track] ={
+                                                    "fitness": 0.0, "car_position": 0.0, 
+                                                    "norm_avg_speed":-0.0,  "norm_distance_raced": -0.0,
+                                                    "norm_damage": 0.0, "norm_out_of_track_ticks": 0.0,
+                                                    "normalized_ticks": 0.0, "sim_seconds": 0.0
+                                                    }
+
+                # for each run of the agent
+                for run in range(NUM_RUN_FOR_BEST_EVALUATION):
+                    # fitness terms of the i-th agent, for the given run 
+                    agent_fitness_term = best_agent_fitness_terms[run][i]
+                    for track in agent_fitness_term:
+                        # for each terms, for the given track.
+                        for term in agent_fitness_term[track].keys():
+                            agent_fitness_term_avg[track][term] += agent_fitness_term[track][term]
+                
+                for track in agent_fitness_term_avg:
+                    for term in agent_fitness_term_avg[track].keys():
+                        agent_fitness_term_avg[track][term] /= NUM_RUN_FOR_BEST_EVALUATION
+                self.fitness_terms[agent] = agent_fitness_term_avg
+
         fitness = np.array(results)
-        #out["G"] = np.array(constraints)
-        
-        #print(f"Current solution fitness:\n{fitness}")
-        #print(f"Current solution constraing:\n{out['G']}")
-        # best_fit = np.min(out["F"])
         best_fit_indx = np.argmin(fitness)
 
         if fitness[best_fit_indx] < self.prev_best:
