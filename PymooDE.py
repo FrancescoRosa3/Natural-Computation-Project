@@ -142,7 +142,7 @@ class TorcsProblem(Problem):
                                                                     stage=2,
                                                                     track=track)
                     
-                    history_lap_time, history_speed, history_damage, history_distance_raced, history_track_pos, history_car_pos, ticks = controller.run_controller()
+                    history_lap_time, history_speed, history_damage, history_distance_raced, history_track_pos, history_car_pos, ticks, race_failed = controller.run_controller()
                     
                     normalized_ticks = ticks/controller.C.maxSteps
 
@@ -150,7 +150,7 @@ class TorcsProblem(Problem):
                     num_laps = len(history_lap_time)
 
                     # the car has completed at least the first lap
-                    if num_laps > 0:
+                    if num_laps > 0 and not race_failed:
                         # compute the average speed
                         avg_speed = 0
                         for history_key in history_speed.keys():
@@ -202,8 +202,11 @@ class TorcsProblem(Problem):
                         fitness_dict_component[track] = f"Fitness {fitness:.4f}\nCar position {norm_car_position:.4f}\nNorm AVG SPEED {-normalized_avg_speed:.4f}\nNorm Distance Raced {-normalized_distance_raced:.4f}\nNorm Damage {normalized_damage:.4f}\nnorm out_of_track_ticks {norm_out_of_track_ticks:.4f}\nnormalized ticks {normalized_ticks:.4f}\nSim seconds {ticks/50}"
                         
                     else:
-                        #print(f"THE AGENTS COULDN'T COMPLETE THE FIRST LAP")
-                        fitness = 10  
+                        if race_failed:
+                            print(f"RACE FAILED")
+                        else:
+                            print(f"THE AGENTS COULDN'T COMPLETE THE FIRST LAP")
+                        fitness = 10   
                     #return fitness
                     
                 except Exception as ex:
@@ -323,7 +326,9 @@ def load_checkpoint(checkpoint_file_name):
 def get_configuration(path):
     conf_split_underscore = path.split("_")
     version = conf_split_underscore[-1].split(".")[0]
-    pfile= open(f"{dir_path}\{path}",'r') 
+    print(f"version: {version}")
+    pfile= open(f"{dir_path}\{path}",'r')
+    print(f"condition_path: {dir_path}\{path}")
     parameters_to_change = json.load(pfile)
     if conf_split_underscore[-4] == 'no':
         global adversarial

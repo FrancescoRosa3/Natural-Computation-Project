@@ -643,7 +643,7 @@ class CustomController:
         R['focus']= 0 
         c.respond_to_server() 
 
-    def run_controller(self, plot_history = False):
+    def run_controller(self, plot_history = False, adv = False):
         # load parameters
         if self.parameters_from_file:
             pfile= open(dir_path + self.parameter_file,'r')
@@ -673,6 +673,7 @@ class CustomController:
         history_distance_raced = {}
         history_track_pos = {}
         history_car_pos = {}
+        race_failed = False
 
         lap_cnt = 1
         last_lap_time_prev = 0.0
@@ -704,7 +705,35 @@ class CustomController:
                     history_track_pos[lap_cnt] = [self.C.S.d['trackPos']]
                     history_car_pos[lap_cnt] = [self.C.S.d['racePos']]
 
-            if return_code == snakeoil.RACE_ENDED:
+            # If the vehicle is racing against other cars, check if it goes out of track or takes damage.
+            # If so terminate the race and declare it failed.
+            if adv:
+                
+                # initialize the "out of track" threshold
+                out_of_track_limit_sec = 5 #sec
+                out_of_track_limit_ticks = out_of_track_limit_sec * 50
+                
+                # check if there are enough ticks to check
+                if len(history_track_pos[lap_cnt]) > out_of_track_limit_ticks*2:
+                    
+                    # initialize the ticks counter
+                    out_of_track_cnt = 0
+
+                    # count the out of track ticks
+                    for val in history_track_pos[lap_cnt][-out_of_track_limit_ticks*2:]:
+                        if abs(val) > 1:
+                            out_of_track_cnt += 1
+                    
+                    
+                    # check if the counted ticks exceed the threshold
+                    # if so, stop the server and declare the race failed.
+                    if out_of_track_cnt > out_of_track_limit_ticks:
+                        self.C.R.d['meta']= 1
+                        self.C.respond_to_server()
+                        race_failed = True
+                        #C.shutdown()
+
+            if return_code == snakeoil.RACE_ENDED or race_failed:
                 #print("Race ended")
                 break
         
@@ -721,7 +750,7 @@ class CustomController:
         self.C.respond_to_server()
         #C.shutdown()
         
-        return history_lap_time, history_speed, history_damage, history_distance_raced, history_track_pos, history_car_pos, ticks
+        return history_lap_time, history_speed, history_damage, history_distance_raced, history_track_pos, history_car_pos, ticks, race_failed
 
 if __name__ == "__main__":
     import argparse

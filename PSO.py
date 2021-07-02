@@ -83,6 +83,7 @@ class TorcsProblem():
            
     # evaluate function
     def evaluate(self, X):
+        print("")
         
         # restart evaluated agents counter
         #agents_cnt_lock.acquire(blocking=True)
@@ -131,7 +132,7 @@ class TorcsProblem():
                                                                     stage=2,
                                                                     track=track)
                     
-                    history_lap_time, history_speed, history_damage, history_distance_raced, history_track_pos, history_car_pos, ticks = controller.run_controller()
+                    history_lap_time, history_speed, history_damage, history_distance_raced, history_track_pos, history_car_pos, ticks, race_failed = controller.run_controller(adv = True)
                     
                     normalized_ticks = ticks/controller.C.maxSteps
 
@@ -139,7 +140,7 @@ class TorcsProblem():
                     num_laps = len(history_lap_time)
 
                     # the car has completed at least the first lap
-                    if num_laps > 0:
+                    if num_laps > 0 and not race_failed:
                         # compute the average speed
                         avg_speed = 0
                         for history_key in history_speed.keys():
@@ -185,12 +186,18 @@ class TorcsProblem():
                         
                         # compute the fitness for the current track
                         speed_comp_multiplier = 2
-                        fitness = -normalized_avg_speed * speed_comp_multiplier -normalized_distance_raced +normalized_damage +norm_out_of_track_ticks +normalized_ticks +norm_car_position
+                        car_pos_multiplier = 2
+                        fitness = (-normalized_avg_speed * speed_comp_multiplier) -normalized_distance_raced +normalized_damage +norm_out_of_track_ticks +normalized_ticks + (norm_car_position * car_pos_multiplier)
+                        
                         # store the fitness for the current track
                         fitness_dict_component[track] = f"Fitness {fitness:.4f}\nCar position {norm_car_position:.4f}\nNorm AVG SPEED {-normalized_avg_speed:.4f}\nNorm Distance Raced {-normalized_distance_raced:.4f}\nNorm Damage {normalized_damage:.4f}\nnorm out_of_track_ticks {norm_out_of_track_ticks:.4f}\nnormalized ticks {normalized_ticks:.4f}\nSim seconds {ticks/50}"
                         
                     else:
-                        #print(f"THE AGENTS COULDN'T COMPLETE THE FIRST LAP")
+                        if race_failed:
+                            print(f"RACE FAILED")
+                        else:
+                            print(f"THE AGENTS COULDN'T COMPLETE THE FIRST LAP")
+                        
                         fitness = 10  
                     #return fitness
                     
@@ -252,25 +259,25 @@ class TorcsProblem():
            
         results = POOL.starmap(run_simulations, params)
         
-        """
-        fitness = []
-        constraints = []
-        for i in range(len(results)):
-            fitness.append(results[i][0])
-            constraints.append(results[i][1])
-        """ 
         fitness = np.array(results)
-        #out["G"] = np.array(constraints)
         
-        #print(f"Current solution fitness:\n{fitness}")
-        #print(f"Current solution constraing:\n{out['G']}")
-        # best_fit = np.min(out["F"])
+        failed_counter = 0
+        fitness_mean = 0
+        for fit in fitness:
+            fitness_mean += fit
+            if fit == 10:
+                failed_counter += 1
+        fitness_mean /= len(X)
+
+        print(f"RACE FAILED/TOTAL RACES: {failed_counter}/{len(X)}")
+
         best_fit_indx = np.argmin(fitness)
 
         if fitness[best_fit_indx] < self.prev_best:
             self.prev_best = fitness[best_fit_indx]
             save_results(X[best_fit_indx])
-
+        
+        print(f"MEAN FITNESS: {fitness_mean}")
         print(f"BEST FITNESS: {fitness[best_fit_indx]}")
         best_fitness_terms = self.fitness_terms[best_fit_indx]
         for track in best_fitness_terms:
@@ -316,7 +323,7 @@ def get_configuration(path):
     version = conf_split_underscore[-1].split(".")[0]
     print(f"version: {version}")
     pfile= open(f"{dir_path}\{path}",'r')
-    print(f"condition_path: {pfile}")
+    print(f"condition_path: {dir_path}\{path}")
     parameters_to_change = json.load(pfile)
     if conf_split_underscore[-4] == 'no':
         global adversarial
