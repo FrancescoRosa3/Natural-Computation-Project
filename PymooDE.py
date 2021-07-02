@@ -366,8 +366,7 @@ def create_population(n_pop, name_parameters_to_change):
                 population[i][j] = parameters[key] - offset
             else:
                 population[i][j] = parameters[key]
-            #print(f"PARAMETER: {key}: {parameters[key]} - variation: {variation} - final_value: {population[i][j]}")
-
+                
 #'''
 if __name__ == "__main__":
     ####################### SETUP ################################
@@ -399,8 +398,8 @@ if __name__ == "__main__":
     create_dir(results_folder)
 
     ####################### Differential Evolution ################################
-    np_seed = 32
-    de_seed = 248
+    np_seed = 64
+    de_seed = 100
     # set the np seed
     np.random.seed(np_seed)
 
@@ -489,5 +488,8 @@ if __name__ == "__main__":
         plt.title("Convergence")
         plt.plot(n_evals, opt, "-")
         #plt.yscale("log")
+        file_name = results_folder  + "/" + PARAMETERS_STRING + '.png'
+        plt.savefig(file_name)
         plt.show()
+        
 #'''
