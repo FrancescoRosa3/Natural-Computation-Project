@@ -98,6 +98,14 @@
     "safeatanyspeed": 0.0012800919243947557, ## linea 289, [0, 1], utilizzato per definire lo steer max, sulla base della velocità
     """ ---------------------------- """
 
+    """ ADDED - AVVERSARI """
+    "steer_min_dist_opp": 7.0, 
+    "steer_opp_adj": 0.5, 
+    # "steer_front_opp_adj": 0.1, 
+    "sn": 3, 
+    "max_worry": 80, 
+    "full_serious": 20, 
+
 
     """ NON UTILIZZATO """
     "clutch_release": 0.050017716984125785, ## non utilizzato.

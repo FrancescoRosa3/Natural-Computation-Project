@@ -202,13 +202,19 @@ class TorcsProblem(Problem):
                                     ticks_out_of_track += 1
                         norm_out_of_track_ticks = ticks_out_of_track/MAX_OUT_OF_TRACK_TICKS                    
                         
-                        # compute the fitness for the current track
-                        fitness = - normalized_avg_speed - norm_max_speed - norm_min_speed + norm_out_of_track_ticks
-                        # store the fitness for the current track
-                        fitness_dict_component[track] = {
-                                                            "fitness": fitness, "norm_avg_speed":-normalized_avg_speed, "norm_out_of_track_ticks": norm_out_of_track_ticks,
-                                                            "norm_max_speed": norm_max_speed, "norm_min_speed": norm_min_speed
-                                                        }
+                        # compute the fitness for the current track and store the fitness for the current track
+                        if not adversarial:
+                            fitness = - normalized_avg_speed - norm_max_speed + norm_out_of_track_ticks # - norm_min_speed 
+                            fitness_dict_component[track] = {
+                                                                "fitness": fitness, "norm_avg_speed":-normalized_avg_speed, "norm_out_of_track_ticks": norm_out_of_track_ticks,
+                                                                "norm_max_speed": norm_max_speed#, "norm_min_speed": norm_min_speed
+                                                            }
+                        else:
+                            fitness = norm_car_position + norm_out_of_track_ticks  + normalized_damage 
+                            fitness_dict_component[track] = {
+                                                                "fitness": fitness, "norm_car_position ": norm_car_position,
+                                                                "norm_out_of_track_ticks": norm_out_of_track_ticks, "normalized_damage": normalized_damage
+                                                            }
                         
                     else:
                         if race_failed:
@@ -295,8 +301,8 @@ class TorcsProblem(Problem):
                 # for each track initialize the average terms.
                 for track in track_names:
                     agent_fitness_term_avg[track] = {
-                                                        "fitness": 0.0, "norm_avg_speed": 0.0, "norm_out_of_track_ticks": 0.0,
-                                                        "norm_max_speed": 0.0, "norm_min_speed": 0.0
+                                                        "fitness": 0.0, "norm_car_position ": 0.0, "norm_out_of_track_ticks": 0.0,
+                                                        "normalized_damage": 0.0
                                                     }
 
                 # for each run of the agent

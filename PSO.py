@@ -94,6 +94,7 @@ class TorcsProblem():
 
         def run_simulations(x, agent_indx, variable_to_change, controller_variables):
             
+            global adversarial
             servers_port_state_lock.acquire(blocking=True)
             port_number = 0
             while True:
@@ -164,25 +165,12 @@ class TorcsProblem():
                     
                         # take the damage
                         damage = history_damage[history_key][-1]
-                        global adversarial
                         normalized_damage = damage/UPPER_BOUND_DAMAGE if not adversarial else damage/UPPER_BOUND_DAMAGE_WITH_ADV
 
                         # take the car position at the end of the race
                         car_position = history_car_pos[history_key][-1]
                         car_position -= 1
                         norm_car_position = car_position/OPPONENTS_NUMBER
-
-                        # compute the average from the center line
-                        """
-                        average_track_pos = 0
-                        steps = 0
-                        for key in history_track_pos.keys():
-                            for value in history_track_pos[key]:
-                                steps += 1
-                                if abs(value) > 1:
-                                    average_track_pos += (abs(value) - 1)
-                        average_track_pos /= steps
-                        """
 
                         # compute out of track ticks and normilize it with respect to the total amount of ticks
                         ticks_out_of_track = 0
@@ -192,13 +180,20 @@ class TorcsProblem():
                                     ticks_out_of_track += 1
                         norm_out_of_track_ticks = ticks_out_of_track/MAX_OUT_OF_TRACK_TICKS                    
                         
-                        # compute the fitness for the current track
-                        fitness = - normalized_avg_speed - norm_max_speed - norm_min_speed + norm_out_of_track_ticks
-                        # store the fitness for the current track
-                        fitness_dict_component[track] = {
-                                                            "fitness": fitness, "norm_avg_speed":-normalized_avg_speed, "norm_out_of_track_ticks": norm_out_of_track_ticks,
-                                                            "norm_max_speed": norm_max_speed, "norm_min_speed": norm_min_speed
-                                                        }
+                        # compute the fitness for the current track and store the fitness for the current track
+                        if not adversarial:
+                            fitness = - normalized_avg_speed - norm_max_speed + norm_out_of_track_ticks # - norm_min_speed 
+                            fitness_dict_component[track] = {
+                                                                "fitness": fitness, "norm_avg_speed":-normalized_avg_speed, "norm_out_of_track_ticks": norm_out_of_track_ticks,
+                                                                "norm_max_speed": norm_max_speed#, "norm_min_speed": norm_min_speed
+                                                            }
+                        else:
+                            fitness = norm_car_position + norm_out_of_track_ticks  + normalized_damage 
+                            fitness_dict_component[track] = {
+                                                                "fitness": fitness, "norm_car_position ": norm_car_position,
+                                                                "norm_out_of_track_ticks": norm_out_of_track_ticks, "normalized_damage": normalized_damage
+                                                            }
+                        
                     else:
                         if race_failed:
                             print(f"RACE FAILED")
@@ -216,13 +211,6 @@ class TorcsProblem():
 
                 fitnesses_dict[track] = fitness
                 self.fitness_terms[agent_indx] = fitness_dict_component
-                
-                """
-                # check for constraint
-                constraint = []
-                for i in range(x.shape[0]):
-                    constraint.append( int((x[i] < self.lb[i] or x[i] > self.ub[i])) )
-                """
 
             # compute the average performance over all the tested tracks
             total_fitness = 0
@@ -232,18 +220,6 @@ class TorcsProblem():
                 num_track += 1
             total_fitness /= num_track
 
-            """
-            if total_fitness > 10:
-                    print(f"AGENTE: {self.agents_cnt} - fitness: {total_fitness}")
-                    with open("temp.xml", 'w') as outfile:
-                        json.dump(controller_variables, outfile)
-                    outfile.close()
-
-                    for key, val in temp.items():
-                        print(f"key: {key} - starting value: {val:.2f} - modified value: {controller_variables[key]:.2f}")
-
-                    print("\n")
-            """
             agents_cnt_lock.acquire(blocking=True)
             self.agents_cnt += 1
             print(f"Agent runned {self.agents_cnt}", end="\r")
@@ -297,8 +273,8 @@ class TorcsProblem():
                 # for each track initialize the average terms.
                 for track in track_names:
                     agent_fitness_term_avg[track] = {
-                                                        "fitness": 0.0, "norm_avg_speed": 0.0, "norm_out_of_track_ticks": 0.0,
-                                                        "norm_max_speed": 0.0, "norm_min_speed": 0.0
+                                                        "fitness": 0.0, "norm_car_position ": 0.0, "norm_out_of_track_ticks": 0.0,
+                                                        "normalized_damage": 0.0
                                                     }
 
                 # for each run of the agent
