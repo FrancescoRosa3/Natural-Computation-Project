@@ -84,15 +84,16 @@ if __name__ == "__main__":
     fitnesses_dict = {}
     for i in range(0, 10):
         for track in track_names:
+            print(f"Track {track}")
             try:
                 #print(f"Run agent {agent_indx} on Port {BASE_PORT+indx+1}")
-                controller = custom_controller.CustomController(port=3010,
+                controller = custom_controller.CustomController(port=3001,
                                                                 parameters=parameters, 
                                                                 parameters_from_file=False,
                                                                 stage=2,
                                                                 track=track)
 
-                history_lap_time, history_speed, history_damage, history_distance_raced, history_track_pos, history_car_pos, ticks = controller.run_controller(plot_history = True)
+                history_lap_time, history_speed, history_damage, history_distance_raced, history_track_pos, history_car_pos, ticks, race_failed = controller.run_controller(plot_history = True)
 
                 normalized_ticks = ticks/controller.C.maxSteps
 

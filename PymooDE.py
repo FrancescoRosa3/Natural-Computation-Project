@@ -27,10 +27,23 @@ import custom_controller
 import os 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
+#Parameters
+PERCENTAGE_OF_VARIATION = 50
+# population size
+n_pop = 100
+# maximum number of generations
+max_gens = 20
+# Cross-over rate
+cr = 0.9
+# Scaling factor F
+f = 1.5
+np_seed = 200
+de_seed = 200
+# set the np seed
+
 # CONSTANT DEFINITION
 NUMBER_SERVERS = 10
 BASE_PORT = 3000
-PERCENTAGE_OF_VARIATION = 40
 MIN_TO_EVALUATE = 3
 NUM_RUN_FOR_BEST_EVALUATION = 3
 
@@ -398,7 +411,6 @@ def get_configuration(path):
     if conf_split_underscore[-4] == 'no':
         global adversarial
         adversarial = False
-        print("Adversarial {adversarial}")
     return parameters_to_change, version
 
 def save_results(result_params):
@@ -468,9 +480,7 @@ if __name__ == "__main__":
     create_dir(results_folder)
 
     ####################### Differential Evolution ################################
-    np_seed = 32
-    de_seed = 248
-    # set the np seed
+
     np.random.seed(np_seed)
 
     # Pymoo Differential Evolution
@@ -492,17 +502,10 @@ if __name__ == "__main__":
     lb = np.array(lb)
     ub = np.array(ub)
     
-    print(f"Number of parameters {n_parameters}")
-    # population size
-    n_pop = 100
     # number of variables for the problem visualization
     n_vars = n_parameters
-    # maximum number of generations
-    max_gens = 20
-    # Cross-over rate
-    cr = 0.9
-    # Scaling factor F
-    f = 0.9
+    print(f"Number of parameters {n_parameters}")
+
 
     PARAMETERS_STRING = f"{np_seed}_{de_seed}_{n_pop}_{max_gens}_{n_vars}_{cr}_{f}_{PERCENTAGE_OF_VARIATION}_{change_cond_version}"
 

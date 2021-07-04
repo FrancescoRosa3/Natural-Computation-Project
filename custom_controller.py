@@ -648,6 +648,7 @@ class CustomController:
         c.respond_to_server() 
 
     def run_controller(self, plot_history = False, adv = False):
+        
         # load parameters
         if self.parameters_from_file:
             pfile= open(dir_path + self.parameter_file,'r')
@@ -659,6 +660,7 @@ class CustomController:
         self.T = Track()
         self.C = snakeoil.Client(p=self.port, P=P, t=self.track, s=self.stage)
             
+        #print(f"Stage {self.C.stage}")
         if self.C.stage == 1 or self.C.stage == 2:
             try:
                 self.T.load_track(self.C.trackname)
