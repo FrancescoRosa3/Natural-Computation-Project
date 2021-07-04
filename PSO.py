@@ -26,7 +26,7 @@ import custom_controller_overtake as custom_controller
 import os 
 
 # CONSTANT DEFINITION
-NUMBER_SERVERS = 9
+NUMBER_SERVERS = 10
 BASE_PORT = 3000
 PERCENTAGE_OF_VARIATION = 50
 MIN_TO_EVALUATE = 3
@@ -390,7 +390,8 @@ def save_results(result_params):
         json.dump(parameters, outfile)
 
 
-def create_population(n_pop, name_parameters_to_change):
+def create_population(n_pop, name_parameters_to_change, n_parameters):
+    population = np.zeros((n_pop, n_parameters))
     # initialize the population
     for i in range(n_pop):
         # for each parameter to change
@@ -431,7 +432,7 @@ if __name__ == '__main__':
     args.controller_params = '\\' + args.controller_params
     pfile= open(dir_path + args.controller_params,'r') 
     parameters = json.load(pfile)
-
+    
     # load the change condition file
     parameters_to_change, change_cond_version = get_configuration(args.param_change_cond_version)
 
@@ -465,8 +466,8 @@ if __name__ == '__main__':
 
     tp = TorcsProblem(variables_to_change=parameters_to_change, controller_variables=parameters, lb=lb, ub=ub)
 
-    population = np.zeros((swarm_size, n_parameters))
-    create_population(swarm_size, name_parameters_to_change)
+   
+    population = create_population(swarm_size, name_parameters_to_change, n_parameters)
 
     # Call instance of PSO
     optimizer = ps.single.LocalBestPSO(n_particles=swarm_size, dimensions=problem_size, options=options, init_pos=population, bounds=(lb,ub))
