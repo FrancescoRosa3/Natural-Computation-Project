@@ -21,7 +21,7 @@ sys.path.append('../')
 #rc('animation', html='html5')
 
 # Load the custom_controller module
-import custom_controller
+import custom_controller_overtake as custom_controller
 # define the path were the parameters are defined
 import os 
 
@@ -169,6 +169,7 @@ class TorcsProblem():
 
                         # take the car position at the end of the race
                         car_position = history_car_pos[history_key][-1]
+                        print(F"CAR POSITION: {car_position}")
                         car_position -= 1
                         norm_car_position = car_position/OPPONENTS_NUMBER
 
@@ -188,7 +189,8 @@ class TorcsProblem():
                                                                 "norm_max_speed": norm_max_speed#, "norm_min_speed": norm_min_speed
                                                             }
                         else:
-                            fitness = norm_car_position + norm_out_of_track_ticks  + normalized_damage 
+                            car_pos_multiplier = 0.5
+                            fitness = (norm_car_position * car_pos_multiplier) + norm_out_of_track_ticks  + normalized_damage 
                             fitness_dict_component[track] = {
                                                                 "fitness": fitness, "norm_car_position ": norm_car_position,
                                                                 "norm_out_of_track_ticks": norm_out_of_track_ticks, "normalized_damage": normalized_damage
