@@ -26,7 +26,7 @@ import custom_controller_overtake as custom_controller
 import os 
 
 # CONSTANT DEFINITION
-NUMBER_SERVERS = 10
+NUMBER_SERVERS = 9
 BASE_PORT = 3000
 PERCENTAGE_OF_VARIATION = 50
 MIN_TO_EVALUATE = 3
@@ -168,11 +168,16 @@ class TorcsProblem():
                         normalized_damage = damage/UPPER_BOUND_DAMAGE if not adversarial else damage/UPPER_BOUND_DAMAGE_WITH_ADV
 
                         # take the car position at the end of the race
-                        car_position = history_car_pos[history_key][-1]
-                        print(F"CAR POSITION: {car_position}")
-                        car_position -= 1
-                        norm_car_position = car_position/OPPONENTS_NUMBER
+                        final_car_position = history_car_pos[num_laps][-1]
+                        final_car_position -= 1
+                        norm_final_car_position = final_car_position/OPPONENTS_NUMBER
 
+                        # take the best position during the race
+                        best_car_position = 9
+                        for lap in range(1, num_laps+1):
+                            best_car_position = np.min(history_car_pos[lap]) if np.min(history_car_pos[lap]) < best_car_position else best_car_position
+                        best_car_position -= 1
+                        norm_best_car_position = best_car_position/OPPONENTS_NUMBER
                         # compute out of track ticks and normilize it with respect to the total amount of ticks
                         ticks_out_of_track = 0
                         for key in history_track_pos.keys():
@@ -190,9 +195,10 @@ class TorcsProblem():
                                                             }
                         else:
                             car_pos_multiplier = 0.5
-                            fitness = (norm_car_position * car_pos_multiplier) + norm_out_of_track_ticks  + normalized_damage 
+                            fitness = (norm_final_car_position * car_pos_multiplier) + norm_best_car_position + norm_out_of_track_ticks  + normalized_damage 
                             fitness_dict_component[track] = {
-                                                                "fitness": fitness, "norm_car_position ": norm_car_position,
+                                                                "fitness": fitness, "norm_final_car_position": norm_final_car_position,
+                                                                "norm_best_car_position": norm_best_car_position,
                                                                 "norm_out_of_track_ticks": norm_out_of_track_ticks, "normalized_damage": normalized_damage
                                                             }
                         
@@ -275,8 +281,9 @@ class TorcsProblem():
                 # for each track initialize the average terms.
                 for track in track_names:
                     agent_fitness_term_avg[track] = {
-                                                        "fitness": 0.0, "norm_car_position ": 0.0, "norm_out_of_track_ticks": 0.0,
-                                                        "normalized_damage": 0.0
+                                                        "fitness": 0.0, "norm_final_car_position": 0.0,
+                                                        "norm_best_car_position": 0.0,
+                                                        "norm_out_of_track_ticks": 0.0, "normalized_damage": 0.0       
                                                     }
 
                 # for each run of the agent

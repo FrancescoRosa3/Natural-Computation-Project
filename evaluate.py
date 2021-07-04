@@ -3,7 +3,7 @@ import xml.etree.ElementTree as ET
 import argparse
 
 # Load the custom_controller module
-import custom_controller
+import custom_controller_overtake as custom_controller
 # define the path were the parameters are defined
 import os 
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -92,7 +92,7 @@ if __name__ == "__main__":
                                                                 stage=2,
                                                                 track=track)
 
-                history_lap_time, history_speed, history_damage, history_distance_raced, history_track_pos, history_car_pos, ticks = controller.run_controller(plot_history = True)
+                history_lap_time, history_speed, history_damage, history_distance_raced, history_track_pos, history_car_pos, ticks, race_failed = controller.run_controller(plot_history = True)
 
                 normalized_ticks = ticks/controller.C.maxSteps
 

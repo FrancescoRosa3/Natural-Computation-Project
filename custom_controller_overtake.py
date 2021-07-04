@@ -240,6 +240,7 @@ class CustomController:
         if ((min(os[12:18]) > overtake_space) and (min(tsen[3:9]) > overtake_space)) or\
             ((min(os[18:24]) > overtake_space) and (min(tsen[10:16]) > overtake_space)):
             return True
+        #print("No Space on side")
         return False
 
     def traffic_speed_adjustment(self, P, os,sx,ts,tsen):
@@ -287,6 +288,7 @@ class CustomController:
                 seriousness= (max_worry-sn)/(max_worry-full_serious)
             tsa= max_tsa * seriousness
             tsa= snakeoil.clip(tsa,-ts,0)
+            #print(f"Speed adjustment {tsa}")
             return tsa
         return 0
 
@@ -299,6 +301,7 @@ class CustomController:
         onthetrack= abs(tp) < P['sortofontrack']
         offrd= 1
         if not onthetrack:
+            #print("Not on track")
             offrd= P['offroad']
         if pointing_ahead:
             sto= a 
@@ -319,7 +322,9 @@ class CustomController:
     #(P,R['steer'],S['trackPos'],S['angle'],S['track'],S['speedX'],infleX,infleA,straightness)
     def steer_reactive(self, P,sti,tp,a,t,sx,infleX,infleA,str8ness):
         if abs(a) > .6: 
-            return self.steer_centeralign(P,sti,tp,a)
+            sto = self.steer_centeralign(P,sti,tp,a)
+            #sto = self.speed_appropriate_steer(P,sto,sx)
+            return sto
         # take the max distance from the edge of the track
         maxsen= max(t)
         ttp= 0
@@ -361,12 +366,9 @@ class CustomController:
         # if there is an opponent within x meters on the left side (in front of the car)
         if min(os[8:18]) < overtake_space:
             sto-= P['steer_opp_adj']/c
-            #print(f"sx {sto=}", end='')
         # if there is an opponent within x meters on the right side (in front of the car)
         if min(os[18:26]) < overtake_space:
             sto+= P['steer_opp_adj']/c
-            #print(f"dx {sto=}", end='')
-        #print("", end='\r')
         """# if there is an opponent in front of the car
         if cs == 17:
             sto+= P['steer_front_opp_adj']/c
@@ -580,7 +582,6 @@ class CustomController:
             s= self.steer_centeralign(P,R['steer'],S['trackPos'],S['angle'])
         # set the steer value to send to the server
         R['steer']= s
-        
         if S['stucktimer'] and S['distRaced']>20:
             # if you are going in reverse.
             # invert the rotation, in order to align with the track
@@ -599,7 +600,7 @@ class CustomController:
                 R['steer']= self.speed_appropriate_steer(P, 
                                                         self.traffic_navigation(P, S['opponents'], R['steer'], S['speedX']),
                                                         S['speedX']+50)
-                #print(f"{R['steer']=}")
+                
         
         if not S['stucktimer']:
             self.target_speed= abs(self.target_speed) 

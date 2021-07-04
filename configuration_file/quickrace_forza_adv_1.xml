@@ -2,10 +2,10 @@
 <!DOCTYPE params SYSTEM "params.dtd">
 
 
-<params name="Forza no adversarial">
+<params name="Forza  adversarial">
   <section name="Header">
-    <attstr name="name" val="Forza no adversarial"/>
-    <attstr name="description" val="Forza no adversarial"/>
+    <attstr name="name" val="Forza  adversarial"/>
+    <attstr name="description" val="Forza  adversarial"/>
     <attnum name="priority" val="10"/>
     <attstr name="menu image" val="data/img/splash-qr.png"/>
   </section>
@@ -22,12 +22,12 @@
 
   <section name="Races">
     <section name="1">
-      <attstr name="name" val="Forza no adversarial"/>
+      <attstr name="name" val="Forza  adversarial"/>
     </section>
 
   </section>
 
-  <section name="Forza no adversarial">
+  <section name="Forza  adversarial">
     <attnum name="distance" unit="km" val="0"/>
     <attstr name="type" val="race"/>
     <attstr name="starting order" val="drivers list"/>
@@ -111,7 +111,7 @@
 
     <section name="3">
       <attstr name="type" val="race config"/>
-      <attstr name="race" val="Forza no adversarial"/>
+      <attstr name="race" val="Forza  adversarial"/>
       <section name="Options">
         <section name="1">
           <attstr name="type" val="race length"/>
