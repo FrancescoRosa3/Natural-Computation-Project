@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import json, random, sys, threading, signal
 from copy import deepcopy
 import time
+import multiprocessing
 from multiprocessing.pool import ThreadPool
 import xml.etree.ElementTree as ET
 from threading import Lock, Condition
@@ -25,8 +26,10 @@ from deap import gp
 import pygraphviz as pgv
 import networkx as nx
 
+import pickle
+
 # Load the custom_controller module
-import custom_controller
+import custom_controller_overtake as custom_controller
 # define the path were the parameters are defined
 import os 
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -82,17 +85,20 @@ def clip(param, lb, ub):
 class GP_alg():
 
     # Problem initialization
-    def __init__(self, controller_variables, n_pop, mate_prob, mut_prob, n_iter):
+    def __init__(self, controller_variables, n_pop, mate_prob, mut_prob, n_iter, pool):
         
         self.controller_variables = controller_variables
         self.n_pop = n_pop
         self.mate_prob = mate_prob
         self.mut_prob = mut_prob
-        self.n_iter = n_iter
-
+        self.n_iter = n_iter-1
+        
+        self.pool = pool
+        self.toolbox = self.create_toolbox()
         self.agents_cnt = 0
-        self.fitnesses = [None for i in range(n_pop)]
-        self.fitnesses_terms = [None for i in range(n_pop)]
+        self.fitnesses = []
+        self.fitnesses_terms = []
+        
 
 
     # evaluate function
@@ -117,7 +123,6 @@ class GP_alg():
             fitness_dict_component = {}
             for track in track_names:
                 try:
-                    
                     overtake_func = self.toolbox.compile(expr = x)
                     controller = custom_controller.CustomController(overtake_func,
                                                                     port=BASE_PORT+port_number+1,
@@ -125,9 +130,7 @@ class GP_alg():
                                                                     parameters_from_file=False,
                                                                     stage=2,
                                                                     track=track)
-                    
                     history_lap_time, history_speed, history_damage, history_distance_raced, history_track_pos, history_car_pos, ticks, race_failed = controller.run_controller()
-                    
                     normalized_ticks = ticks/controller.C.maxSteps
 
                     # compute the number of laps
@@ -190,8 +193,8 @@ class GP_alg():
                         if race_failed:
                             print(f"RACE FAILED")
                         else:
-                            print(f"THE AGENTS COULDN'T COMPLETE THE FIRST LAP")
-                        fitness = 10   
+                            print(f"THE AGENT COULDN'T COMPLETE THE FIRST LAP")
+                        fitness = 10 
                     #return fitness
                     
                 except Exception as ex:
@@ -225,12 +228,24 @@ class GP_alg():
             servers_port_state_lock.notify_all()
             servers_port_state_lock.release()
 
-            return total_fitness
-        return run_simulations(x)
+            return total_fitness,
+
+
+        agents_cnt_lock.acquire(blocking=True)
+        if self.agents_cnt != 0 and self.agents_cnt % self.n_pop == 0:
+            self.agents_cnt = 0
+            best_fit_index = np.argmin(self.fitnesses)
+            print(f"BEST fitness: {min(self.fitnesses)} - TERMS: {self.fitnesses_terms[best_fit_index]}")
+            self.fitnesses = []
+            self.fitnesses_terms = []
+        agents_cnt_lock.release()
+                
+        return run_simulations(self, x)
+
        
-    def create_toolbox(self):
+    def create_toolbox(self, pippo = True):
         # defined a new primitive set for strongly typed GP
-        pset = gp.PrimitiveSetTyped("MAIN", itertools.repeat(float, 57), bool, "IN")
+        pset = gp.PrimitiveSetTyped("MAIN", itertools.repeat(float, 7), float, "ARG")
 
         # boolean operators
         pset.addPrimitive(operator.and_, [bool, bool], bool)
@@ -263,20 +278,21 @@ class GP_alg():
         pset.addPrimitive(if_then_else, [bool, float, float], float)
 
         # terminals
-        pset.addEphemeralConstant("randpi", lambda: random.randint(0, 300), int)
-        pset.addEphemeralConstant("randpi", lambda: random.randint(5, 20), int)
+        pset.addEphemeralConstant("vel", lambda: random.randint(0, 300), int)
+        pset.addEphemeralConstant("dist", lambda: random.randint(5, 20), int)
         pset.addEphemeralConstant("randpi", lambda: random.uniform(-np.pi, np.pi), float)
+
+        pset.addTerminal(False, bool)
+        pset.addTerminal(True, bool)
 
         #input
         pset.renameArguments(ARG0='sti')
         pset.renameArguments(ARG1='tp')
-        pset.renameArguments(ARG0='a')
-        pset.renameArguments(ARG0='ttp')
-        pset.renameArguments(ARG0='sx')
-        pset.renameArguments(ARG0='op_left')
-        pset.renameArguments(ARG0='op_right')
-
-
+        pset.renameArguments(ARG2='a')
+        pset.renameArguments(ARG3='ttp')
+        pset.renameArguments(ARG4='sx')
+        pset.renameArguments(ARG5='op_left')
+        pset.renameArguments(ARG6='op_right')
 
         creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
         creator.create("Individual", gp.PrimitiveTree, fitness=creator.FitnessMin)
@@ -285,17 +301,19 @@ class GP_alg():
         toolbox.register("expr", gp.genHalfAndHalf, pset=pset, min_=1, max_=2)
         toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.expr)
         toolbox.register("population", tools.initRepeat, list, toolbox.individual)
-        toolbox.register("compile", gp.compile, pset=pset)
+        if pippo:
+            toolbox.register("compile", gp.compile, pset=pset)
 
         toolbox.register("evaluate", self._evaluate)
         toolbox.register("select", tools.selTournament, tournsize=3)
         toolbox.register("mate", gp.cxOnePoint)
         toolbox.register("expr_mut", gp.genFull, min_=0, max_=2)
-        toolbox.register("mutate", gp.mutUniform, expr=toolbox.expr_mut, pset=pset)    
+        toolbox.register("mutate", gp.mutUniform, expr=toolbox.expr_mut, pset=pset)
+        if pippo:
+            toolbox.register("map", self.pool.map)
+        return toolbox
 
     def run_problem(self):
-        self.create_toolbox()
-        random.seed(10)
         pop = self.toolbox.population(n=self.n_pop)
         hof = tools.HallOfFame(1)
         stats = tools.Statistics(lambda ind: ind.fitness.values)
@@ -304,9 +322,9 @@ class GP_alg():
         stats.register("min", np.min)
         stats.register("max", np.max)
 
-        algorithms.eaSimple(pop, self.toolbox, self.mate_prob, self.mut_prob, 40, stats, halloffame=hof)
+        population, logbook = algorithms.eaSimple(pop, self.toolbox, self.mate_prob, self.mut_prob, self.n_iter, stats, halloffame=hof, verbose=True)
 
-        return pop, stats, hof
+        return pop, stats, hof, logbook
 
 def take_track_names(args):
     track_names = []
@@ -390,9 +408,26 @@ def save_results(result_params):
         json.dump(parameters, outfile)
 """
 
+def save_results(pop, n_iter, hof, logbook):
+
+    #cp = dict(population=deepcopy(pop), generation=deepcopy(n_iter), halloffame=deepcopy(hof),
+    #            logbook=deepcopy(logbook), rndstate=random.getstate())
+
+    cp = dict(halloffame=deepcopy(hof))
+
+    global results_folder
+    create_dir(results_folder)
+    file_name = results_folder  + "/" + PARAMETERS_STRING + ".xml"
+    
+    with open(file_name, "wb") as cp_file:
+        json.dump(cp, cp_file)
+    
+    
 if __name__ == "__main__":
     ####################### SETUP ################################
     parser = argparse.ArgumentParser()
+    parser.add_argument('--checkpoint_file', '-cp', help="checkpoint file containing the starting population for the algorithm", type= str,
+                        default= "None")
     parser.add_argument('--configuration_file', '-conf', help="name of the configuration file to use, without extension or port number", type= str,
                     default= "quickrace_forza_no_adv")
     parser.add_argument('--controller_params', '-ctrlpar', help="initial controller parameters", type= str,
@@ -412,55 +447,72 @@ if __name__ == "__main__":
     create_dir(results_folder)
 
     ####################### Differential Evolution ################################
-    np_seed = 32
-    de_seed = 248
-    # set the np seed
-    np.random.seed(np_seed)
+    if args.checkpoint_file == "None":
+        np_seed = 32
+        # set the np seed
+        np.random.seed(np_seed)
 
-    # Pymoo Differential Evolution
-    print('Pymoo Differential Evolution')
+        # Pymoo Differential Evolution
+        print('Pymoo Differential Evolution')
 
-    # population size
-    n_pop = 100
-    # mate prpbability
-    mate_prob = 0.5
-    # mutation prpbability
-    mut_prob = 0.2
-    # maximum number of generations
-    n_iter = 20
+        # population size
+        n_pop = 10
+        # mate prpbability
+        mate_prob = 0.5
+        # mutation prpbability
+        mut_prob = 0.2
+        # maximum number of generations
+        n_iter = 1
+        
+        PARAMETERS_STRING = f"{np_seed}_{n_pop}_{mate_prob}_{mut_prob}_{n_iter}"
+
+        pool = multiprocessing.dummy.Pool(NUMBER_SERVERS)
+
+        # define the problem
+        algorithm = GP_alg(parameters, n_pop, mate_prob, mut_prob, n_iter, pool)
+        pop, stats, hof, logbook = algorithm.run_problem()
+
+        save_results(pop, stats, hof, logbook)
+
+        best_individual_so_far = hof.items[0]
+        best_fitness_so_far = hof.items[0].fitness.values[0]
+
+        print("hof phenotype: ", best_individual_so_far)
+        print("hof fitness: ", best_fitness_so_far, best_fitness_so_far/n_pop)
+
+        nodes, edges, labels = gp.graph(hof.items[0])
+
+        g = pgv.AGraph()
+        g.add_nodes_from(nodes)
+        g.add_edges_from(edges)
+        g.layout(prog="dot")
+
+        for i in nodes:
+            n = g.get_node(i)
+            n.attr["label"] = labels[i]
+
+        g.draw("tree.pdf")
+
+        g = nx.Graph()
+        g.add_nodes_from(nodes)
+        g.add_edges_from(edges)
+        pos = nx.nx_agraph.graphviz_layout(g, prog="dot")
+
+        nx.draw_networkx_nodes(g, pos)
+        nx.draw_networkx_edges(g, pos)
+        nx.draw_networkx_labels(g, pos, labels)
+        plt.show()
     
-    PARAMETERS_STRING = f"{np_seed}_{de_seed}_{n_pop}_{mate_prob}_{mut_prob}_{n_iter}"
-
-    # define the problem
-    algorithm = GP_alg(parameters, n_pop, mate_prob, mut_prob, n_iter)
-    pop, stats, hof = algorithm.run_problem()
-
-
-    best_individual_so_far = hof.items[0]
-    best_fitness_so_far = hof.items[0].fitness.values[0]
-
-    print("hof phenotype: ", best_individual_so_far)
-    print("hof fitness: ", best_fitness_so_far, best_fitness_so_far/n_pop)
-
-    nodes, edges, labels = gp.graph(hof.items[0])
-
-    g = pgv.AGraph()
-    g.add_nodes_from(nodes)
-    g.add_edges_from(edges)
-    g.layout(prog="dot")
-
-    for i in nodes:
-        n = g.get_node(i)
-        n.attr["label"] = labels[i]
-
-    g.draw("tree.pdf")
-
-    g = nx.Graph()
-    g.add_nodes_from(nodes)
-    g.add_edges_from(edges)
-    pos = nx.nx_agraph.graphviz_layout(g, prog="dot")
-
-    nx.draw_networkx_nodes(g, pos)
-    nx.draw_networkx_edges(g, pos)
-    nx.draw_networkx_labels(g, pos, labels)
-    plt.show()
+    else:
+        with open(args.checkpoint_file, "r") as cp_file:
+            cp = json.load(cp_file)
+        overtake_func = cp["halloffame"]
+        toolbox = GP_alg.create_toolbox(False)
+        overtake_func_compiled = toolbox.compile(expr = overtake_func.items[0])
+        controller = custom_controller.CustomController(overtake_func_compiled,
+                                                                    port=BASE_PORT+1,
+                                                                    parameters=parameters,
+                                                                    parameters_from_file=False,
+                                                                    stage=2,
+                                                                    track="forza")
+        

@@ -261,7 +261,7 @@ class CustomController:
         # soglia sulla distanza sotto la quale si frena
         if sn<P["sn"]: 
             self.opHistory= os 
-            return -ts 
+            return -ts
         opn= mpn+sn 
         mpp= mpn - sx/180 
         sp= min(self.opHistory[17],self.opHistory[18]) 
@@ -278,7 +278,7 @@ class CustomController:
         max_tsa= osx - ts
 
         if not self.space_on_sides(P, os, tsen, sx):
-            max_worry= P["max_worry"] 
+            max_worry= P["max_worry"]
             full_serious= P["full_serious"]
             if sn > max_worry:
                 seriousness= 0
@@ -293,7 +293,6 @@ class CustomController:
 
     # P,R['steer'],S['trackPos'],S['angle']
     def steer_centeralign(self, P,sti,tp,a,ttp=0):
-        print(f"STEER_CENTERALIGN: {sti} - {ttp}")
         
         pointing_ahead= abs(a) < P['pointingahead'] 
         # tp represents if the car is inside or outside the track
@@ -319,9 +318,11 @@ class CustomController:
         return snakeoil.clip(sto,-stmax,stmax)
 
     #(P,R['steer'],S['trackPos'],S['angle'],S['track'],S['speedX'],infleX,infleA,straightness)
-    def steer_reactive(self, P,sti,tp,a,t,sx,infleX,infleA,str8ness):
-        if abs(a) > .6: 
-            return self.steer_centeralign(P,sti,tp,a)
+    def steer_reactive(self, P, sti, os, tp,a,t,sx,infleX,infleA,str8ness):
+        if abs(a) > .6:
+            min_left = min(os[8:18])
+            min_right = min(os[18:26]) 
+            return self.overtake_func(sti,tp,a, 0, sx, min_left, min_right)
         # take the max distance from the edge of the track
         maxsen= max(t)
         ttp= 0
@@ -350,7 +351,9 @@ class CustomController:
                 ttp= .94 * abs(tp) / tp
             else:
                 ttp= 0
-        sto= self.steer_centeralign(P,sti,tp,aadj,ttp)
+        min_left = min(os[8:18])
+        min_right = min(os[18:26]) 
+        sto= self.overtake_func(sti,tp,aadj,ttp, sx, min_left, min_right)
         return self.speed_appropriate_steer(P,sto,sx)
 
     def traffic_navigation(self, P, os, sti, sx):
@@ -575,8 +578,10 @@ class CustomController:
                 s= self.steer_centeralign(P,R['steer'],S['trackPos'],S['angle'])
                 self.badness+= 1
             else:
-                s= self.steer_reactive(P,R['steer'],S['trackPos'],S['angle'],S['track'],
+                s= self.steer_reactive(P,R['steer'], S['opponents'], S['trackPos'],S['angle'],S['track'],
                                                     S['speedX'],infleX,infleA,straightness)
+                
+                
         else:
             # it brings the car towards the center
             s= self.steer_centeralign(P,R['steer'],S['trackPos'],S['angle'])
@@ -598,9 +603,7 @@ class CustomController:
                 # override what has been decided before.
                 # set the steer based on the current car speed: S['speedX']+50
                 # the desired steer based on the presence of the opponents: self.traffic_navigation(S['opponents'], R['steer'])
-                R['steer']= self.speed_appropriate_steer(P, 
-                                                        self.traffic_navigation(P, S['opponents'], R['steer'], S['speedX']),
-                                                        S['speedX']+50)
+                R['steer']= self.speed_appropriate_steer(P, R['steer'], S['speedX']+50)
                 #print(f"{R['steer']=}")
         
         if not S['stucktimer']:
