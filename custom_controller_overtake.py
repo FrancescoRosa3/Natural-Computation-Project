@@ -13,8 +13,9 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 
 class CustomController:
     
-    def __init__(self, port=None, parameters = None, parameters_from_file = True, parameter_file = "\Baseline_snakeoil\default_parameters",
+    def __init__(self, overtake_func, port=None, parameters = None, parameters_from_file = True, parameter_file = "\Baseline_snakeoil\default_parameters",
                  stage = 3, track = "unknown"):
+        self.overtake_func = overtake_func
         self.port = port
         self.parameters = parameters
         self.parameters_from_file = parameters_from_file
@@ -292,6 +293,7 @@ class CustomController:
 
     # P,R['steer'],S['trackPos'],S['angle']
     def steer_centeralign(self, P,sti,tp,a,ttp=0):
+        print(f"STEER_CENTERALIGN: {sti} - {ttp}")
         
         pointing_ahead= abs(a) < P['pointingahead'] 
         # tp represents if the car is inside or outside the track
