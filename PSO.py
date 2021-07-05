@@ -194,7 +194,7 @@ class TorcsProblem():
                                                                 "norm_max_speed": norm_max_speed#, "norm_min_speed": norm_min_speed
                                                             }
                         else:
-                            car_pos_multiplier = 0.5
+                            car_pos_multiplier = 2
                             fitness = (norm_final_car_position * car_pos_multiplier) + norm_best_car_position + norm_out_of_track_ticks  + normalized_damage 
                             fitness_dict_component[track] = {
                                                                 "fitness": fitness, "norm_final_car_position": norm_final_car_position,
