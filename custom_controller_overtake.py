@@ -261,7 +261,7 @@ class CustomController:
         # soglia sulla distanza sotto la quale si frena
         if sn<P["sn"]: 
             self.opHistory= os 
-            return -ts 
+            #return -ts 
         opn= mpn+sn 
         mpp= mpn - sx/180 
         sp= min(self.opHistory[17],self.opHistory[18]) 
