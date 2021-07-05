@@ -456,13 +456,13 @@ if __name__ == '__main__':
     ub = np.array(ub)
 
     # Set-up hyperparameters
-    #options = {'c1': 0.5, 'c2': 0.3, 'w': 0.9, 'k': 2, 'p': 2}
-    options = {'c1': 0.8, 'c2': 0.6, 'w': 0.7298, 'k': 10, 'p': 2}
+    #options = {'c1': 0.6, 'c2': 0.8, 'w': 0.7298, 'k': 15, 'p': 2}
+    options = {'c1': 0.6, 'c2': 0.8, 'w': 0.5}
     problem_size = n_parameters
-    swarm_size = 50
+    swarm_size = 70
     iterations = 20
 
-    PARAMETERS_STRING = f"{np_seed}_{swarm_size}_{iterations}_{n_parameters}_{options['c1']}_{options['c2']}_{options['w']}_{options['k']}_{options['p']}_{PERCENTAGE_OF_VARIATION}_{change_cond_version}"
+    PARAMETERS_STRING = f"{np_seed}_{swarm_size}_{iterations}_{n_parameters}_{options['c1']}_{options['c2']}_{options['w']}_{PERCENTAGE_OF_VARIATION}_{change_cond_version}"
 
     tp = TorcsProblem(variables_to_change=parameters_to_change, controller_variables=parameters, lb=lb, ub=ub)
 
@@ -470,7 +470,7 @@ if __name__ == '__main__':
     population = create_population(swarm_size, name_parameters_to_change, n_parameters)
 
     # Call instance of PSO
-    optimizer = ps.single.LocalBestPSO(n_particles=swarm_size, dimensions=problem_size, options=options, init_pos=population, bounds=(lb,ub))
+    optimizer = ps.single.GlobalBestPSO(n_particles=swarm_size, dimensions=problem_size, options=options, init_pos=population, bounds=(lb,ub))
 
     # Perform optimization
     cost, pos = optimizer.optimize(func, iters=iterations)
