@@ -30,7 +30,7 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 # CONSTANT DEFINITION
 NUMBER_SERVERS = 10
 BASE_PORT = 3000
-PERCENTAGE_OF_VARIATION = 40
+PERCENTAGE_OF_VARIATION = 50
 MIN_TO_EVALUATE = 3
 NUM_RUN_FOR_BEST_EVALUATION = 3
 
@@ -508,9 +508,9 @@ if __name__ == "__main__":
     # number of variables for the problem visualization
     n_vars = n_parameters
     # maximum number of generations
-    max_gens = 20
+    max_gens = 25
     # Cross-over rate
-    cr = 0.9
+    cr = 0.7
     # Scaling factor F
     f = 0.9
 
