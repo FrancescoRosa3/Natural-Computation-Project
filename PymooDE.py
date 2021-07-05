@@ -327,7 +327,7 @@ class TorcsProblem(Problem):
                 for track in agent_fitness_term_avg:
                     for term in agent_fitness_term_avg[track].keys():
                         agent_fitness_term_avg[track][term] /= NUM_RUN_FOR_BEST_EVALUATION
-                print(f"Agent {agent}, fitness terms {agent_fitness_term_avg}")
+                #print(f"Agent {agent}, fitness terms {agent_fitness_term_avg}")
                 self.fitness_terms[agent] = agent_fitness_term_avg
 
         """
