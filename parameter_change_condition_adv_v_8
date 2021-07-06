@@ -107,7 +107,7 @@
     "steer_opp_adj": [1, 0.1, 20],
     "overtake_space": [1, 1, 20],
   
-    "sn": [1, 0, 10],
+    "sn": [0, 0, 10],
     "max_worry": [1, 0, 150],
     "full_serious": [1, 0, 100],
 

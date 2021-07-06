@@ -436,7 +436,7 @@ if __name__ == '__main__':
     # load the change condition file
     parameters_to_change, change_cond_version = get_configuration(args.param_change_cond_version)
 
-    np_seed = 0
+    np_seed = 10
     np.random.seed(np_seed)
 
     # compute the number of parameters to change

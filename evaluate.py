@@ -1,7 +1,7 @@
 import json
 import xml.etree.ElementTree as ET
 import argparse
-
+import numpy as np
 # Load the custom_controller module
 import custom_controller_overtake as custom_controller
 # define the path were the parameters are defined
@@ -66,6 +66,7 @@ if __name__ == "__main__":
                     default= "quickrace_forza_no_adv")
     parser.add_argument('--controller_params', '-ctrlpar', help="initial controller parameters", type= str,
                     default= "Baseline_snakeoil\default_parameters")
+    parser.add_argument('--port', '-port', help="port number", type= int)
    
                     
     args = parser.parse_args()
@@ -86,7 +87,7 @@ if __name__ == "__main__":
         for track in track_names:
             try:
                 #print(f"Run agent {agent_indx} on Port {BASE_PORT+indx+1}")
-                controller = custom_controller.CustomController(port=3001,
+                controller = custom_controller.CustomController(port=3000+args.port,
                                                                 parameters=parameters, 
                                                                 parameters_from_file=False,
                                                                 stage=2,
@@ -119,9 +120,17 @@ if __name__ == "__main__":
                     normalized_damage = damage/UPPER_BOUND_DAMAGE if not adversarial else damage/UPPER_BOUND_DAMAGE_WITH_ADV
 
                     # take the car position at the end of the race
-                    car_position = history_car_pos[history_key][-1]
-                    car_position -= 1
-                    norm_car_position = car_position/OPPONENTS_NUMBER
+                    # take the car position at the end of the race
+                    final_car_position = history_car_pos[num_laps][-1]
+                    final_car_position -= 1
+                    norm_final_car_position = final_car_position/OPPONENTS_NUMBER
+
+                    # take the best position during the race
+                    best_car_position = 9
+                    for lap in range(1, num_laps+1):
+                        best_car_position = np.min(history_car_pos[lap]) if np.min(history_car_pos[lap]) < best_car_position else best_car_position
+                    best_car_position -= 1
+                    norm_best_car_position = best_car_position/OPPONENTS_NUMBER
 
                     # compute the average from the center line
                     """
@@ -144,11 +153,13 @@ if __name__ == "__main__":
                     norm_out_of_track_ticks = ticks_out_of_track/MAX_OUT_OF_TRACK_TICKS                    
                     
                     # compute the fitness for the current track
-                    speed_comp_multiplier = 2
                     car_pos_multiplier = 2
-                    fitness = (-normalized_avg_speed * speed_comp_multiplier) -normalized_distance_raced +normalized_damage +norm_out_of_track_ticks +normalized_ticks + (norm_car_position * car_pos_multiplier)
-                    # store the fitness for the current track
-                    fitness_dict_component[track] = f"Fitness {fitness:.4f}\nCar position {norm_car_position:.4f}\nNorm AVG SPEED {-normalized_avg_speed:.4f}\nNorm Distance Raced {-normalized_distance_raced:.4f}\nNorm Damage {normalized_damage:.4f}\nnorm out_of_track_ticks {norm_out_of_track_ticks:.4f}\nnormalized ticks {normalized_ticks:.4f}\nSim seconds {ticks/50}"
+                    fitness = (norm_final_car_position * car_pos_multiplier) + norm_best_car_position + norm_out_of_track_ticks  + normalized_damage 
+                    fitness_dict_component[track] = {
+                                                        "fitness": fitness, "norm_final_car_position": norm_final_car_position,
+                                                        "norm_best_car_position": norm_best_car_position,
+                                                        "norm_out_of_track_ticks": norm_out_of_track_ticks, "normalized_damage": normalized_damage
+                                                        }
                     
                 else:
                     #print(f"THE AGENTS COULDN'T COMPLETE THE FIRST LAP")
