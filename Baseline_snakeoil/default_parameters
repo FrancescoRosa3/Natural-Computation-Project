@@ -57,7 +57,7 @@
     "steer_front_opp_adj": 0.1,
     
     "sn": 3,
-    "max_worry": 40,
+    "max_worry": 80,
     "full_serious": 20,
 
     "caution_badness_snow_100": 0.8,
@@ -67,7 +67,5 @@
     "caution_badness_snext_100": 0.90,
     "caution_badness_snext_1000": 0.75,
     "caution_badness_snext_10000": 0.5
-
-
 
 }
