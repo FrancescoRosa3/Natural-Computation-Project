@@ -470,7 +470,7 @@ if __name__ == '__main__':
     population = create_population(swarm_size, name_parameters_to_change, n_parameters)
 
     # Call instance of PSO
-    optimizer = ps.single.localPSO(n_particles=swarm_size, dimensions=problem_size, options=options, init_pos=population, bounds=(lb,ub))
+    optimizer = ps.single.LocalBestPSO(n_particles=swarm_size, dimensions=problem_size, options=options, init_pos=population, bounds=(lb,ub))
 
     # Perform optimization
     cost, pos = optimizer.optimize(func, iters=iterations)
