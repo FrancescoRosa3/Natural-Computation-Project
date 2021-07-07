@@ -1,6 +1,7 @@
 import json
 import xml.etree.ElementTree as ET
 import argparse
+import numpy as np
 
 # Load the custom_controller module
 import custom_controller_overtake as custom_controller
@@ -54,7 +55,7 @@ def take_track_names(args):
 
 def get_configuration(path):
     conf_split_underscore = path.split("_") 
-    if conf_split_underscore[-3] == 'no':
+    if conf_split_underscore[-2] == 'no':
         global adversarial
         adversarial = False
         print("Adversarial {adversarial}")
@@ -86,7 +87,7 @@ if __name__ == "__main__":
         for track in track_names:
             try:
                 #print(f"Run agent {agent_indx} on Port {BASE_PORT+indx+1}")
-                controller = custom_controller.CustomController(port=3001,
+                controller = custom_controller.CustomController(port=3010,
                                                                 parameters=parameters, 
                                                                 parameters_from_file=False,
                                                                 stage=2,
@@ -103,53 +104,61 @@ if __name__ == "__main__":
                 if num_laps > 0:
                     # compute the average speed
                     avg_speed = 0
+                    max_speed = 0
+                    min_speed = MAX_SPEED
                     for history_key in history_speed.keys():
                         for value in history_speed[history_key]:
+                            max_speed = value if value > max_speed else max_speed
+                            min_speed = value if value < min_speed else min_speed
                             avg_speed += value
                     avg_speed /= ticks
+                    norm_max_speed = max_speed/MAX_SPEED
+                    norm_min_speed = min_speed/MAX_SPEED
                     #print(f"Num Laps {num_laps} - Average Speed {avg_speed} - Num ticks {ticks}")
                     
                     normalized_avg_speed = avg_speed/MAX_SPEED
 
                     distance_raced = history_distance_raced[history_key][-1]
                     normalized_distance_raced = distance_raced/(TRACK_LENGTH[track]*EXPECTED_NUM_LAPS)
-
+                
                     # take the damage
                     damage = history_damage[history_key][-1]
                     normalized_damage = damage/UPPER_BOUND_DAMAGE if not adversarial else damage/UPPER_BOUND_DAMAGE_WITH_ADV
 
                     # take the car position at the end of the race
-                    car_position = history_car_pos[history_key][-1]
-                    car_position -= 1
-                    norm_car_position = car_position/OPPONENTS_NUMBER
+                    final_car_position = history_car_pos[num_laps][-1]
+                    final_car_position -= 1
+                    norm_final_car_position = final_car_position/OPPONENTS_NUMBER
 
-                    # compute the average from the center line
-                    """
-                    average_track_pos = 0
-                    steps = 0
-                    for key in history_track_pos.keys():
-                        for value in history_track_pos[key]:
-                            steps += 1
-                            if abs(value) > 1:
-                                average_track_pos += (abs(value) - 1)
-                    average_track_pos /= steps
-                    """
-
+                    # take the best position during the race
+                    best_car_position = 9
+                    for lap in range(1, num_laps+1):
+                        best_car_position = np.min(history_car_pos[lap]) if np.min(history_car_pos[lap]) < best_car_position else best_car_position
+                    best_car_position -= 1
+                    norm_best_car_position = best_car_position/OPPONENTS_NUMBER
                     # compute out of track ticks and normilize it with respect to the total amount of ticks
                     ticks_out_of_track = 0
                     for key in history_track_pos.keys():
                         for value in history_track_pos[key]:
                             if abs(value) > 1:
                                 ticks_out_of_track += 1
-                    norm_out_of_track_ticks = ticks_out_of_track/MAX_OUT_OF_TRACK_TICKS                    
+                    norm_out_of_track_ticks = ticks_out_of_track/MAX_OUT_OF_TRACK_TICKS                       
                     
-                    # compute the fitness for the current track
-                    speed_comp_multiplier = 2
-                    car_pos_multiplier = 2
-                    fitness = (-normalized_avg_speed * speed_comp_multiplier) -normalized_distance_raced +normalized_damage +norm_out_of_track_ticks +normalized_ticks + (norm_car_position * car_pos_multiplier)
-                    # store the fitness for the current track
-                    fitness_dict_component[track] = f"Fitness {fitness:.4f}\nCar position {norm_car_position:.4f}\nNorm AVG SPEED {-normalized_avg_speed:.4f}\nNorm Distance Raced {-normalized_distance_raced:.4f}\nNorm Damage {normalized_damage:.4f}\nnorm out_of_track_ticks {norm_out_of_track_ticks:.4f}\nnormalized ticks {normalized_ticks:.4f}\nSim seconds {ticks/50}"
-                    
+                                            # compute the fitness for the current track and store the fitness for the current track
+                    if not adversarial:
+                        fitness = - normalized_avg_speed - norm_max_speed + norm_out_of_track_ticks # - norm_min_speed 
+                        fitness_dict_component[track] = {
+                                                            "fitness": fitness, "norm_avg_speed":-normalized_avg_speed, "norm_out_of_track_ticks": norm_out_of_track_ticks,
+                                                            "norm_max_speed": norm_max_speed#, "norm_min_speed": norm_min_speed
+                                                        }
+                    else:
+                        car_pos_multiplier = 2
+                        fitness = (norm_final_car_position * car_pos_multiplier) + norm_best_car_position + norm_out_of_track_ticks  + normalized_damage 
+                        fitness_dict_component[track] = {
+                                                            "fitness": fitness, "norm_final_car_position": norm_final_car_position,
+                                                            "norm_best_car_position": norm_best_car_position,
+                                                            "norm_out_of_track_ticks": norm_out_of_track_ticks, "normalized_damage": normalized_damage
+                                                        }
                 else:
                     #print(f"THE AGENTS COULDN'T COMPLETE THE FIRST LAP")
                     fitness = 10  
