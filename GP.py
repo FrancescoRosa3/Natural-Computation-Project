@@ -122,9 +122,11 @@ class GP_alg():
             try:
                 port_number = servers_port_state.index(True)
                 servers_port_state[port_number] = False
+                print(f"Agent: {self.agents_cnt} got a port.")
                 servers_port_state_lock.release()
                 break
             except ValueError:
+                print(f"Agent: {self.agents_cnt} couldn't get a port.")
                 servers_port_state_lock.wait()
                 
 
@@ -377,6 +379,7 @@ class GP_alg():
             for i, ind in enumerate(population):
                 inds_list.append(ind.fitness.values[0])
             inds_list = np.array(inds_list)
+            print(np.sort(inds_list))
             best_k_fits_index = np.argpartition(inds_list, k)[:k]
 
             best_k_inds = []
@@ -404,6 +407,7 @@ class GP_alg():
                 best_k_inds[i].fitness.values = (inds_fitnesses[i], )
 
             # get best individual
+            print(np.sort(inds_fitnesses))
             best_ind_index = np.argmin(inds_fitnesses)
             best_ind = best_k_inds[best_ind_index]
 
@@ -629,7 +633,7 @@ np.random.seed(np_seed)
 print('Pymoo Differential Evolution')
 
 # population size
-n_pop = 50
+n_pop = 10
 # mate prpbability
 mate_prob = 0.5
 # mutation prpbability
