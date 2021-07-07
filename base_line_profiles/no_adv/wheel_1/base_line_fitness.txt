@@ -1,12 +1,14 @@
 # MAX_STEPS = 25000
 
-Sim Time:   137.14 [s], Leader Laps:    1, Leader Distance:    4.329 [km]
+Sim Time:   137.14 [s], Leader Laps:    1, 
+Leader Distance:    4.329 [km]
 Sim Time:   269.56 [s], Leader Laps:    2, Leader Distance:    8.657 [km]
 
-Fitness -0.1693125064395773
-Norm AVG SPEED: -0.38101212321567274
-Norm Distance Raced: -1.0027803832239046
-Norm Damage: 0.054
-norm out_of_track_ticks: 0.634
-normalized ticks: 0.52648
-Sim seconds: 263.24
+Total fitness -0.5011376601451564
+Fitness components {'wheel-1': {
+        'fitness': -0.5011376601451564, 
+        'norm_avg_speed': -0.38101212321567274, 
+        'norm_out_of_track_ticks': 0.634, 
+        'norm_max_speed': -0.7541255369294836
+    }
+}

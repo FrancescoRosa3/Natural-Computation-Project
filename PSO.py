@@ -26,7 +26,7 @@ import custom_controller
 import os 
 
 # CONSTANT DEFINITION
-NUMBER_SERVERS = 10
+NUMBER_SERVERS = 9
 BASE_PORT = 3000
 PERCENTAGE_OF_VARIATION = 50
 MIN_TO_EVALUATE = 3
@@ -426,7 +426,7 @@ if __name__ == '__main__':
     # load the change condition file
     parameters_to_change, change_cond_version = get_configuration(args.param_change_cond_version)
 
-    np_seed = 0
+    np_seed = 42
     np.random.seed(np_seed)
 
     # compute the number of parameters to change
@@ -447,7 +447,7 @@ if __name__ == '__main__':
 
     # Set-up hyperparameters
     #options = {'c1': 0.5, 'c2': 0.3, 'w': 0.9, 'k': 2, 'p': 2}
-    options = {'c1': 0.8, 'c2': 0.6, 'w': 0.7298, 'k': 10, 'p': 2}
+    options = {'c1': 1, 'c2': 0.6, 'w': 0.7298, 'k': 15, 'p': 2}
     problem_size = n_parameters
     swarm_size = 50
     iterations = 20

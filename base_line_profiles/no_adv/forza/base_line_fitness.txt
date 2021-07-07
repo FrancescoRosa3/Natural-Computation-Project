@@ -1,12 +1,14 @@
 # MAX_STEPS = 25000
 
-Sim Time:   125.20 [s], Leader Laps:    1, Leader Distance:    5.784 [km]
+Sim Time:   125.20 [s], 
+Leader Laps:    1, Leader Distance:    5.784 [km]
 Sim Time:   237.18 [s], Leader Laps:    2, Leader Distance:   11.568 [km]
 
-Fitness 0.21164592962117323
-Norm AVG SPEED: -0.5907248399021751
-Norm Distance Raced: -1.0021092304766515
-Norm Damage: 0.2
-norm out_of_track_ticks: 1.142
-normalized ticks: 0.46248
-Sim seconds: 231.24
+Total fitness -0.3720898487246922
+Fitness components {
+    'forza': {  
+                'fitness': -0.3720898487246922, 
+                'norm_avg_speed': -0.5907248399021751, 
+                'norm_out_of_track_ticks': 1.142, 
+                'norm_max_speed': 0.9233650088225169
+            }}

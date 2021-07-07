@@ -37,8 +37,8 @@ max_gens = 20
 cr = 0.9
 # Scaling factor F
 f = 1.5
-np_seed = 200
-de_seed = 200
+np_seed = 100
+de_seed = 100
 # set the np seed
 
 # CONSTANT DEFINITION
