@@ -87,7 +87,7 @@ if __name__ == "__main__":
             print(f"Track {track}")
             try:
                 #print(f"Run agent {agent_indx} on Port {BASE_PORT+indx+1}")
-                controller = custom_controller.CustomController(port=3010,
+                controller = custom_controller.CustomController(port=3001,
                                                                 parameters=parameters, 
                                                                 parameters_from_file=False,
                                                                 stage=2,
