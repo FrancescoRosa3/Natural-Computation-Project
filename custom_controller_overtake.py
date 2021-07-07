@@ -321,13 +321,8 @@ class CustomController:
     def steer_reactive(self, P, sti, os, tp,a,t,sx,infleX,infleA,str8ness):
         if abs(a) > .6:
             # steer = self.steer_centeralign(P,sti,tp,a)
-            #steer =  self.overtake_func(sti, tp, a, sx, min(os[8:18]), min(os[18:26]))
-            sto = self.overtake_func(sti, tp, a, sx, 0)#min(os[8:18]), min(os[18:26]))
-            #print("A: " + str(a))
-            #print(f"STEER1: {steer}")
-            #steer += self.overtake_func(tp, sx, min(os[8:18]), min(os[18:26]))
+            sto = self.overtake_func(sti, tp, a, 0, sx, min(os[8:18]), min(os[18:26]))
             #print(sto)
-            # print(f"STEER1: {steer}")
             return sto
         # take th<e max distance from the edge of the track
         maxsen= max(t)
@@ -359,13 +354,8 @@ class CustomController:
                 ttp= 0
         # sto = self.steer_centeralign(P,sti,tp,aadj,ttp)
         # sto = self.overtake_func(sto,tp,sx, min(os[8:18]), min(os[18:26]))
-        sto = self.overtake_func(sti, tp, a, sx, ttp)
-        #print(f"STEER2: {sto}")
+        sto = self.overtake_func(sti, tp, aadj, ttp, sx, min(os[8:18]), min(os[18:26]))
         #print(sto)
-        #sto += self.overtake_func(tp,sx, min(os[8:18]), min(os[18:26]))/40
-        #print(sto)
-        # print(f"STEER2: {sto}")
-        #return self.speed_appropriate_steer(P,sto,sx)
         return self.speed_appropriate_steer(P,sti,sx)
 
     def traffic_navigation(self, P, os, sti, sx):

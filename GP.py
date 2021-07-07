@@ -148,8 +148,7 @@ class GP_alg():
                 num_laps = len(history_lap_time)
 
                 # the car has completed at least the first lap
-                #if num_laps > 0 and not race_failed:
-                
+                # if num_laps > 0 and not race_failed:                
                 # compute the average speed
                 avg_speed = 0
                 max_speed = 0
@@ -163,21 +162,26 @@ class GP_alg():
                 norm_max_speed = max_speed/MAX_SPEED
                 norm_min_speed = min_speed/MAX_SPEED
                 #print(f"Num Laps {num_laps} - Average Speed {avg_speed} - Num ticks {ticks}")
-                
                 normalized_avg_speed = avg_speed/MAX_SPEED
-
                 distance_raced = history_distance_raced[history_key][-1]
                 normalized_distance_raced = distance_raced/(TRACK_LENGTH[track]*EXPECTED_NUM_LAPS)
-            
                 # take the damage
                 damage = history_damage[history_key][-1]
                 global adversarial
                 normalized_damage = damage/UPPER_BOUND_DAMAGE if not adversarial else damage/UPPER_BOUND_DAMAGE_WITH_ADV
 
                 # take the car position at the end of the race
-                car_position = history_car_pos[history_key][-1]
-                car_position -= 1
-                norm_car_position = car_position/OPPONENTS_NUMBER
+                num_laps = 1 if num_laps == 0 else num_laps
+                final_car_position = history_car_pos[num_laps][-1]
+                final_car_position -= 1
+                norm_final_car_position = final_car_position/OPPONENTS_NUMBER
+
+                # take the best position during the race
+                best_car_position = 9
+                for lap in range(1, num_laps+1):
+                    best_car_position = np.min(history_car_pos[lap]) if np.min(history_car_pos[lap]) < best_car_position else best_car_position
+                best_car_position -= 1
+                norm_best_car_position = best_car_position/OPPONENTS_NUMBER
 
                 # compute out of track ticks and normilize it with respect to the total amount of ticks
                 ticks_out_of_track = 0
@@ -195,9 +199,11 @@ class GP_alg():
                                                         "norm_max_speed": norm_max_speed, "normalized_distance_raced": normalized_distance_raced#, "norm_min_speed": norm_min_speed
                                                     }
                 else:
-                    fitness = norm_car_position + norm_out_of_track_ticks  + normalized_damage 
+                    car_pos_multiplier = 2
+                    fitness = (norm_final_car_position * car_pos_multiplier) + norm_best_car_position + norm_out_of_track_ticks  + normalized_damage 
                     fitness_dict_component[track] = {
-                                                        "fitness": fitness, "norm_car_position ": norm_car_position,
+                                                        "fitness": fitness, "norm_final_car_position": norm_final_car_position,
+                                                        "norm_best_car_position": norm_best_car_position,
                                                         "norm_out_of_track_ticks": norm_out_of_track_ticks, "normalized_damage": normalized_damage
                                                     }
                 """
@@ -212,12 +218,13 @@ class GP_alg():
                     fitness = 10 
                 #return fitness
                 """
+                
                 if num_laps == 0:
                     if not self.fitness_correction:
                         first_lap_failed_agents_lock.acquire(blocking=True)
                         self.first_lap_failed_agents += 1
                         first_lap_failed_agents_lock.release()
-
+                
             except Exception as ex:
                 template = "An exception of type {0} occurred. Arguments:\n{1!r}"
                 message = template.format(type(ex).__name__, ex.args)
@@ -259,7 +266,7 @@ class GP_alg():
        
     def create_toolbox(self):
         # defined a new primitive set for strongly typed GP
-        pset = gp.PrimitiveSetTyped("MAIN", itertools.repeat(float, 5), float, "ARG")
+        pset = gp.PrimitiveSetTyped("MAIN", itertools.repeat(float, 7), float, "ARG")
 
         # boolean operators
         pset.addPrimitive(operator.and_, [bool, bool], bool)
@@ -306,8 +313,8 @@ class GP_alg():
         pset.renameArguments(ARG2='a')
         pset.renameArguments(ARG3='ttp')
         pset.renameArguments(ARG4='sx')
-        #pset.renameArguments(ARG3='op_left')
-        #pset.renameArguments(ARG4='op_right')
+        pset.renameArguments(ARG5='op_left')
+        pset.renameArguments(ARG6='op_right')
 
         creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
         creator.create("Individual", gp.PrimitiveTree, fitness=creator.FitnessMin)
