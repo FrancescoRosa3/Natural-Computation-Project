@@ -66,7 +66,7 @@ if __name__ == "__main__":
                     default= "quickrace_forza_no_adv")
     parser.add_argument('--controller_params', '-ctrlpar', help="initial controller parameters", type= str,
                     default= "Baseline_snakeoil\default_parameters")
-    parser.add_argument('--port', '-port', help="port number", type= int)
+    parser.add_argument('--port', '-port', help="port number", type= int, default=1)
    
                     
     args = parser.parse_args()
@@ -86,7 +86,7 @@ if __name__ == "__main__":
     for i in range(0, 10):
         for track in track_names:
             try:
-                controller = custom_controller.CustomController(port=BASE_PORT+1,
+                controller = custom_controller.CustomController(port=BASE_PORT+args.port,
                                                                 parameters=parameters, 
                                                                 parameters_from_file=False,
                                                                 stage=2,
