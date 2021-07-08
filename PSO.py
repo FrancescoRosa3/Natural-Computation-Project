@@ -135,8 +135,12 @@ class TorcsProblem():
                                                                     stage=2,
                                                                     track=track)
                     
-                    history_lap_time, history_speed, history_damage, history_distance_raced, history_track_pos, history_car_pos, ticks, race_failed = controller.run_controller(adv = False)
-                    
+                    history_lap_time, history_speed, history_damage, history_distance_raced, history_track_pos, history_car_pos, ticks, race_failed = controller.run_controller()
+                    while race_failed == True:
+                        print("Server crashed, restarting agent...")
+                        history_lap_time, history_speed, history_damage, history_distance_raced, history_track_pos, history_car_pos, ticks, race_failed = controller.run_controller()
+                        
+
                     normalized_ticks = ticks/controller.C.maxSteps
 
                     # compute the number of laps
@@ -369,6 +373,8 @@ def get_configuration(path):
     if conf_split_underscore[-4] == 'no':
         global adversarial
         adversarial = False
+        
+    print(f"Adversarial {adversarial}")
     return parameters_to_change, version
 
 def save_results(result_params):
@@ -436,7 +442,7 @@ if __name__ == '__main__':
     # load the change condition file
     parameters_to_change, change_cond_version = get_configuration(args.param_change_cond_version)
 
-    np_seed = 10
+    np_seed = 0
     np.random.seed(np_seed)
 
     # compute the number of parameters to change
@@ -454,7 +460,7 @@ if __name__ == '__main__':
             name_parameters_to_change.append(key)
     lb = np.array(lb)
     ub = np.array(ub)
-
+    print(f"Number of parameters {n_parameters}")
     # Set-up hyperparameters
     options = {'c1': 0.6, 'c2': 0.8, 'w': 0.7298, 'k': 15, 'p': 2}
     #options = {'c1': 0.6, 'c2': 0.8, 'w': 0.5}
@@ -483,7 +489,7 @@ if __name__ == '__main__':
     plot_cost_history(cost_history=optimizer.cost_history)
     file_name = results_folder  + "/" + PARAMETERS_STRING + '.png'
     plt.savefig(file_name)
-    plt.show()
+    #plt.show()
 
     '''
     if(problem_size == 2):
