@@ -55,7 +55,7 @@
     "overtake_space": 10,
 
     "sn": 3,
-    "max_worry": 40,
+    "max_worry": 30,
     "full_serious": 20,
 
     "caution_badness_snow_100": 0.8,
