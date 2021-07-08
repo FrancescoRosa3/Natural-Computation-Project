@@ -202,11 +202,12 @@ class GP_alg():
                                                     }
                 else:
                     car_pos_multiplier = 2
-                    fitness = (norm_final_car_position * car_pos_multiplier) + norm_best_car_position + norm_out_of_track_ticks  + normalized_damage 
+                    fitness = (norm_final_car_position * car_pos_multiplier) + norm_best_car_position + norm_out_of_track_ticks  + normalized_damage - normalized_distance_raced 
                     fitness_dict_component[track] = {
                                                         "fitness": fitness, "norm_final_car_position": norm_final_car_position,
                                                         "norm_best_car_position": norm_best_car_position,
-                                                        "norm_out_of_track_ticks": norm_out_of_track_ticks, "normalized_damage": normalized_damage
+                                                        "norm_out_of_track_ticks": norm_out_of_track_ticks, "normalized_damage": normalized_damage,
+                                                        "normalized_distance_raced": normalized_distance_raced
                                                     }
                 """
                 else:
@@ -467,11 +468,14 @@ class GP_alg():
             print(F"INVALID #: {len(invalid_ind)}")
             
             fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
+            print(f"COMPUTED FITNESS OF GEN: {gen}")
             for ind, fit in zip(invalid_ind, fitnesses):
                 ind.fitness.values = fit
             
             if adversarial:
-                update_top_k_ind_fitness(population)
+                print(f"UPDATING FITNESS OF GEN: {gen}")
+                update_top_k_ind_fitness(offspring)
+                print(f"UPDATED FITNESS OF GEN: {gen}")
             else:
                 self.on_iter_end()
 
@@ -633,7 +637,7 @@ np.random.seed(np_seed)
 print('Pymoo Differential Evolution')
 
 # population size
-n_pop = 10
+n_pop = 50
 # mate prpbability
 mate_prob = 0.5
 # mutation prpbability
