@@ -235,13 +235,39 @@ class CustomController:
         return jsa
     # S['opponents'],S['speedX'],self.target_speed,S['track']
 
-    def space_on_sides(self, P, os, tsen, sx):
-        overtake_space = P['overtake_space'] * ((sx/MAX_SPEED)+1)
-        if ((min(os[12:18]) > overtake_space) and (min(tsen[3:9]) > overtake_space)) or\
-            ((min(os[18:24]) > overtake_space) and (min(tsen[10:16]) > overtake_space)):
+    def space_to_keep_velocity(self, P, os, tsen, sx):
+        keep_speed = P['keep_speed'] # * ((sx/MAX_SPEED)+1)
+        
+        # 20° for the obstacle
+        # 80° for the track
+        # we keep the current speed if the obstacle if far enough and there is enough free track space.
+        if (min(os[17:19]) > keep_speed) and (min(tsen[5:14]) > keep_speed):
             return True
-        #print("No Space on side")
         return False
+
+    def traffic_navigation(self, P, os, sti, sx, tsen):
+        overtake_space = P['overtake_space'] #* ((sx/MAX_SPEED)+1)
+        free_lateral_distance = P['free_lateral_distance'] #* ((sx/MAX_SPEED)+1)
+        sto= sti 
+        # take 
+        c= min(os[16:21]) 
+        cs= os.index(c)
+        #print(f"{cs=}", end=' ')  
+        if not c: c= .0001
+        
+        # start to overtake the opponent in front of the car
+        if min(os[17:19]) < overtake_space:
+            
+            # check if there is enough free space on the left
+            if min(os[16:18]) > free_lateral_distance and (min(tsen[5:9]) > free_lateral_distance):
+                # steer toward the free space
+                sto+= P['steer_opp_adj']/c
+            # check if there is enough free space on the right
+            elif min(os[18:20]) > free_lateral_distance and (min(tsen[9:14]) > free_lateral_distance):
+                # steer toward the free space
+                sto-= P['steer_opp_adj']/c
+
+        return sto
 
     def traffic_speed_adjustment(self, P, os,sx,ts,tsen):
         if not self.opHistory: 
@@ -277,7 +303,7 @@ class CustomController:
         if osx-sx > 0: return 0 
         max_tsa= osx - ts
 
-        if not self.space_on_sides(P, os, tsen, sx):
+        if not self.space_to_keep_velocity(P, os, tsen, sx):
             max_worry= P["max_worry"] 
             full_serious= P["full_serious"]
             if sn > max_worry:
@@ -288,7 +314,6 @@ class CustomController:
                 seriousness= (max_worry-sn)/(max_worry-full_serious)
             tsa= max_tsa * seriousness
             tsa= snakeoil.clip(tsa,-ts,0)
-            #print(f"Speed adjustment {tsa}")
             return tsa
         return 0
 
@@ -356,30 +381,7 @@ class CustomController:
         sto= self.steer_centeralign(P,sti,tp,aadj,ttp)
         return self.speed_appropriate_steer(P,sto,sx)
 
-    def traffic_navigation(self, P, os, sti, sx):
-        overtake_space = P['overtake_space'] * ((sx/MAX_SPEED)+1)
-        sto= sti 
-        c= min(os[4:32]) 
-        cs= os.index(c)
-        #print(f"{cs=}", end=' ')  
-        if not c: c= .0001
-        # if there is an opponent within x meters on the left side (in front of the car)
-        if min(os[8:18]) < overtake_space:
-            sto-= P['steer_opp_adj']/c
-        # if there is an opponent within x meters on the right side (in front of the car)
-        if min(os[18:26]) < overtake_space:
-            sto+= P['steer_opp_adj']/c
-        """# if there is an opponent in front of the car
-        if cs == 17:
-            sto+= P['steer_front_opp_adj']/c
-        # if there is an opponent in front of the car
-        if cs == 18:
-            sto-= P['steer_front_opp_adj']/c"""
-        """if .1 < os[17] < 40:
-            sto+= .01
-        if .1 < os[18] < 40:
-            sto-= .01"""
-        return sto
+
 
     # P,R['clutch'],slip,S['speedX'],S['speedY'],S['gear']
     def clutch_control(self, P,cli,sl,sx,sy,g):
@@ -598,7 +600,7 @@ class CustomController:
                 # set the steer based on the current car speed: S['speedX']+50
                 # the desired steer based on the presence of the opponents: self.traffic_navigation(S['opponents'], R['steer'])
                 R['steer']= self.speed_appropriate_steer(P, 
-                                                        self.traffic_navigation(P, S['opponents'], R['steer'], S['speedX']),
+                                                        self.traffic_navigation(P, S['opponents'], R['steer'], S['speedX'], S['track']),
                                                         S['speedX']+50)
                 
         
