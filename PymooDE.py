@@ -22,7 +22,7 @@ from pymoo.model.problem import Problem
 import argparse
 
 # Load the custom_controller module
-import custom_controller
+import custom_controller_overtake as custom_controller
 # define the path were the parameters are defined
 import os 
 dir_path = os.path.dirname(os.path.realpath(__file__))
