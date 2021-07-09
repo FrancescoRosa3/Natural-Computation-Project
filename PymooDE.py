@@ -28,9 +28,9 @@ import os
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 # CONSTANT DEFINITION
-NUMBER_SERVERS = 10
+NUMBER_SERVERS = 9
 BASE_PORT = 3000
-PERCENTAGE_OF_VARIATION = 40
+PERCENTAGE_OF_VARIATION = 50
 MIN_TO_EVALUATE = 3
 NUM_RUN_FOR_BEST_EVALUATION = 3
 
@@ -145,7 +145,10 @@ class TorcsProblem(Problem):
                                                                     track=track)
                     
                     history_lap_time, history_speed, history_damage, history_distance_raced, history_track_pos, history_car_pos, ticks, race_failed = controller.run_controller()
-                    
+                    while race_failed == True:
+                        print("Server crashed, restarting agent...")
+                        history_lap_time, history_speed, history_damage, history_distance_raced, history_track_pos, history_car_pos, ticks, race_failed = controller.run_controller()
+                     
                     normalized_ticks = ticks/controller.C.maxSteps
 
                     # compute the number of laps
@@ -478,8 +481,8 @@ if __name__ == "__main__":
     create_dir(results_folder)
 
     ####################### Differential Evolution ################################
-    np_seed = 32
-    de_seed = 248
+    np_seed = 0
+    de_seed = 0
     # set the np seed
     np.random.seed(np_seed)
 
