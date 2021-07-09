@@ -67,7 +67,8 @@ if __name__ == "__main__":
                     default= "quickrace_forza_no_adv")
     parser.add_argument('--controller_params', '-ctrlpar', help="initial controller parameters", type= str,
                     default= "Baseline_snakeoil\default_parameters")
-   
+    parser.add_argument('--port', '-p', help="server port 1-10", type= int,
+                    default= 1)
                     
     args = parser.parse_args()
 
@@ -81,13 +82,29 @@ if __name__ == "__main__":
 
     track_names = take_track_names(args)
 
+    average_fitness_dict = {}
+    for track in track_names:
+        if not adversarial:
+            average_fitness_dict[track] = {
+                                                "fitness": 0.0, "norm_avg_speed":0.0, "norm_out_of_track_ticks": 0.0,
+                                                "norm_max_speed": 0.0#, "norm_min_speed": norm_min_speed
+                                            }
+        else:
+            average_fitness_dict[track] = {
+                                                "fitness": 0.0, "norm_final_car_position": 0.0,
+                                                "norm_best_car_position": 0.0,
+                                                "norm_out_of_track_ticks": 0.0, "normalized_damage": 0.0
+                                            }
+
+
+
     fitness_dict_component = {}
     fitnesses_dict = {}
     for i in range(0, 10):
         for track in track_names:
             try:
                 #print(f"Run agent {agent_indx} on Port {BASE_PORT+indx+1}")
-                controller = custom_controller.CustomController(port=3001,
+                controller = custom_controller.CustomController(port=3000+args.port,
                                                                 parameters=parameters, 
                                                                 parameters_from_file=False,
                                                                 stage=2,
@@ -182,4 +199,17 @@ if __name__ == "__main__":
             num_track += 1
         total_fitness /= num_track
 
+        for track in fitness_dict_component.keys():
+            for term in fitness_dict_component[track].keys():
+                average_fitness_dict[track][term] += fitness_dict_component[track][term]
+
         print(f"Run: {i}\nTotal fitness {total_fitness}\nFitness components {fitness_dict_component}")
+
+
+    for track in average_fitness_dict.keys():
+        for term in average_fitness_dict[track].keys():
+            average_fitness_dict[track][term] /= 10
+    
+    print(f"Average: {average_fitness_dict}")
+
+
