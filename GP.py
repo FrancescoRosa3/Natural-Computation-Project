@@ -143,7 +143,13 @@ class GP_alg():
                                                                 parameters_from_file=False,
                                                                 stage=2,
                                                                 track=track)
+                
                 history_lap_time, history_speed, history_damage, history_distance_raced, history_track_pos, history_car_pos, ticks, race_failed = controller.run_controller()
+                while race_failed == True:
+                    print("Server crashed, restarting agent...")
+                    history_lap_time, history_speed, history_damage, history_distance_raced, history_track_pos, history_car_pos, ticks, race_failed = controller.run_controller()
+                    
+                
                 normalized_ticks = ticks/controller.C.maxSteps
 
                 # compute the number of laps
@@ -468,14 +474,11 @@ class GP_alg():
             print(F"INVALID #: {len(invalid_ind)}")
             
             fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
-            print(f"COMPUTED FITNESS OF GEN: {gen}")
             for ind, fit in zip(invalid_ind, fitnesses):
                 ind.fitness.values = fit
             
             if adversarial:
-                print(f"UPDATING FITNESS OF GEN: {gen}")
                 update_top_k_ind_fitness(offspring)
-                print(f"UPDATED FITNESS OF GEN: {gen}")
             else:
                 self.on_iter_end()
 

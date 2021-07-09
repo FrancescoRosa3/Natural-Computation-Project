@@ -472,12 +472,18 @@ class Client():
         '''Server's input is stored in a ServerState object'''
         if not self.so: return
         sockdata = str().encode()
+        no_response_cnt = 0
         while True:
             try:
                 # Receive server data
                 sockdata, addr = self.so.recvfrom(1024)
+                no_response_cnt = 0
             except socket.error as emsg:
                 print('.', end=' ')
+                no_response_cnt += 1
+                if no_response_cnt == 40:
+                    self.shutdown()
+                    return NO_DATA_FROM_SERVER
                 # print "Waiting for data on %d.............." % self.port
             if '***identified***' in sockdata.decode():
                 print("Client connected on %d.............." % self.port)

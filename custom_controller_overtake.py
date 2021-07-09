@@ -707,6 +707,10 @@ class CustomController:
         for step in range(self.C.maxSteps,0,-1):
             ticks += 1
             return_code = self.C.get_servers_input()
+
+            if return_code == snakeoil.NO_DATA_FROM_SERVER:
+                race_failed = True
+
             try:   
                 if self.C.S.d['lastLapTime'] != last_lap_time_prev:
                     # store the lap time
@@ -731,34 +735,7 @@ class CustomController:
                     history_track_pos[lap_cnt] = [self.C.S.d['trackPos']]
                     history_car_pos[lap_cnt] = [self.C.S.d['racePos']]
 
-            # If the vehicle is racing against other cars, check if it goes out of track or takes damage.
-            # If so terminate the race and declare it failed.
-            if adv:
-                
-                # initialize the "out of track" threshold
-                out_of_track_limit_sec = 5 #sec
-                out_of_track_limit_ticks = out_of_track_limit_sec * 50
-                
-                # check if there are enough ticks to check
-                if len(history_track_pos[lap_cnt]) > out_of_track_limit_ticks*2:
-                    
-                    # initialize the ticks counter
-                    out_of_track_cnt = 0
-
-                    # count the out of track ticks
-                    for val in history_track_pos[lap_cnt][-out_of_track_limit_ticks*2:]:
-                        if abs(val) > 1:
-                            out_of_track_cnt += 1
-                    
-                    
-                    # check if the counted ticks exceed the threshold
-                    # if so, stop the server and declare the race failed.
-                    if out_of_track_cnt > out_of_track_limit_ticks:
-                        self.C.R.d['meta']= 1
-                        self.C.respond_to_server()
-                        race_failed = True
-                        #C.shutdown()
-
+            
             if return_code == snakeoil.RACE_ENDED or race_failed:
                 #print("Race ended")
                 break
