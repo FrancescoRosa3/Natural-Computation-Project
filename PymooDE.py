@@ -574,7 +574,7 @@ if __name__ == "__main__":
         file_name = results_folder  + "/" + PARAMETERS_STRING + '.png'
         plt.savefig(file_name)
         plt.show()
-        
+#'''        
 '''
 if __name__ == "__main__":
     ####################### SETUP ################################

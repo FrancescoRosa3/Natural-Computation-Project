@@ -342,28 +342,20 @@ class CustomController:
     def traffic_navigation(self, P, os, sti):
         sto= sti 
         c= min(os[4:32]) 
-        cs= os.index(c)
-        #print(f"{cs=}", end=' ')  
+        cs= os.index(c)  
         if not c: c= .0001
-        # if there is an opponent within x meters on the left side (in front of the car)
-        if min(os[8:18])<P['steer_min_dist_opp']:#7:
-            sto-= P['steer_opp_adj']/c
-            #print(f"sx {sto=}", end='')
-        # if there is an opponent within x meters on the right side (in front of the car)
-        if min(os[18:26])<P['steer_min_dist_opp']:#7:
-            sto+= P['steer_opp_adj']/c
-            #print(f"dx {sto=}", end='')
-        #print("", end='\r')
-        """# if there is an opponent in front of the car
+        if min(os[18:26])<7:
+            sto+= .5/c
+        if min(os[8:17])<7:
+            sto-= .5/c
         if cs == 17:
-            sto+= P['steer_front_opp_adj']/c
-        # if there is an opponent in front of the car
+            sto+= .1/c
         if cs == 18:
-            sto-= P['steer_front_opp_adj']/c"""
-        """if .1 < os[17] < 40:
+            sto-= .1/c
+        if .1 < os[17] < 40:
             sto+= .01
         if .1 < os[18] < 40:
-            sto-= .01"""
+            sto-= .01
         return sto
 
     # P,R['clutch'],slip,S['speedX'],S['speedY'],S['gear']

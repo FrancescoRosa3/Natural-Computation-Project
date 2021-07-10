@@ -52,10 +52,12 @@
     "backward": 1.6692247869011361,
     
     "steer_opp_adj": 0.5,
-    "overtake_space": 10,
-
+    "keep_speed": 10.0,
+    "overtake_space": 30.0,
+    "free_lateral_distance": 5.0,
+    
     "sn": 3,
-    "max_worry": 40,
+    "max_worry": 80,
     "full_serious": 20,
 
     "caution_badness_snow_100": 0.8,
@@ -65,7 +67,5 @@
     "caution_badness_snext_100": 0.90,
     "caution_badness_snext_1000": 0.75,
     "caution_badness_snext_10000": 0.5
-
-
 
 }
