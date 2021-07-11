@@ -69,6 +69,8 @@ if __name__ == "__main__":
                     default= "Baseline_snakeoil\default_parameters")
     parser.add_argument('--port', '-p', help="server port 1-10", type= int,
                     default= 1)
+    parser.add_argument('--stage', '-s', help="stage 0-3", type= int,
+                    default= 1)
                     
     args = parser.parse_args()
 
@@ -107,7 +109,7 @@ if __name__ == "__main__":
                 controller = custom_controller.CustomController(port=3000+args.port,
                                                                 parameters=parameters, 
                                                                 parameters_from_file=False,
-                                                                stage=2,
+                                                                stage=args.stage,
                                                                 track=track)
 
                 history_lap_time, history_speed, history_damage, history_distance_raced, history_track_pos, history_car_pos, ticks, race_failed = controller.run_controller()
