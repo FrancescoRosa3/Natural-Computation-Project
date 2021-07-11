@@ -22,12 +22,12 @@
 
   <section name="Races">
     <section name="1">
-      <attstr name="name" val="Wheel1 adversarial"/>
+      <attstr name="name" val="wheel-1 adversarial"/>
     </section>
 
   </section>
 
-  <section name="Wheel1 adversarial">
+  <section name="wheel-1 adversarial">
     <attnum name="distance" unit="km" val="0"/>
     <attstr name="type" val="race"/>
     <attstr name="starting order" val="drivers list"/>
@@ -93,7 +93,7 @@
 
     <!--Custom Controller-->
     <section name="9">
-      <attnum name="idx" val="0"/>
+      <attnum name="idx" val="1"/>
       <attstr name="module" val="scr_server"/>
     </section>
 

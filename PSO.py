@@ -102,14 +102,10 @@ class TorcsProblem():
                     port_number = servers_port_state.index(True)
                     servers_port_state[port_number] = False
                     servers_port_state_lock.release()
-                    #print(f"Agent {agent_indx}- Found Free port {port_number}")
                     break
                 except ValueError:
-                    #print(f"Agent {agent_indx} wait....")
                     servers_port_state_lock.wait()
-                    #print(f"Agent {agent_indx} waked up")
             
-
             #temp = deepcopy(controller_variables)
 
             i = 0
@@ -442,7 +438,7 @@ if __name__ == '__main__':
     # load the change condition file
     parameters_to_change, change_cond_version = get_configuration(args.param_change_cond_version)
 
-    np_seed = 0
+    np_seed = 10
     np.random.seed(np_seed)
 
     # compute the number of parameters to change
@@ -489,7 +485,14 @@ if __name__ == '__main__':
     plot_cost_history(cost_history=optimizer.cost_history)
     file_name = results_folder  + "/" + PARAMETERS_STRING + '.png'
     plt.savefig(file_name)
-    #plt.show()
+
+    plot_cost_history(optimizer.mean_neighbor_history)
+    file_name = results_folder  + "/" + PARAMETERS_STRING + '_mean_neighbor_history.png'
+    plt.savefig(file_name)
+    
+    plot_cost_history(optimizer.mean_pbest_history)
+    file_name = results_folder  + "/" + PARAMETERS_STRING + 'mean_pbest_history.png'
+    plt.savefig(file_name)
 
     '''
     if(problem_size == 2):
