@@ -247,7 +247,7 @@ class CustomController:
         print("TRACK EDGES:")
         print(tsen[5:14])
         """
-        if (min(os[16:20]) > keep_speed) and (min(tsen[5:14]) > keep_speed):
+        if (min(os[17:19]) > keep_speed) and (min(tsen[5:14]) > keep_speed):
             #print(f"TRUE:\n{os[16:20]}\n{tsen[5:14]}")
             return True
         #print(f"FALSE:\n{os[16:20]}\n{tsen[5:14]}")
@@ -264,7 +264,7 @@ class CustomController:
         if not c: c= .0001
         
         # start to overtake the opponent in front of the car
-        if min(os[16:20]) < overtake_space:
+        if min(os[17:19]) < overtake_space:
             
             # check if there is enough free space on the left
             if min(os[16:18]) > free_lateral_distance and (min(tsen[5:9]) > free_lateral_distance):
