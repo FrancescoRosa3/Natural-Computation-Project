@@ -70,7 +70,7 @@ if __name__ == "__main__":
     parser.add_argument('--port', '-p', help="server port 1-10", type= int,
                     default= 1)
     parser.add_argument('--stage', '-s', help="stage 0-3", type= int,
-                    default= 1)
+                    default= 2)
                     
     args = parser.parse_args()
 
