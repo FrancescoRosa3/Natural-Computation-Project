@@ -481,8 +481,8 @@ if __name__ == "__main__":
     create_dir(results_folder)
 
     ####################### Differential Evolution ################################
-    np_seed = 0
-    de_seed = 0
+    np_seed = 10
+    de_seed = 10
     # set the np seed
     np.random.seed(np_seed)
 
@@ -515,7 +515,7 @@ if __name__ == "__main__":
     # Cross-over rate
     cr = 0.9
     # Scaling factor F
-    f = 0.9
+    f = 1.5
 
     PARAMETERS_STRING = f"{np_seed}_{de_seed}_{n_pop}_{max_gens}_{n_vars}_{cr}_{f}_{PERCENTAGE_OF_VARIATION}_{change_cond_version}"
 

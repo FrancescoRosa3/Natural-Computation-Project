@@ -462,7 +462,7 @@ if __name__ == '__main__':
     ub = np.array(ub)
     print(f"Number of parameters {n_parameters}")
     # Set-up hyperparameters
-    options = {'c1': 0.6, 'c2': 0.8, 'w': 0.7298, 'k': 15, 'p': 2}
+    options = {'c1': 0.8, 'c2': 0.6, 'w': 0.7298, 'k': 15, 'p': 2}
     #options = {'c1': 0.6, 'c2': 0.8, 'w': 0.5}
     problem_size = n_parameters
     swarm_size = 70
