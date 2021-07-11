@@ -462,7 +462,7 @@ if __name__ == '__main__':
     ub = np.array(ub)
     print(f"Number of parameters {n_parameters}")
     # Set-up hyperparameters
-    options = {'c1': 0.6, 'c2': 0.8, 'w': 0.7298, 'k': 15, 'p': 2}
+    options = {'c1': 0.8, 'c2': 0.6, 'w': 0.7298, 'k': 15, 'p': 2}
     #options = {'c1': 0.6, 'c2': 0.8, 'w': 0.5}
     problem_size = n_parameters
     swarm_size = 70
@@ -489,7 +489,14 @@ if __name__ == '__main__':
     plot_cost_history(cost_history=optimizer.cost_history)
     file_name = results_folder  + "/" + PARAMETERS_STRING + '.png'
     plt.savefig(file_name)
-    #plt.show()
+
+    plot_cost_history(optimizer.mean_neighbor_history)
+    file_name = results_folder  + "/" + PARAMETERS_STRING + '_mean_neighbor_history.png'
+    plt.savefig(file_name)
+    
+    plot_cost_history(optimizer.mean_pbest_history)
+    file_name = results_folder  + "/" + PARAMETERS_STRING + 'mean_pbest_history.png'
+    plt.savefig(file_name)
 
     '''
     if(problem_size == 2):
