@@ -102,14 +102,10 @@ class TorcsProblem():
                     port_number = servers_port_state.index(True)
                     servers_port_state[port_number] = False
                     servers_port_state_lock.release()
-                    #print(f"Agent {agent_indx}- Found Free port {port_number}")
                     break
                 except ValueError:
-                    #print(f"Agent {agent_indx} wait....")
                     servers_port_state_lock.wait()
-                    #print(f"Agent {agent_indx} waked up")
             
-
             #temp = deepcopy(controller_variables)
 
             i = 0
@@ -442,7 +438,7 @@ if __name__ == '__main__':
     # load the change condition file
     parameters_to_change, change_cond_version = get_configuration(args.param_change_cond_version)
 
-    np_seed = 0
+    np_seed = 10
     np.random.seed(np_seed)
 
     # compute the number of parameters to change

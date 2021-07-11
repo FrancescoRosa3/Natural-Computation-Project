@@ -14,7 +14,7 @@
     <attnum name="maximum number" val="3"/>
 
     <section name="1">
-      <attstr name="name" val="wheel-1"/>
+      <attstr name="name" val="forza"/>
       <attstr name="category" val="road"/>
     </section>
 
@@ -22,12 +22,12 @@
 
   <section name="Races">
     <section name="1">
-      <attstr name="name" val="Wheel1 no adversarial"/>
+      <attstr name="name" val="Forza no adversarial"/>
     </section>
 
   </section>
 
-  <section name="Wheel1 no adversarial">
+  <section name="Forza no adversarial">
     <attnum name="distance" unit="km" val="0"/>
     <attstr name="type" val="race"/>
     <attstr name="starting order" val="drivers list"/>
@@ -93,7 +93,7 @@
 
     <!--Custom Controller-->
     <section name="9">
-      <attnum name="idx" val="0"/>
+      <attnum name="idx" val="9"/>
       <attstr name="module" val="scr_server"/>
     </section>
 
@@ -111,7 +111,7 @@
 
     <section name="3">
       <attstr name="type" val="race config"/>
-      <attstr name="race" val="Wheel1 adversarial"/>
+      <attstr name="race" val="Wheel adversarial"/>
       <section name="Options">
         <section name="1">
           <attstr name="type" val="race length"/>
