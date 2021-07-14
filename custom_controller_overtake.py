@@ -13,7 +13,7 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 
 class CustomController:
     
-    def __init__(self, port=None, parameters = None, parameters_from_file = True, parameter_file = "\Baseline_snakeoil\default_parameters_overtake",
+    def __init__(self, port=None, parameters = None, parameters_from_file = True, parameter_file = "Baseline_snakeoil\default_parameters_overtake",
                  stage = 3, track = "unknown"):
         self.port = port
         self.parameters = parameters
@@ -659,7 +659,7 @@ class CustomController:
     def run_controller(self, plot_history = False):
         # load parameters
         if self.parameters_from_file:
-            pfile= open(dir_path + self.parameter_file,'r')
+            pfile= open(dir_path + '\\' + self.parameter_file,'r')
             print(f"Load parameter from {self.parameter_file}") 
             P = json.load(pfile)
         else:
@@ -742,15 +742,17 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('--parameters_file', '-pf', help="file name where take the controller parameters", type= str,
-                        default= "\Baseline_snakeoil\default_parameters_overtake")
+                        default= "Baseline_snakeoil\default_parameters_overtake")
     parser.add_argument('--stage', '-s', help="stage 0:warm-up, 1:qualification, 2:race, 3:unknown", type= int,
                         default= 3)
     parser.add_argument('--track', '-t', help="track name", type= str,
                         default= "forza")
+    parser.add_argument('--port', '-p', help="port number [1-10]", type= int,
+                        default= 1)
     
     args = parser.parse_args()
 
     print(f"Take parameters from {args.parameters_file}")
-    controller = CustomController(parameter_file=args.parameters_file, port=3001, stage = args.stage, track = args.track)
+    controller = CustomController(parameter_file=args.parameters_file, port=3000 + args.port, stage = args.stage, track = args.track)
     controller.run_controller(plot_history=True)
     

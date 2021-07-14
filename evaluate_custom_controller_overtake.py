@@ -9,27 +9,14 @@ import custom_controller_overtake as custom_controller
 import os 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
-# CONSTANT DEFINITION
-NUMBER_SERVERS = 10
-BASE_PORT = 3000
-PERCENTAGE_OF_VARIATION = 40
-
 # CONSTANT FOR NORMALIZATION
 EXPECTED_NUM_LAPS = 2
 MAX_SPEED = 300
-FORZA_LENGTH = 5784.10
-FORZA_WIDTH = 11.0
-WHEEL_LENGHT = 4328.54
-WHEEL_WIDTH = 14.0
-CG_2_LENGHT = 3185.83
-CG_2_WIDTH = 15.0
-TRACK_LENGTH = {'forza': FORZA_LENGTH, 'wheel-1': WHEEL_LENGHT, 'g-track-2': CG_2_LENGHT}
 UPPER_BOUND_DAMAGE = 1500
 UPPER_BOUND_DAMAGE_WITH_ADV = 7000
 MAX_OUT_OF_TRACK_TICKS = 1000       # corresponds to 20 sec
 OPPONENTS_NUMBER = 8
 
-SAVE_CHECKPOINT = True
 
 # list of track names
 track_names = []
@@ -69,8 +56,6 @@ if __name__ == "__main__":
                     default= "Baseline_snakeoil\default_parameters")
     parser.add_argument('--port', '-p', help="server port 1-10", type= int,
                     default= 1)
-    parser.add_argument('--stage', '-s', help="stage 0-3", type= int,
-                    default= 2)
                     
     args = parser.parse_args()
 
@@ -89,7 +74,7 @@ if __name__ == "__main__":
         if not adversarial:
             average_fitness_dict[track] = {
                                                 "fitness": 0.0, "norm_avg_speed":0.0, "norm_out_of_track_ticks": 0.0,
-                                                "norm_max_speed": 0.0#, "norm_min_speed": norm_min_speed
+                                                "norm_max_speed": 0.0
                                             }
         else:
             average_fitness_dict[track] = {
@@ -105,11 +90,10 @@ if __name__ == "__main__":
     for i in range(0, 10):
         for track in track_names:
             try:
-                #print(f"Run agent {agent_indx} on Port {BASE_PORT+indx+1}")
                 controller = custom_controller.CustomController(port=3000+args.port,
                                                                 parameters=parameters, 
                                                                 parameters_from_file=False,
-                                                                stage=args.stage,
+                                                                stage=2,
                                                                 track=track)
 
                 history_lap_time, history_speed, history_damage, history_distance_raced, history_track_pos, history_car_pos, ticks, race_failed = controller.run_controller()
@@ -139,9 +123,6 @@ if __name__ == "__main__":
                     #print(f"Num Laps {num_laps} - Average Speed {avg_speed} - Num ticks {ticks}")
                     
                     normalized_avg_speed = avg_speed/MAX_SPEED
-
-                    distance_raced = history_distance_raced[history_key][-1]
-                    normalized_distance_raced = distance_raced/(TRACK_LENGTH[track]*EXPECTED_NUM_LAPS)
                 
                     # take the damage
                     damage = history_damage[history_key][-1]

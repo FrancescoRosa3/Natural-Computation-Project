@@ -10,21 +10,10 @@ import custom_controller
 import os 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
-# CONSTANT DEFINITION
-NUMBER_SERVERS = 10
-BASE_PORT = 3000
-PERCENTAGE_OF_VARIATION = 40
 
 # CONSTANT FOR NORMALIZATION
 EXPECTED_NUM_LAPS = 2
 MAX_SPEED = 300
-FORZA_LENGTH = 5784.10
-FORZA_WIDTH = 11.0
-WHEEL_LENGHT = 4328.54
-WHEEL_WIDTH = 14.0
-CG_2_LENGHT = 3185.83
-CG_2_WIDTH = 15.0
-TRACK_LENGTH = {'forza': FORZA_LENGTH, 'wheel-1': WHEEL_LENGHT, 'g-track-2': CG_2_LENGHT}
 UPPER_BOUND_DAMAGE = 1500
 UPPER_BOUND_DAMAGE_WITH_ADV = 7000
 MAX_OUT_OF_TRACK_TICKS = 1000       # corresponds to 20 sec
@@ -138,9 +127,6 @@ if __name__ == "__main__":
                     #print(f"Num Laps {num_laps} - Average Speed {avg_speed} - Num ticks {ticks}")
                     
                     normalized_avg_speed = avg_speed/MAX_SPEED
-
-                    distance_raced = history_distance_raced[history_key][-1]
-                    normalized_distance_raced = distance_raced/(TRACK_LENGTH[track]*EXPECTED_NUM_LAPS)
                 
                     # take the damage
                     damage = history_damage[history_key][-1]
