@@ -5,6 +5,21 @@ This project has been realized by:
 - Francesco Rosa, 0622701095, f.rosa5@studenti.unisa.it
 - Giovanni Mignone, 0622701104, g.mignone2@studenti.unisa.it
 
+## Repository content
+
+This repository contains:
+- **Baseline_snakeoil** folder, which contains the snakeoil controller (snakeoil.py) and the baseline controller (client.py).
+- **configuration_file** folder, which contains the *.xml configuration file used during the training and evaluation of the controller.
+- **Parameters_change_condition_files**, folder that contains the file used during the training in order to select which parameter must be optimized.
+- **Track_info**, folder that contains the ***.trackinfo** files used during the training and the evaluation.
+- **custom_controller_overtake.py**, the controller which implements our overtaking logic.
+- **custom_controller.py**, the baseline controller with some modification explaned in **documentation**.
+- **evaluate_custom_controller_overtake.py**, file that implements the evaluation process (average of 10 runs) on custom_controller_overtake. 
+- **evaluate_custom_controller.py**, file that implements the evaluation process (average of 10 runs) on custom_controller.
+- **evaluate_final_controller.py**, file that implements the evaluation of the final controller.
+- **PSO.py**, file used during the optimization with the ***Particle Swarm Optimization Algorithm***.
+- **DE.py**, file used during the optimization with the ***Differential Evolutional Algorith***.
+
 ## How to run the custom_controller_overtake
 
 Our controller has been optimized in **race** mode.
