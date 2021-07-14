@@ -3,10 +3,8 @@
 import pyswarms as ps
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib import animation, rc
 from IPython.display import HTML
 from pyswarms.utils.plotters import (plot_cost_history, plot_contour, plot_surface)
-from pyswarms.utils.plotters.formatters import Mesher
 import sys
 import json
 from multiprocessing.pool import ThreadPool
@@ -17,8 +15,6 @@ import argparse
 
 # Change directory to access the pyswarms module
 sys.path.append('../')
-
-#rc('animation', html='html5')
 
 # Load the custom_controller module
 import custom_controller_overtake as custom_controller
@@ -35,13 +31,6 @@ NUM_RUN_FOR_BEST_EVALUATION = 3
 # CONSTANT FOR NORMALIZATION
 EXPECTED_NUM_LAPS = 2
 MAX_SPEED = 300
-FORZA_LENGTH = 5784.10
-FORZA_WIDTH = 11.0
-WHEEL_LENGHT = 4328.54
-WHEEL_WIDTH = 14.0
-CG_2_LENGHT = 3185.83
-CG_2_WIDTH = 15.0
-TRACK_LENGTH = {'forza': FORZA_LENGTH, 'wheel-1': WHEEL_LENGHT, 'g-track-2': CG_2_LENGHT}
 UPPER_BOUND_DAMAGE = 1500
 UPPER_BOUND_DAMAGE_WITH_ADV = 7000
 MAX_OUT_OF_TRACK_TICKS = 1000       # corresponds to 20 sec
@@ -64,7 +53,6 @@ servers_port_state_lock = Condition(lock=Lock())
 # True: server port free, False: server port busy
 servers_port_state = [True for i in range(NUMBER_SERVERS)]
 
-#from pyswarms.utils.functions import single_obj as fx
 
 # class that defines the problem to solve
 class TorcsProblem():
@@ -88,9 +76,7 @@ class TorcsProblem():
         print("")
         
         # restart evaluated agents counter
-        #agents_cnt_lock.acquire(blocking=True)
         self.agents_cnt = 0
-        #agents_cnt_lock.release()
 
         def run_simulations(x, agent_indx, variable_to_change, controller_variables):
             
@@ -106,7 +92,6 @@ class TorcsProblem():
                 except ValueError:
                     servers_port_state_lock.wait()
             
-            #temp = deepcopy(controller_variables)
 
             i = 0
             for key in variable_to_change.keys():
@@ -114,7 +99,6 @@ class TorcsProblem():
                 # if the given variable is under evolution
                 if variable_to_change[key][0] == 1:
                     # this parameter is under evolution
-                    #print(f"key: {key} - starting value: {controller_variables[key]:.2f} - modified value: {x[agent_indx][i]}")
                     controller_variables[key] = x[i]
                     i += 1
             
@@ -137,8 +121,6 @@ class TorcsProblem():
                         history_lap_time, history_speed, history_damage, history_distance_raced, history_track_pos, history_car_pos, ticks, race_failed = controller.run_controller()
                         
 
-                    normalized_ticks = ticks/controller.C.maxSteps
-
                     # compute the number of laps
                     num_laps = len(history_lap_time)
 
@@ -155,13 +137,8 @@ class TorcsProblem():
                                 avg_speed += value
                         avg_speed /= ticks
                         norm_max_speed = max_speed/MAX_SPEED
-                        norm_min_speed = min_speed/MAX_SPEED
-                        #print(f"Num Laps {num_laps} - Average Speed {avg_speed} - Num ticks {ticks}")
                         
                         normalized_avg_speed = avg_speed/MAX_SPEED
-
-                        distance_raced = history_distance_raced[history_key][-1]
-                        normalized_distance_raced = distance_raced/(TRACK_LENGTH[track]*EXPECTED_NUM_LAPS)
                     
                         # take the damage
                         damage = history_damage[history_key][-1]
@@ -310,8 +287,6 @@ class TorcsProblem():
                 failed_counter += 1
         fitness_mean /= len(X)
 
-        #print(f"RACE FAILED/TOTAL RACES: {failed_counter}/{len(X)}")
-
         best_fit_indx = np.argmin(fitness)
 
         if fitness[best_fit_indx] < self.prev_best:
@@ -348,6 +323,7 @@ def func(x):
     global tp
     return tp.evaluate(x)
 
+# this function clip tha parameter param between lb (lower-bound) and ub (upper-bound)
 def clip(param, lb, ub):
     if param < lb:
         return lb
@@ -359,6 +335,8 @@ def create_dir(folder_path):
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
 
+# Given the path to the parameters_to_change file, return dict of parameter to change and the version
+# Set the adversarial variable, used for selecting the cost function to be used.
 def get_configuration(path):
     conf_split_underscore = path.split("_")
     version = conf_split_underscore[-1].split(".")[0]
@@ -409,7 +387,6 @@ def create_population(n_pop, name_parameters_to_change, n_parameters):
             else:
                 population[i][j] = parameters[key]
             population[i][j] = clip(population[i][j], lb[j], ub[j])
-            #print(f"PARAMETER: {key}: {parameters[key]} - variation: {variation} - final_value: {population[i][j]}")
     return population
 
 
@@ -430,7 +407,7 @@ if __name__ == '__main__':
     tracks_folder = args.configuration_file
     results_folder = dir_path + "/Results_PSO/" + tracks_folder
 
-    # load default parameters
+    # load the starting controller parameters
     args.controller_params = '\\' + args.controller_params
     pfile= open(dir_path + args.controller_params,'r') 
     parameters = json.load(pfile)
@@ -459,7 +436,6 @@ if __name__ == '__main__':
     print(f"Number of parameters {n_parameters}")
     # Set-up hyperparameters
     options = {'c1': 0.8, 'c2': 0.6, 'w': 0.7298, 'k': 15, 'p': 2}
-    #options = {'c1': 0.6, 'c2': 0.8, 'w': 0.5}
     problem_size = n_parameters
     swarm_size = 70
     iterations = 20
@@ -493,11 +469,3 @@ if __name__ == '__main__':
     plot_cost_history(optimizer.mean_pbest_history)
     file_name = results_folder  + "/" + PARAMETERS_STRING + 'mean_pbest_history.png'
     plt.savefig(file_name)
-
-    '''
-    if(problem_size == 2):
-        animation = plot_contour(pos_history=optimizer.pos_history, mesher=m, mark=(0, 0))
-        # Enables us to view it in a Jupyter notebook
-        HTML(animation.to_html5_video())
-        animation.save('dynamic_images.mp4')
-    '''

@@ -37,13 +37,6 @@ NUM_RUN_FOR_BEST_EVALUATION = 3
 # CONSTANT FOR NORMALIZATION
 EXPECTED_NUM_LAPS = 2
 MAX_SPEED = 300
-FORZA_LENGTH = 5784.10
-FORZA_WIDTH = 11.0
-WHEEL_LENGHT = 4328.54
-WHEEL_WIDTH = 14.0
-CG_2_LENGHT = 3185.83
-CG_2_WIDTH = 15.0
-TRACK_LENGTH = {'forza': FORZA_LENGTH, 'wheel-1': WHEEL_LENGHT, 'g-track-2': CG_2_LENGHT}
 UPPER_BOUND_DAMAGE = 1500
 UPPER_BOUND_DAMAGE_WITH_ADV = 7000
 MAX_OUT_OF_TRACK_TICKS = 1000       # corresponds to 20 sec
@@ -82,11 +75,8 @@ class TorcsProblem(Problem):
     # Problem initialization
     def __init__(self, variables_to_change, controller_variables, lb, ub):
         
-        """super().__init__(n_var=lb.shape[0], n_obj=1, n_constr=lb.shape[0], 
-                        xl=np.array([-100000 for i in range(lb.shape[0])]), xu=np.array([100000 for i in range(lb.shape[0])]))#,xl = lb, xu = ub)
-        """
         super().__init__(n_var=lb.shape[0], n_obj=3, n_constr=0, 
-                        xl=np.array([-100000 for i in range(lb.shape[0])]), xu=np.array([100000 for i in range(lb.shape[0])]))#,xl = lb, xu = ub)
+                        xl=np.array([-100000 for i in range(lb.shape[0])]), xu=np.array([100000 for i in range(lb.shape[0])]))
         
         self.variable_to_change = variables_to_change
         self.controller_variables = controller_variables
@@ -101,9 +91,7 @@ class TorcsProblem(Problem):
     def _evaluate(self, X, out, *args, **kwargs):
         
         # restart evaluated agents counter
-        #agents_cnt_lock.acquire(blocking=True)
         self.agents_cnt = 0
-        #agents_cnt_lock.release()
 
         def run_simulations(x, agent_indx, variable_to_change, controller_variables):
             servers_port_state_lock.acquire(blocking=True)
@@ -113,12 +101,9 @@ class TorcsProblem(Problem):
                     port_number = servers_port_state.index(True)
                     servers_port_state[port_number] = False
                     servers_port_state_lock.release()
-                    #print(f"Agent {agent_indx}- Found Free port {port_number}")
                     break
                 except ValueError:
-                    #print(f"Agent {agent_indx} wait....")
                     servers_port_state_lock.wait()
-                    #print(f"Agent {agent_indx} waked up")
             
 
             i = 0
@@ -127,7 +112,6 @@ class TorcsProblem(Problem):
                 # if the given variable is under evolution
                 if variable_to_change[key][0] == 1:
                     # this parameter is under evolution
-                    #print(f"key: {key} - starting value: {controller_variables[key]:.2f} - modified value: {x[agent_indx][i]}")
                     controller_variables[key] = x[i]
                     i += 1
 
@@ -149,8 +133,6 @@ class TorcsProblem(Problem):
                         print("Server crashed, restarting agent...")
                         history_lap_time, history_speed, history_damage, history_distance_raced, history_track_pos, history_car_pos, ticks, race_failed = controller.run_controller()
                      
-                    normalized_ticks = ticks/controller.C.maxSteps
-
                     # compute the number of laps
                     num_laps = len(history_lap_time)
 
@@ -168,12 +150,8 @@ class TorcsProblem(Problem):
                         avg_speed /= ticks
                         norm_max_speed = max_speed/MAX_SPEED
                         norm_min_speed = min_speed/MAX_SPEED
-                        #print(f"Num Laps {num_laps} - Average Speed {avg_speed} - Num ticks {ticks}")
                         
                         normalized_avg_speed = avg_speed/MAX_SPEED
-
-                        distance_raced = history_distance_raced[history_key][-1]
-                        normalized_distance_raced = distance_raced/(TRACK_LENGTH[track]*EXPECTED_NUM_LAPS)
                     
                         # take the damage
                         damage = history_damage[history_key][-1]
@@ -191,18 +169,6 @@ class TorcsProblem(Problem):
                             best_car_position = np.min(history_car_pos[lap]) if np.min(history_car_pos[lap]) < best_car_position else best_car_position
                         best_car_position -= 1
                         norm_best_car_position = best_car_position/OPPONENTS_NUMBER
-
-                        # compute the average from the center line
-                        """
-                        average_track_pos = 0
-                        steps = 0
-                        for key in history_track_pos.keys():
-                            for value in history_track_pos[key]:
-                                steps += 1
-                                if abs(value) > 1:
-                                    average_track_pos += (abs(value) - 1)
-                        average_track_pos /= steps
-                        """
 
                         # compute out of track ticks and normilize it with respect to the total amount of ticks
                         ticks_out_of_track = 0
@@ -229,28 +195,17 @@ class TorcsProblem(Problem):
                                                             }
                         
                     else:
-                        if race_failed:
-                            print(f"RACE FAILED")
-                        else:
-                            print(f"THE AGENTS COULDN'T COMPLETE THE FIRST LAP")
+                        print(f"THE AGENTS COULDN'T COMPLETE THE FIRST LAP")
                         fitness = 10   
-                    #return fitness
                     
                 except Exception as ex:
                     template = "An exception of type {0} occurred. Arguments:\n{1!r}"
                     message = template.format(type(ex).__name__, ex.args)
-                    #print(message)
                     fitness = 20
 
                 fitnesses_dict[track] = fitness
                 self.fitness_terms[agent_indx] = fitness_dict_component
                 
-                """
-                # check for constraint
-                constraint = []
-                for i in range(x.shape[0]):
-                    constraint.append( int((x[i] < self.lb[i] or x[i] > self.ub[i])) )
-                """
 
             # compute the average performance over all the tested tracks
             total_fitness = 0
@@ -333,19 +288,7 @@ class TorcsProblem(Problem):
                 print(f"Agent {agent}, fitness terms {agent_fitness_term_avg}")
                 self.fitness_terms[agent] = agent_fitness_term_avg
 
-        """
-        fitness = []
-        constraints = []
-        for i in range(len(results)):
-            fitness.append(results[i][0])
-            constraints.append(results[i][1])
-        """ 
         out["F"] = np.array(results)
-        #out["G"] = np.array(constraints)
-        
-        #print(f"Current solution fitness:\n{out['F']}")
-        #print(f"Current solution constraing:\n{out['G']}")
-        # best_fit = np.min(out["F"])
         best_fit_indx = np.argmin(out["F"])
         print(f"BEST FITNESS: {out['F'][best_fit_indx]}")
         best_fitness_terms = self.fitness_terms[best_fit_indx]
@@ -373,6 +316,7 @@ def create_dir(folder_path):
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
 
+# save the checkpoint
 def save_checkpoint(algorithm, iter):
     global np_seed, de_seed, n_pop, max_gens, n_vars, cr, f, PARAMETERS_STRING
     checkpoint_folder = results_folder + "/Checkpoints/"+ PARAMETERS_STRING + "/"
@@ -388,6 +332,7 @@ def save_checkpoint(algorithm, iter):
         print(f"iteration {iter} checkpoint creation failed")
         return None
 
+# load the checkpoint checkpoint_file_name
 def load_checkpoint(checkpoint_file_name):
     try:
         with open(checkpoint_file_name, 'rb') as file:
@@ -401,6 +346,8 @@ def load_checkpoint(checkpoint_file_name):
         print(f"iteration {last_iteration} checkpoint could not be restored")
         return None, None
 
+# Given the path to the parameters_to_change file, return dict of parameter to change and the version
+# Set the adversarial variable, used for selecting the cost function to be used.
 def get_configuration(path):
     conf_split_underscore = path.split("_")
     version = conf_split_underscore[-1].split(".")[0]
@@ -450,7 +397,6 @@ def create_population(n_pop, name_parameters_to_change):
             else:
                 population[i][j] = parameters[key]
                 
-#'''
 if __name__ == "__main__":
     ####################### SETUP ################################
     parser = argparse.ArgumentParser()
@@ -466,7 +412,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
 
-    # load default parameters
+    # load the starting controller parameters
     args.controller_params = '\\' + args.controller_params
     pfile= open(dir_path + args.controller_params,'r') 
     parameters = json.load(pfile)
@@ -474,8 +420,10 @@ if __name__ == "__main__":
     # load the change condition file
     parameters_to_change, change_cond_version = get_configuration(args.param_change_cond_version)
     
+    # get the tacks name.
     track_names = take_track_names(args)
 
+    # create the directory where save the result
     tracks_folder = args.configuration_file
     results_folder = dir_path+"/Results_DE/"+ tracks_folder
     create_dir(results_folder)
@@ -557,6 +505,7 @@ if __name__ == "__main__":
         algorithm.has_terminated = False
     
     res = algorithm.result()
+
     if res != None:
         print(f"final population fitness: {res.pop.get('F')}")
         print("Best solution found: \nX = %s\nF = %s" % (res.X, res.F))
@@ -570,52 +519,6 @@ if __name__ == "__main__":
         
         plt.title("Convergence")
         plt.plot(n_evals, opt, "-")
-        #plt.yscale("log")
         file_name = results_folder  + "/" + PARAMETERS_STRING + '.png'
         plt.savefig(file_name)
         plt.show()
-#'''        
-'''
-if __name__ == "__main__":
-    ####################### SETUP ################################
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--checkpoint_file', '-cp', help="checkpoint file containing the starting population for the algorithm", type= str,
-                        default= "None")
-    parser.add_argument('--controller_params', '-ctrlpar', help="initial controller parameters", type= str,
-                    default= "Baseline_snakeoil\default_parameters")
-    parser.add_argument('--param_change_cond_version', '-param_vers', help="path to the file containing the parameters to be changed by the algorithm", type= str,
-                    default="parameter_change_condition_no_adv_v_2")
-                    
-    args = parser.parse_args()
-
-
-    # load default parameters
-    args.controller_params = '\\' + args.controller_params
-    pfile= open(dir_path + args.controller_params,'r') 
-    parameters = json.load(pfile)
-
-    # load the change condition file
-    parameters_to_change, change_cond_version = get_configuration(args.param_change_cond_version)
-
-    algorithm, last_iteration = load_checkpoint(args.checkpoint_file)
-
-    res = algorithm.result()
-
-    print(res.X)
-    print(res.F)
-
-    print("Saving the best result on file.....")
-    i = 0
-    for key in parameters_to_change.keys():
-        # change the value of contreller_variables
-        # if the given variable is under evolution
-        if parameters_to_change[key][0] == 1:
-            # this parameter is under evolution
-            parameters[key] = res.X[0][i]
-            i += 1
-    
-    file_name = "temp.xml"
-    
-    with open(file_name, 'w') as outfile:
-        json.dump(parameters, outfile)
-'''

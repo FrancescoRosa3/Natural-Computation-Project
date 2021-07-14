@@ -13,7 +13,7 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 
 class CustomController:
     
-    def __init__(self, port=None, parameters = None, parameters_from_file = True, parameter_file = "\Baseline_snakeoil\default_parameters",
+    def __init__(self, port=None, parameters = None, parameters_from_file = True, parameter_file = "\Baseline_snakeoil\default_parameters_overtake",
                  stage = 3, track = "unknown"):
         self.port = port
         self.parameters = parameters
@@ -241,26 +241,16 @@ class CustomController:
         # 20° for the obstacle
         # 80° for the track
         # we keep the current speed if the obstacle if far enough and there is enough free track space.
-        """
-        print("ADVS:")
-        print(os[16:20])
-        print("TRACK EDGES:")
-        print(tsen[5:14])
-        """
         if (min(os[17:19]) > keep_speed) and (min(tsen[5:14]) > keep_speed):
-            #print(f"TRUE:\n{os[16:20]}\n{tsen[5:14]}")
             return True
-        #print(f"FALSE:\n{os[16:20]}\n{tsen[5:14]}")
         return False
 
     def traffic_navigation(self, P, os, sti, sx, tsen):
-        overtake_space = P['overtake_space'] #* ((sx/MAX_SPEED)+1)
-        free_lateral_distance = P['free_lateral_distance'] #* ((sx/MAX_SPEED)+1)
-        sto= sti 
-        # take 
+        overtake_space = P['overtake_space']
+        free_lateral_distance = P['free_lateral_distance'] 
+        sto= sti
         c= min(os[16:21]) 
-        cs= os.index(c)
-        #print(f"{cs=}", end=' ')  
+        cs= os.index(c)  
         if not c: c= .0001
         
         # start to overtake the opponent in front of the car
@@ -292,7 +282,7 @@ class CustomController:
             sn=  min(sn , os[15],os[20])  
         sn-= 5 
         
-        # soglia sulla distanza sotto la quale si frena
+        # distance from the opponent over wich the controller breaks
         if sn<P["sn"]: 
             self.opHistory= os 
             #return -ts 
@@ -322,7 +312,6 @@ class CustomController:
                 seriousness= (max_worry-sn)/(max_worry-full_serious)
             tsa= max_tsa * seriousness
             tsa= snakeoil.clip(tsa,-ts,0)
-            #print(f"TSA: {tsa}")
             return tsa
         return 0
 
@@ -335,7 +324,6 @@ class CustomController:
         onthetrack= abs(tp) < P['sortofontrack']
         offrd= 1
         if not onthetrack:
-            #print("Not on track")
             offrd= P['offroad']
         if pointing_ahead:
             sto= a 
@@ -439,8 +427,6 @@ class CustomController:
             return 0
         # the car speed is higher than the target speed
         if toofast: 
-            # direttamente proporzionale alla differenza di velocità
-            # inversamente proporzionale allo slittamento
             bo+= P['brake'] * toofast / max(1,abs(sk))
             #bo=1
         if sk > P['seriousABS']: bo=0 
@@ -451,8 +437,6 @@ class CustomController:
         if sy:
             sycon= min(1,  P['sycon2']-P['sycon1']*math.log(abs(sy))  )
         
-        #print(f"Bo {bo} - sycon {sycon} - min: {min(bo,sycon)}")
-        # output [0,1]
         return min(bo,sycon)
 
     def iberian_skid(self, wsv,sx):
@@ -578,7 +562,7 @@ class CustomController:
                         if snext.badness>1000: caution= P['caution_badness_snext_1000']
                         if snext.badness>10000: caution= P['caution_badness_snext_10000']
         self.target_speed*= caution
-        # In unknown this if is true
+        # In unknown this is true
         if self.T.usable_model or c.stage>1:
             # if the car is not on the axis
             if abs(S['trackPos']) > 1:
@@ -690,7 +674,6 @@ class CustomController:
             except:
                 print(f"Could not load the track: {self.C.trackname}") 
                 sys.exit()
-            #print("Track loaded!")
 
         self.initialize_car(self.C)
         self.C.S.d['stucktimer']= 0
@@ -739,13 +722,11 @@ class CustomController:
                     history_car_pos[lap_cnt] = [self.C.S.d['racePos']]
 
             if return_code == snakeoil.RACE_ENDED or race_failed:
-                #print("Race ended")
                 break
         
             self.drive(self.C, step)
             self.C.respond_to_server()
         # save the history
-        #print(f"Lap time: {history_lap_time}")
         if plot_history:
             utils.plot_history(history_lap_time, history_speed, history_damage)
 
@@ -761,7 +742,7 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('--parameters_file', '-pf', help="file name where take the controller parameters", type= str,
-                        default= "\Baseline_snakeoil\default_parameters")
+                        default= "\Baseline_snakeoil\default_parameters_overtake")
     parser.add_argument('--stage', '-s', help="stage 0:warm-up, 1:qualification, 2:race, 3:unknown", type= int,
                         default= 3)
     parser.add_argument('--track', '-t', help="track name", type= str,

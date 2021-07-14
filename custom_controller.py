@@ -247,7 +247,7 @@ class CustomController:
             sn=  min(sn , os[15],os[20])  
         sn-= 5 
         
-        # soglia sulla distanza sotto la quale si frena
+        # distance from the opponent after wich the controller brakes
         if sn<P["sn"]: 
             self.opHistory= os 
             return -ts 
@@ -405,8 +405,6 @@ class CustomController:
             return 0
         # the car speed is higher than the target speed
         if toofast: 
-            # direttamente proporzionale alla differenza di velocità
-            # inversamente proporzionale allo slittamento
             bo+= P['brake'] * toofast / max(1,abs(sk))
             #bo=1
         if sk > P['seriousABS']: bo=0 
@@ -417,7 +415,6 @@ class CustomController:
         if sy:
             sycon= min(1,  P['sycon2']-P['sycon1']*math.log(abs(sy))  )
         
-        #print(f"Bo {bo} - sycon {sycon} - min: {min(bo,sycon)}")
         # output [0,1]
         return min(bo,sycon)
 
@@ -578,7 +575,6 @@ class CustomController:
                 R['steer']= self.speed_appropriate_steer(P, 
                                                         self.traffic_navigation(P, S['opponents'], R['steer']),
                                                         S['speedX']+50)
-                #print(f"{R['steer']=}")
         
         if not S['stucktimer']:
             self.target_speed= abs(self.target_speed) 
@@ -657,7 +653,6 @@ class CustomController:
             except:
                 print(f"Could not load the track: {self.C.trackname}") 
                 sys.exit()
-            #print("Track loaded!")
 
         self.initialize_car(self.C)
         self.C.S.d['stucktimer']= 0
