@@ -241,8 +241,16 @@ class CustomController:
         # 20° for the obstacle
         # 80° for the track
         # we keep the current speed if the obstacle if far enough and there is enough free track space.
+        """
+        print("ADVS:")
+        print(os[16:20])
+        print("TRACK EDGES:")
+        print(tsen[5:14])
+        """
         if (min(os[17:19]) > keep_speed) and (min(tsen[5:14]) > keep_speed):
+            #print(f"TRUE:\n{os[16:20]}\n{tsen[5:14]}")
             return True
+        #print(f"FALSE:\n{os[16:20]}\n{tsen[5:14]}")
         return False
 
     def traffic_navigation(self, P, os, sti, sx, tsen):
@@ -314,6 +322,7 @@ class CustomController:
                 seriousness= (max_worry-sn)/(max_worry-full_serious)
             tsa= max_tsa * seriousness
             tsa= snakeoil.clip(tsa,-ts,0)
+            #print(f"TSA: {tsa}")
             return tsa
         return 0
 
