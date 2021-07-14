@@ -1,0 +1,34 @@
+python evaluate_custom_controller_overtake.py -conf quickrace_cg_track_2_adv -ctrlpar Results_PSO\quickrace_wheel_1_adv\18_5\10_70_20_20_1_0.6_0.7298__15_2_50_9.xml -p 1
+
+Run: 0
+Total fitness 4.217142857142857
+Fitness components {'g-track-2': {'fitness': 4.217142857142857, 'norm_final_car_position': 1.0, 'norm_best_car_position': 0.75, 'norm_out_of_track_ticks': 1.122, 'normalized_damage': 0.34514285714285714}}
+Run: 1
+Total fitness 3.213142857142857
+Fitness components {'g-track-2': {'fitness': 3.213142857142857, 'norm_final_car_position': 0.875, 'norm_best_car_position': 0.75, 'norm_out_of_track_ticks': 0.494, 'normalized_damage': 0.21914285714285714}}
+Run: 2
+Total fitness 3.282142857142857
+Fitness components {'g-track-2': {'fitness': 3.282142857142857, 'norm_final_car_position': 0.875, 'norm_best_car_position': 0.75, 'norm_out_of_track_ticks': 0.494, 'normalized_damage': 0.28814285714285715}}
+Run: 3
+Total fitness 3.2128571428571426
+Fitness components {'g-track-2': {'fitness': 3.2128571428571426, 'norm_final_car_position': 0.875, 'norm_best_car_position': 0.75, 'norm_out_of_track_ticks': 0.494, 'normalized_damage': 0.21885714285714286}}
+Run: 4
+Total fitness 3.6742857142857144
+Fitness components {'g-track-2': {'fitness': 3.6742857142857144, 'norm_final_car_position': 1.0, 'norm_best_car_position': 0.75, 'norm_out_of_track_ticks': 0.614, 'normalized_damage': 0.3102857142857143}}
+Run: 5
+Total fitness 3.6742857142857144
+Fitness components {'g-track-2': {'fitness': 3.6742857142857144, 'norm_final_car_position': 1.0, 'norm_best_car_position': 0.75, 'norm_out_of_track_ticks': 0.614, 'normalized_damage': 0.3102857142857143}}
+Run: 6
+Total fitness 3.6742857142857144
+Fitness components {'g-track-2': {'fitness': 3.6742857142857144, 'norm_final_car_position': 1.0, 'norm_best_car_position': 0.75, 'norm_out_of_track_ticks': 0.614, 'normalized_damage': 0.3102857142857143}}
+Run: 7
+Total fitness 3.607285714285714
+Fitness components {'g-track-2': {'fitness': 3.607285714285714, 'norm_final_car_position': 1.0, 'norm_best_car_position': 0.75, 'norm_out_of_track_ticks': 0.549, 'normalized_damage': 0.3082857142857143}}
+Run: 8
+Total fitness 3.193857142857143
+Fitness components {'g-track-2': {'fitness': 3.193857142857143, 'norm_final_car_position': 0.875, 'norm_best_car_position': 0.75, 'norm_out_of_track_ticks': 0.492, 'normalized_damage': 0.20185714285714285}}
+Run: 9
+Total fitness 3.310285714285714
+Fitness components {'g-track-2': {'fitness': 3.310285714285714, 'norm_final_car_position': 0.875, 'norm_best_car_position': 0.75, 'norm_out_of_track_ticks': 0.505, 'normalized_damage': 0.30528571428571427}}
+
+Average: {'g-track-2': {'fitness': 3.505957142857144, 'norm_final_car_position': 0.9375, 'norm_best_car_position': 0.75, 'norm_out_of_track_ticks': 0.5992, 'normalized_damage': 0.2817571428571429}}

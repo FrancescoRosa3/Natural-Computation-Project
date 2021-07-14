@@ -13,12 +13,12 @@ This repository contains:
 - **Parameters_change_condition_files**, folder that contains the file used during the training in order to select which parameter must be optimized.
 - **Track_info**, folder that contains the ***.trackinfo** files used during the training and the evaluation.
 - **custom_controller_overtake.py**, the controller which implements our overtaking logic.
-- **custom_controller.py**, the baseline controller with some modification explaned in **documentation**.
+- **custom_controller.py**, the baseline controller with some modification explained in **documentation**.
 - **evaluate_custom_controller_overtake.py**, file that implements the evaluation process (average of 10 runs) on custom_controller_overtake. 
 - **evaluate_custom_controller.py**, file that implements the evaluation process (average of 10 runs) on custom_controller.
 - **evaluate_final_controller.py**, file that implements the evaluation of the final controller.
-- **PSO.py**, file used during the optimization with the ***Particle Swarm Optimization Algorithm***.
-- **DE.py**, file used during the optimization with the ***Differential Evolutional Algorith***.
+- **PSO&#46;py**, file used during the optimization with the ***Particle Swarm Optimization Algorithm***.
+- **DE&#46;py**, file used during the optimization with the ***Differential Evolutional Algorithm***.
 
 ## How to run the custom_controller_overtake
 
@@ -29,7 +29,8 @@ Let's generate the track-info file.
 ```bash
 wtorcs.exe -t 2000000000 -nofuel
 ```
-Configure the track on which you want to run the contreller, without opponents.
+In order to run the controller you must first make a **warm-up run**, to produce ***.trackinfo** file useful for the actual **race run**.
+Configure the track without opponents.
 Open another terminal and run:
 ```bash
 python custom_controller_overtake -s 0 -t track_name -p port
@@ -37,7 +38,6 @@ python custom_controller_overtake -s 0 -t track_name -p port
 The value of **port** must be the same as the scr_server plus 1.
 For example, if you configure for scr_server_0, you have insert **-p 1**
 The value of **track_name** is the name of the track configured. This is used as name of the ***.trackinfo** file.
-
 After the ***.trackinfo** file has been generated, configure the race with the opponents and run:
 ```bash
 python custom_controller_overtake -s 2 -t track_name -p port
@@ -46,7 +46,7 @@ Where track_name is the same name of the ***.trackinfo** file, without the exten
 With the same warings as above.
 
 ## How to evaluate the custom_controller_overtake
-If you want to evaluate the custom_controller_overtake with the cost function explaned in the **documentation**, you must run the following commands:
+If you want to evaluate the custom_controller_overtake with the cost function explained in the **documentation**, you must run the following commands:
 
 If you do not have the ***.trackinfo** follow the same rules as above.
 
