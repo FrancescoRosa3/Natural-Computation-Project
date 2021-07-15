@@ -14,7 +14,8 @@ This repository contains:
 - **Track_info**, folder that contains the ***.trackinfo** files used during the training and the evaluation.
 - **custom_controller_overtake.py**, the controller which implements our overtaking logic.
 - **custom_controller.py**, the baseline controller with some modification explained in **documentation**.
-- **evaluate_custom_controller_overtake.py**, file that implements the evaluation process (average of 10 runs) on custom_controller_overtake. 
+- **evaluate_custom_controller_overtake_10_runs.py**, file that implements the evaluation process (average of 10 runs) on custom_controller_overtake. 
+- **evaluate_custom_controller_overtake_30_runs_std.py**, file that implements the evaluation process (average of 30 runs) on custom_controller_overtake, and compute the standard deviation. 
 - **evaluate_custom_controller.py**, file that implements the evaluation process (average of 10 runs) on custom_controller.
 - **evaluate_final_controller.py**, file that implements the evaluation of the final controller.
 - **PSO&#46;py**, file used during the optimization with the ***Particle Swarm Optimization Algorithm***.
