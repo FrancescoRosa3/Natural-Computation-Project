@@ -87,7 +87,8 @@ if __name__ == "__main__":
 
     fitness_dict_component = {}
     fitnesses_dict = {}
-    for i in range(0, 10):
+    fitness_array = []
+    for i in range(0, 30):
         for track in track_names:
             try:
                 controller = custom_controller.CustomController(port=3000+args.port,
@@ -182,6 +183,8 @@ if __name__ == "__main__":
             num_track += 1
         total_fitness /= num_track
 
+        fitness_array.append(total_fitness)
+
         for track in fitness_dict_component.keys():
             for term in fitness_dict_component[track].keys():
                 average_fitness_dict[track][term] += fitness_dict_component[track][term]
@@ -191,8 +194,9 @@ if __name__ == "__main__":
 
     for track in average_fitness_dict.keys():
         for term in average_fitness_dict[track].keys():
-            average_fitness_dict[track][term] /= 10
+            average_fitness_dict[track][term] /= 30
     
-    print(f"Average: {average_fitness_dict}")
+    std = np.std(fitness_array)
+    print(f"Average: {average_fitness_dict}\nStd {std}")
 
 
