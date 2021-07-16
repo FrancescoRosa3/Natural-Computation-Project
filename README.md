@@ -27,23 +27,29 @@ This repository contains:
 
 Our controller has been optimized in **race** mode.
 In this mode the controller needs the track-info file.
-Let's generate the track-info file.
-
+Let's generate the track-info file.<br>
+First change your current directory with Torcs folder then run the following command:<br>
+On a Windows pc:
 ```bash
-wtorcs.exe -t 2000000000 -nofuel
+./wtorcs.exe -t 2000000000 -nofuel
 ```
+On a Linux pc:
+```bash
+torcs -t 2000000000 -nofuel
+```
+Then configure Torcs graphically for the simulation to run.<br>
 In order to run the controller you must first make a **warm-up run**, to produce ***.trackinfo** file useful for the actual **race run**.
 Configure the track without opponents.
 Open another terminal and run:
 ```bash
-python custom_controller_overtake -s 0 -t track_name -p port
+python custom_controller_overtake.py -s 0 -t track_name -p port
 ```
 The value of **port** must be the same as the scr_server plus 1.
 For example, if you configure for scr_server_0, you have to insert **-p 1**.<br>
 The value of **track_name** is the name of the track configured. This is used as name of the ***.trackinfo** file.<br>
 After the ***.trackinfo** file has been generated, configure the race with the opponents and run:
 ```bash
-python custom_controller_overtake -s 2 -t track_name -p port
+python custom_controller_overtake.py -s 2 -t track_name -p port
 ```
 Where **track_name** is the same name of the ***.trackinfo** file, without the extension.
 With the same warnings as above.

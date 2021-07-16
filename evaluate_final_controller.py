@@ -22,7 +22,7 @@ if __name__ == "__main__":
     ####################### SETUP ################################
     parser = argparse.ArgumentParser()
     parser.add_argument('--controller_params', '-ctrlpar', help="initial controller parameters", type= str,
-                    default= "Baseline_snakeoil\default_parameters")
+                    default= "Controller/final_controller.xml")
     parser.add_argument('--port', '-p', help="server port 1-10", type= int,
                     default= 1)
     parser.add_argument('--stage', '-s', help="stage 0:warm-up, 1:qualification, 2:race, 3:unknown", type= int,

@@ -742,7 +742,7 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('--parameters_file', '-pf', help="file name where take the controller parameters", type= str,
-                        default= "Baseline_snakeoil\default_parameters_overtake")
+                        default= "Controller/final_controller.xml")
     parser.add_argument('--stage', '-s', help="stage 0:warm-up, 1:qualification, 2:race, 3:unknown", type= int,
                         default= 3)
     parser.add_argument('--track', '-t', help="track name", type= str,

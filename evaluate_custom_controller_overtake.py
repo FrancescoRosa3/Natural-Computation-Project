@@ -53,7 +53,7 @@ if __name__ == "__main__":
     parser.add_argument('--configuration_file', '-conf', help="name of the configuration file to use, without extension or port number", type= str,
                     default= "quickrace_forza_no_adv")
     parser.add_argument('--controller_params', '-ctrlpar', help="initial controller parameters", type= str,
-                    default= "Baseline_snakeoil\default_parameters")
+                    default= "Controller/final_controller.xml")
     parser.add_argument('--port', '-p', help="server port 1-10", type= int,
                     default= 1)
                     
