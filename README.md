@@ -6,20 +6,22 @@ This project has been realized by:
 - Giovanni Mignone, 0622701104, g.mignone2@studenti.unisa.it
 
 ## Repository content
-
 This repository contains:
-- **Baseline_snakeoil** folder, which contains the snakeoil controller (snakeoil.py) and the baseline controller (client.py).
-- **configuration_file** folder, which contains the *.xml configuration file used during the training and evaluation of the controller.
-- **Parameters_change_condition_files**, folder that contains the file used during the training in order to select which parameter must be optimized.
-- **Track_info**, folder that contains the ***.trackinfo** files used during the training and the evaluation.
-- **custom_controller_overtake.py**, the controller which implements our overtaking logic.
-- **custom_controller.py**, the baseline controller with some modification explained in **documentation**.
-- **evaluate_custom_controller_overtake_10_runs.py**, file that implements the evaluation process (average of 10 runs) on custom_controller_overtake. 
-- **evaluate_custom_controller_overtake_30_runs_std.py**, file that implements the evaluation process (average of 30 runs) on custom_controller_overtake, and compute the standard deviation. 
-- **evaluate_custom_controller.py**, file that implements the evaluation process (average of 10 runs) on custom_controller.
-- **evaluate_final_controller.py**, file that implements the evaluation of the final controller.
-- **PSO&#46;py**, file used during the optimization with the ***Particle Swarm Optimization Algorithm***.
-- **DE&#46;py**, file used during the optimization with the ***Differential Evolutional Algorithm***.
+### Controller
+- **custom_controller_overtake.py**: the controller which implements our overtaking logic.
+- **Controller** folder: contains the **optimized parameters** for the final controller.<br><br>
+### Others
+- **Baseline_snakeoil** folder: contains the snakeoil controller (snakeoil.py) and the baseline controller (client.py).
+- **configuration_file** folder: contains the *.xml configuration file used during the training and evaluation of the controller.
+- **Parameters_change_condition_files** folder: contains the file used during the training in order to select which parameter must be optimized.
+- **Track_info**: contains the ***.trackinfo** files used during the training and the evaluation.
+- **custom_controller.py**: the baseline controller with some modification explained in **documentation**.
+- **evaluate_custom_controller_overtake_10_runs.py**: file that implements the evaluation process (average of 10 runs) on custom_controller_overtake. 
+- **evaluate_custom_controller_overtake_30_runs_std.py**: file that implements the evaluation process (average of 30 runs) on custom_controller_overtake, and compute the standard deviation. 
+- **evaluate_custom_controller.py**: file that implements the evaluation process (average of 10 runs) on custom_controller.
+- **evaluate_final_controller.py**: file that implements the evaluation of the final controller.
+- **PSO&#46;py**: file used during the optimization with the ***Particle Swarm Optimization Algorithm***.
+- **DE&#46;py**: file used during the optimization with the ***Differential Evolutional Algorithm***.
 
 ## How to run the custom_controller_overtake
 
