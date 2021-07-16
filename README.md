@@ -24,7 +24,7 @@ This repository contains:
 ## How to run the custom_controller_overtake
 
 Our controller has been optimized in **race** mode.
-In this mode the controller need the track-info file.
+In this mode the controller needs the track-info file.
 Let's generate the track-info file.
 
 ```bash
@@ -37,14 +37,14 @@ Open another terminal and run:
 python custom_controller_overtake -s 0 -t track_name -p port
 ```
 The value of **port** must be the same as the scr_server plus 1.
-For example, if you configure for scr_server_0, you have insert **-p 1**
-The value of **track_name** is the name of the track configured. This is used as name of the ***.trackinfo** file.
+For example, if you configure for scr_server_0, you have to insert **-p 1**.<br>
+The value of **track_name** is the name of the track configured. This is used as name of the ***.trackinfo** file.<br>
 After the ***.trackinfo** file has been generated, configure the race with the opponents and run:
 ```bash
 python custom_controller_overtake -s 2 -t track_name -p port
 ```
-Where track_name is the same name of the ***.trackinfo** file, without the extension.
-With the same warings as above.
+Where **track_name** is the same name of the ***.trackinfo** file, without the extension.
+With the same warnings as above.
 
 ## How to evaluate the custom_controller_overtake
 If you want to evaluate the custom_controller_overtake with the cost function explained in the **documentation**, you must run the following commands:
