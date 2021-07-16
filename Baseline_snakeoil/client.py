@@ -60,7 +60,7 @@ class Track():
         self.usable_model= True 
     def write_track(self,fn):
         firstline= "%f\n" % self.width 
-        f= open(fn+'.trackinfo','w')
+        f= open('Track_info\\'+fn+'.trackinfo','w')
         f.write(firstline)
         for s in self.sectionList:
             ts= '%f %f %f %d\n' % (s.start,s.end,s.magnitude,s.badness)
@@ -68,7 +68,7 @@ class Track():
         f.close()
     def load_track(self,fn):
         self.sectionList= list() 
-        with open(fn+'.trackinfo','r') as f:
+        with open('Track_info\\'+fn+'.trackinfo','r') as f:
             self.width= float(f.readline().strip())
             for l in f:
                 data=l.strip().split(' ') 
